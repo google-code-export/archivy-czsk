@@ -1,0 +1,56 @@
+<keymap>
+	<map context="GlobalActions">
+		<key id="KEY_BLUE" mapto="showPanel" flags="mr" />
+	</map>
+	
+	<map context="MoviePlayer2Actions">
+		<key id="KEY_TV" mapto="leavePlayer" flags="m" />
+		<key id="KEY_STOP" mapto="leavePlayer" flags="m" />
+		<key id="KEY_ZOOM" mapto="aspectChange" flags="m" />
+		<key id="KEY_EXIT" mapto="leavePlayer" flags="m" />
+	</map>
+	
+	<map context="DownloadActions">
+		<key id="KEY_REFRESH" mapto="showDownloadListView" flags="m" />
+		<key id="KEY_RECORD" mapto="showDownloadListView" flags="m" />
+		<key id="KEY_RADIO" mapto="showDownloadListView" flags="m" />
+	</map>
+
+	<map context="archivCZSKActions">
+		<key id="KEY_RED" mapto="red" flags="m" />
+		<key id="KEY_GREEN" mapto="green" flags="m" />
+		<key id="KEY_YELLOW" mapto="yellow" flags="m" />
+		<key id="KEY_BLUE" mapto="blue" flags="m" />
+		<key id="KEY_INFO" mapto="info" flags="m" />
+		<key id="KEY_EXIT" mapto="cancel" flags="m" />
+		<key id="KEY_MENU" mapto="menu" flags="m" />
+		<key id="KEY_HOME" mapto="cancel" flags="m" />
+		<key id="KEY_OK" mapto="ok" flags="m" />
+		<key id="KEY_UP" mapto="up" flags="m" />
+		<key id="KEY_DOWN" mapto="down" flags="m" />
+		<key id="KEY_LEFT" mapto="left" flags="m" />
+		<key id="KEY_RIGHT" mapto="right" flags="m" />
+	</map>
+	
+	<map context="CustomPlayerActions">
+		<key id="KEY_RED" mapto="red" flags="m" />
+		<key id="KEY_GREEN" mapto="green" flags="m" />
+		<key id="KEY_YELLOW" mapto="yellow" flags="m" />
+		<key id="KEY_BLUE" mapto="blue" flags="m" />
+		<key id="KEY_EXIT" mapto="leavePlayer" flags="m" />
+		<key id="KEY_STOP" mapto="leavePlayer" flags="m" />
+		<key id="KEY_ESC" mapto="leavePlayer" flags="m" />
+		<key id="KEY_HOME" mapto="cancel" flags="m" />
+		<key id="KEY_OK" mapto="ok" flags="m" />
+		<key id="KEY_UP" mapto="up" flags="m" />
+		<key id="KEY_DOWN" mapto="down" flags="m" />
+		<key id="KEY_LEFT" mapto="left" flags="m" />
+		<key id="KEY_RIGHT" mapto="right" flags="m" />
+		<key id="KEY_SUBTITLE" mapto="subtitles" flags="m" />
+		<key id="KEY_TEXT" mapto="subtitles" flags="m" />
+		<key id="KEY_ZOOM" mapto="aspectChange" flags="m" />
+		<key id="KEY_5" mapto="aspectChange" flags="m" /> 
+		
+	</map>
+
+</keymap>
