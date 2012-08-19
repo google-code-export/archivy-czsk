@@ -19,7 +19,7 @@
     <summary lang="en">movie-library.cz</summary>
     <summary lang="cs">movie-library.cz</summary>
     <description lang="en">Watch online content from movie-library.cz</description>
-    <description lang="cs">Sledujte online obsah ze servru movie-library.cz Plugin podporuje pĹehrĂĄvĂĄnĂ­ a stahovĂĄnĂ­ videĂ­ ze servru uloz.to bez nutnosti video stahovat nebo pokaĹždĂŠ opisovat kontrolnĂ­ kĂłd!!. DĂĄle je moĹžnĂŠ vyhledĂĄvat videa jak na movie-library.cz tak pĹĂ­mo na ulozto.cz a taky stahovat videa na disk.</description>
+    <description lang="cs">Sledujte online obsah ze servru movie-library.cz Plugin podporuje přehrávání a stahování videí ze servru uloz.to bez nutnosti video stahovat nebo pokaždé opisovat kontrolní kód!!. Dále je možné vyhledávat videa jak na movie-library.cz tak přímo na ulozto.cz a taky stahovat videa na disk.</description>
     <platform>all</platform>
   </extension>
 </addon>
@@ -42,7 +42,7 @@
     <summary lang="en">re-play.cz</summary>
     <summary lang="cs">re-play.cz</summary>
     <description lang="en">Watch news about games on re-play.cz</description>
-    <description lang="cs">Sledujte video-archĂ­v seriĂĄlu o nejnovÄjĹĄĂ­ch hrĂĄch</description>
+    <description lang="cs">Sledujte video-archív seriálu o nejnovějších hrách</description>
     <platform>all</platform>
   </extension>
 </addon>
@@ -65,7 +65,7 @@
     <summary lang="en">videacesky.cz</summary>
     <summary lang="cs">videacasky.cz</summary>
     <description lang="en">Watch content from videacesky.cz</description>
-    <description lang="cs">Sledujte videa, reklamy, seriĂĄly, ÄlĂĄnky a nĂĄvody ze servru videacesky.cz</description>
+    <description lang="cs">Sledujte videa, reklamy, seriály, články a návody ze servru videacesky.cz</description>
     <platform>all</platform>
   </extension>
 </addon>
@@ -112,7 +112,7 @@
     <summary lang="en">pohadkar.cz</summary>
     <summary lang="cs">pohadkar.cz</summary>
     <description lang="en">Watch online tales mostly in czech language on pohadkar.cz</description>
-    <description lang="cs">Sledujte online pohĂĄdky ze servru pohĂĄdkĂĄĹ.cz. IdeĂĄlnĂ­ pro zabavenĂ­ dÄtĂ­.</description>
+    <description lang="cs">Sledujte online pohádky ze servru pohádkář.cz. Ideální pro zabavení dětí.</description>
     <platform>all</platform>
   </extension>
 </addon>
@@ -135,7 +135,7 @@
     <summary lang="en">serialycz.cz</summary>
     <summary lang="cs">serialycz.cz</summary>
     <description lang="en">Watch online series from serialycz.cz</description>
-    <description lang="cs">Sledujte online seriĂĄly ze servru serialycz.cz</description>
+    <description lang="cs">Sledujte online seriály ze servru serialycz.cz</description>
     <platform>all</platform>
   </extension>
 </addon>
@@ -158,12 +158,12 @@
     <summary lang="en">movie-library.cz</summary>
     <summary lang="cs">movie-library.cz</summary>
     <description lang="en">Watch online content from bezvadata.cz</description>
-    <description lang="cs">Sledujte nebo stahujte obsah ze servru bezvadata.cz. StahovĂĄnĂ­ nebo pĹehrĂĄvĂĄnĂ­ bez omezenĂ­ rychlosti</description>
+    <description lang="cs">Sledujte nebo stahujte obsah ze servru bezvadata.cz. Stahování nebo přehrávání bez omezení rychlosti</description>
     <platform>all</platform>
   </extension>
 </addon>
 <addon id="plugin.video.dmd-czech.ivysilani"
-       name="iVysĂ­lĂĄnĂ­ TV Archiv"
+       name="iVysílání TV Archiv"
        version="1.1"
        provider-name="Jiri Vyhnalek"
        repository="dmd_czech">
@@ -177,12 +177,12 @@
   <extension point="xbmc.addon.metadata">
     <platform>all</platform>
     <summary>CT iVysilani video-archive plugin</summary>
-    <summary lang="cs">ÄT iVysĂ­lĂĄnĂ­ - archiv</summary>
+    <summary lang="cs">ČT iVysílání - archiv</summary>
     <description>
         Plugin to play TV video archive from CT iVysilani
     </description>
     <description lang="cs">
-        Plugin pro pĹehrĂĄvĂĄnĂ­ videĂ­ z archivu ÄT iVysĂ­lĂĄnĂ­
+        Plugin pro přehrávání videí z archivu ČT iVysílání
     </description>
   </extension>
 </addon>
@@ -206,7 +206,7 @@
         Plugin to play TV video archive www.stv.sk
     </description>
     <description lang="cs">
-        Plugin pro pĹehrĂĄvĂĄnĂ­ videĂ­ z archivu www.stv.sk
+        Plugin pro přehrávání videí z archivu www.stv.sk
     </description>
   </extension>
 </addon>
@@ -230,7 +230,7 @@
         Plugin to play TV video archive http://www.b-tv.cz
     </description>
     <description lang="cs">
-        Plugin pro pĹehrĂĄvĂĄnĂ­ videĂ­ z archivu http://www.b-tv.cz
+        Plugin pro přehrávání videí z archivu http://www.b-tv.cz
     </description>
   </extension>
 </addon>
@@ -254,7 +254,7 @@
         Plugin to play TV video archive Huste.tv
     </description>
     <description lang="cs">
-        Plugin pro pĹehrĂĄvĂĄnĂ­ videĂ­ z archivu Huste.tv
+        Plugin pro přehrávání videí z archivu Huste.tv
     </description>
   </extension>
 </addon>
@@ -278,7 +278,7 @@
         Plugin to play TV video archive joj.sk
     </description>
     <description lang="cs">
-        Plugin pro pĹehrĂĄvĂĄnĂ­ videĂ­ z archivu joj.sk
+        Plugin pro přehrávání videí z archivu joj.sk
     </description>
   </extension>
 </addon>
@@ -302,7 +302,7 @@
         Plugin to play TV video archive from markiza.sk including archive doma tv and fun tv  
     </description>
     <description lang="cs">
-        Plugin pro pĹehrĂĄvĂĄnĂ­ videĂ­ z archivu markiza.sk vÄetnÄ doma tv a fun tv... 
+        Plugin pro přehrávání videí z archivu markiza.sk včetně doma tv a fun tv... 
     </description>
   </extension>
 </addon>
@@ -326,7 +326,7 @@
         Plugin to play TV video archive http://www.muvi.cz
     </description>
     <description lang="cs">
-        Plugin pro pĹehrĂĄvĂĄnĂ­ videĂ­ z archivu http://www.muvi.cz
+        Plugin pro přehrávání videí z archivu http://www.muvi.cz
     </description>
   </extension>
 </addon>
@@ -351,7 +351,7 @@
         Plugin to play TV video archive iprima.cz/videoarchiv
     </description>
     <description lang="cs">
-        Plugin pro pĹehrĂĄvĂĄnĂ­ videĂ­ z archivu iprima.cz/videoarchiv
+        Plugin pro přehrávání videí z archivu iprima.cz/videoarchiv
     </description>
   </extension>
 </addon>
@@ -376,7 +376,7 @@
         Plugin to play TV video archive stream.cz
     </description>
     <description lang="cs">
-        Plugin pro pĹehrĂĄvĂĄnĂ­ videĂ­ z archivu stream.cz
+        Plugin pro přehrávání videí z archivu stream.cz
     </description>
   </extension>
 </addon>
@@ -401,13 +401,13 @@
         Plugin to play TV video archive Voyo.cz
     </description>
     <description lang="cs">
-        Plugin pro pĹehrĂĄvĂĄnĂ­ videĂ­ z archivu Voyo.cz
+        Plugin pro přehrávání videí z archivu Voyo.cz
     </description>
   </extension>
 </addon>
 
 <addon id="plugin.video.dmd-czech.metropol"
-       name="Metropol - Televize plnĂĄ Prahy"
+       name="Metropol - Televize plná Prahy"
        version="0.1"
        provider-name="Jiri Vyhnalek"
        repository="dmd_czech">
@@ -426,7 +426,7 @@
         Plugin to play TV video archive Metropol.cz
     </description>
     <description lang="cs">
-        Plugin pro pĹehrĂĄvĂĄnĂ­ videĂ­ z archivu Metropol.cz
+        Plugin pro přehrávání videí z archivu Metropol.cz
     </description>
   </extension>
 </addon>
@@ -451,7 +451,7 @@
         Plugin to play videos form FilmyCZ.com
     </description>
     <description lang="cs">
-        Plugin pro pĹehrĂĄvĂĄnĂ­ videĂ­ z FilmyCZ.com
+        Plugin pro přehrávání videí z FilmyCZ.com
     </description>
   </extension>
 </addon>
@@ -473,8 +473,8 @@
   <extension point="xbmc.addon.metadata">
     <summary lang="en">nastojaka.cz</summary>
     <summary lang="cs">nastojaka.cz</summary>
-    <description lang="en">Watch online HBO Show Na stojĂĄka</description>
-    <description lang="cs">Sledujte online scĂŠnky poĹadu HBO Na stojĂĄka</description>
+    <description lang="en">Watch online HBO Show Na stojáka</description>
+    <description lang="cs">Sledujte online scénky pořadu HBO Na stojáka</description>
     <platform>all</platform>
   </extension>
 </addon>
@@ -499,31 +499,31 @@
         Plugin to play TV video archive iprima.cz/videoarchiv
     </description>
     <description lang="cs">
-        Plugin pro pĹehrĂĄvĂĄnĂ­ videĂ­ z archivu iprima.cz/videoarchiv
+        Plugin pro přehrávání videí z archivu iprima.cz/videoarchiv
     </description>
     <tools>
-    	<directory name="server">
-    		<file>koukniresolver.py</file>
-    		<file>divxstageresolver.py</file>
-    		<file>mixturevideoresolver.py</file>
-    		<file>movshareresolver.py</file>
-    		<file>novamovresolver.py</file>
-    		<file>putlockerresolver.py</file>
-    		<file>servertipczresolver.py</file>
-    		<file>trivialresolver.py</file>
-    		<file>videobbresolver.py</file>
-    		<file>videoweedresolver.py</file>
-    		<file>videozerresolver.py</file>
-    		<file>vkontakteresolver.py</file>
-    		<file>youtuberesolver.py</file>
-    		<file>zideonlresolver.py</file>
-    		<file>stagevuresolver.py</file>
-    		<file>zkouknitoresolver.py</file>
-    	</directory>
-    	<file>addon.xml</file>
-    	<file>resolver.py</file>
-    	<file>search.py</file>
-    	<file>util.py</file>
+        <directory name="server">
+                <file>koukniresolver.py</file>
+                <file>divxstageresolver.py</file>
+                <file>mixturevideoresolver.py</file>
+                <file>movshareresolver.py</file>
+                <file>novamovresolver.py</file>
+                <file>putlockerresolver.py</file>
+                <file>servertipczresolver.py</file>
+                <file>trivialresolver.py</file>
+                <file>videobbresolver.py</file>
+                <file>videoweedresolver.py</file>
+                <file>videozerresolver.py</file>
+                <file>vkontakteresolver.py</file>
+                <file>youtuberesolver.py</file>
+                <file>zideonlresolver.py</file>
+                <file>stagevuresolver.py</file>
+                <file>zkouknitoresolver.py</file>
+        </directory>
+        <file>addon.xml</file>
+        <file>resolver.py</file>
+        <file>search.py</file>
+        <file>util.py</file>
     </tools>
   </extension>
 </addon>
@@ -548,22 +548,22 @@
         Plugin to play TV video archive iprima.cz/videoarchiv
     </description>
     <description lang="cs">
-        Plugin pro pĹehrĂĄvĂĄnĂ­ videĂ­ z archivu iprima.cz/videoarchiv
+        Plugin pro přehrávání videí z archivu iprima.cz/videoarchiv
     </description>
     <tools>
-    	<file>addon.xml</file>
-    	<file>megavideo.py</file>
-    	<file>novamov.py</file>
-    	<file>parse.py</file>
-    	<file>parseutils.py</file>
-    	<file>servertools.py</file>
-    	<file>videobb.py</file>
-    	<file>megavideo.py</file>
-    	<file>videonet.py</file>
-    	<file>videoweed.py</file>
-    	<file>videozer.py</file>
-    	<file>vk.py</file>
-    	<file>youtube.py</file>
+        <file>addon.xml</file>
+        <file>megavideo.py</file>
+        <file>novamov.py</file>
+        <file>parse.py</file>
+        <file>parseutils.py</file>
+        <file>servertools.py</file>
+        <file>videobb.py</file>
+        <file>megavideo.py</file>
+        <file>videonet.py</file>
+        <file>videoweed.py</file>
+        <file>videozer.py</file>
+        <file>vk.py</file>
+        <file>youtube.py</file>
     </tools>
   </extension>
 </addon>
