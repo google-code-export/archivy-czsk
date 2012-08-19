@@ -481,7 +481,7 @@
 
 <addon id="plugin.video.dmd-czech.doplnky_tools"
        name="xbmc_doplnky_tools"
-       version="1.0"
+       version="1.1"
        repository="xbmc_doplnky"
        provider-name="Libor Zoubek">
   <requires>

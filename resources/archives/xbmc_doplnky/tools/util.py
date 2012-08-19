@@ -104,6 +104,7 @@ def error(text):
         print "error"+ (str([text]))
 
 
+
 def get_searches(addon,server):
         local=os.path.join(_path,addon)
         if not os.path.exists(local):

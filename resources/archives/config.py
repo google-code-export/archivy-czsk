@@ -28,18 +28,24 @@ OTHER = os.path.join(ARCHIVES_PATH, 'other')
 archives = [DMD_PATH, DOPLNKY_PATH, OTHER]
 tools = [(DMD_TOOLS_NAME, DMD_TOOLS_PATH), (DOPLNKY_TOOLS_NAME, DOPLNKY_TOOLS_PATH)]
 
-dmd = ['movielibrary', 'koukni', 'videacesky', 'bezvadata', 'pohadkar', 'replay', 'serialycz', 'eserialcz']
-doplnky = ['muvi', 'filmyczcom', 'stream', 'markiza', 'joj', 'btv', 'voyo', 'ivysilani', 'stv', 'metropol', 'prima', 'huste']
+doplnky = ('movielibrary', 'koukni', 'videacesky', 'bezvadata', 'pohadkar', 'replay', 'serialycz', 'eserialcz')
+dmd = ('muvi', 'filmyczcom', 'stream', 'markiza', 'joj', 'btv', 'voyo', 'ivysilani', 'stv', 'metropol', 'prima', 'huste')
 
 
 
 #define in which category archive belong
-video_archives = ['movielibrary', 'koukni', 'muvi', 'filmyczcom', 'videacesky', 'stream', 'bezvadata', 'pohadkar', 'replay', 'serialycz', 'eserialcz', 'nastojaka']
-tv_archives = ['markiza', 'joj', 'btv', 'voyo', 'ivysilani', 'stv', 'metropol', 'prima', 'huste']
+video_archives = ('movielibrary', 'koukni', 'muvi', 'filmyczcom', 'videacesky', 'stream', 'bezvadata', 'pohadkar', 'replay', 'serialycz', 'eserialcz', 'nastojaka', 'playserial', 'zkouknito')
+tv_archives = ('markiza', 'joj', 'btv', 'voyo', 'ivysilani', 'stv', 'metropol', 'prima', 'huste')
 streamy = 'streamy'
 
 config.plugins.archivCZSK = ConfigSubsection()
 config.plugins.archivCZSK.archives = ConfigSubsection()
+
+choicelist = []
+for i in range(0, 40, 1):
+    choicelist.append(("%d" % i, "%d %s" % (i, _('items'))))
+config.plugins.archivCZSK.keep_searches = ConfigSelection(default="20", choices=choicelist)
+
 
 
 #creating config for every archive
@@ -68,23 +74,7 @@ for archs_dir in archives:
 #video_archives
         elif module in video_archives:
             
-            if module == 'koukni':
-                choicelist = []
-                for i in range(0, 40, 1):
-                    choicelist.append(("%d" % i, "%d %s" % (i, _('items'))))
-                    archive_conf.keep_searches = ConfigSelection(default="20", choices=choicelist)
-                    
-            if module == 'nastojaka':
-                choicelist = []
-                for i in range(0, 40, 1):
-                    choicelist.append(("%d" % i, "%d %s" % (i, _('items'))))
-                    archive_conf.keep_searches = ConfigSelection(default="20", choices=choicelist)
-            
             if module == 'movielibrary':
-                choicelist = []
-                for i in range(0, 40, 1):
-                    choicelist.append(("%d" % i, "%d %s" % (i, _('items'))))
-                    archive_conf.keep_searches = ConfigSelection(default="20", choices=choicelist)
                 archive_conf.captcha_text = ConfigText(default="abcd")
                 archive_conf.captcha_id = ConfigText(default="3333")
                 choicelist = [('0', _('name')), ('1', _('year')), ('2', _('date')), ('3', _('rating'))]
@@ -115,13 +105,13 @@ def getArchiveConfigListEntries(archive):
         list.append(getConfigListEntry(_("Use alternate stream server?"), archive_conf.server))
         
     if module == 'nastojaka':
-        list.append(getConfigListEntry(_("Search history"), archive_conf.keep_searches))
+        list.append(getConfigListEntry(_("Search history"), config.plugins.archivCZSK.keep_searches))
                 
     if module == 'koukni':
-        list.append(getConfigListEntry(_("Search history"), archive_conf.keep_searches))
+        list.append(getConfigListEntry(_("Search history"), config.plugins.archivCZSK.keep_searches))
                 
     if module == 'movielibrary':
-        list.append(getConfigListEntry(_("Search history"), archive_conf.keep_searches))
+        list.append(getConfigListEntry(_("Search history"), config.plugins.archivCZSK.keep_searches))
         list.append(getConfigListEntry(_("Order by"), archive_conf.order))
         list.append(getConfigListEntry(_("Filter languages - comma-separated e.g.: cz,sk"), archive_conf.lang_filter))
         list.append(getConfigListEntry(_("Include movies without language when filtering"), archive_conf.lang_filter_include))

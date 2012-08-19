@@ -18,7 +18,7 @@
 # *
 # */
 
-import sys, os, util, re
+import sys, os, util, re, traceback
 
 # dummy implementation of 2nd generation of resolving
 # this will be injected to each resolver, that does not have this method yet
@@ -33,6 +33,7 @@ def _resolve(link):
                 item['url'] = stream
                 item['quality'] = '???'
                 item['surl'] = link
+                item['subs'] = None
                 resolved.append(item)
         return resolved
 
@@ -76,12 +77,21 @@ def resolve2(url):
         url = util.decode_html(url)
         util.info('Resolving ' + url)
         resolver = _get_resolver(url)
+        util.debug('Using resolver ' + str(resolver));
         if resolver == None:
                 return None
-        value = resolver.resolve(url)
+        try:
+                value = resolver.resolve(url)
+        except:
+                traceback.print_exc()
         if value == None:
                 return []
+        def fix_key(i):
+                if not 'subs' in i.keys():
+                        i['subs'] = None
+        [fix_key(i) for i in value]
         return sorted(value, key=lambda i:i['quality'])
+
 
 
 def _get_resolver(url):

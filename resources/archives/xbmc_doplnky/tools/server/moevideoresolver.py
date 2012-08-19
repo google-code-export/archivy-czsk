@@ -19,25 +19,26 @@
 # *  http://www.gnu.org/copyleft/gpl.html
 # *
 # */
-import re
+import re, urllib2, urlparse
 try:
     from Plugins.Extensions.archivCZSK.resources.archives.xbmc_doplnky.tools import util
 except ImportError:
     from resources.archives.xbmc_doplnky.tools import util
-    
-__name__ = 'zkouknito'
+__name__ = 'moevideo'
 def supports(url):
-        return not _regex(url) == None
+	return not _regex(url) == None
 
 # returns the steam url
 def url(url):
-        m = _regex(url)
-        if not m == None:
-                data = util.request('http://www.zkouknito.cz/player/scripts/videoinfo_externi.php?id=%s' % m.group('id'))
-                f = re.search('<file>([^<]+)', data, re.IGNORECASE | re.DOTALL)
-                if f:
-                        return [f.group(1)]
-
+	m = _regex(url)
+	if m:
+		id = m.group('id')
+		post = {'r':'["tVL0gjqo5",["preview/flv_image",{"uid":"' + id + '"}],["preview/flv_link",{"uid":"' + id + '"}]]'}
+		data = util.post('http://api.letitbit.net', post)
+		data = data.replace('\\', '')
+		print data
+		link = re.search('link\"\:\"(?P<link>[^\"]+)', data)
+		if link:
+			return [link.group('link')]
 def _regex(url):
-        return re.search('(www\.)zkouknito.cz/(.+?)vid=(?P<id>[\d]+)', url, re.IGNORECASE | re.DOTALL)
-
+	return re.search('moevideo.net/video\.php\?file=(?P<id>[^\&]+)', url, re.IGNORECASE | re.DOTALL)

@@ -642,7 +642,7 @@ class srtParser(object):
 
     def srt_to_dict(self, srtText):
         subs = []
-        for s in re.sub('\n\n\n*', '\n\n', re.sub('\r\n', '\n', srtText)).split('\n\n'):
+        for s in re.sub('\s*\n\n\n*', '\n\n', re.sub('\r\n', '\n', srtText)).split('\n\n'):
             st = s.split('\n')
             if len(st) >= 3:
                 split = st[1].split(' --> ')

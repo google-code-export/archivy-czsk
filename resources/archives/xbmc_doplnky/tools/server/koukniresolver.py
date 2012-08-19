@@ -25,6 +25,7 @@ try:
 except ImportError:
     from resources.archives.xbmc_doplnky.tools import util
 __name__ = 'koukni.cz'
+
 def supports(url):
 	return not _regex(url) == None
 

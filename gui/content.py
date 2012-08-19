@@ -41,16 +41,17 @@ class ContentScreen(Screen, DownloadList):
     instance = None
     skin = """
         <screen position="center,center" size="720,576" title="Main Menu" >
-            <widget name="key_red" position="10,5" zPosition="1" size="170,45" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" shadowOffset="-2,-2" shadowColor="black" />
-            <widget name="key_green" position="180,5" zPosition="1" size="170,45" font="Regular;20" halign="center" valign="center" backgroundColor="#1f771f" shadowOffset="-2,-2" shadowColor="black" />
-            <widget name="key_yellow" position="360,5" zPosition="1" size="170,45" font="Regular;20" halign="center" valign="center" backgroundColor="#a08500" shadowOffset="-2,-2" shadowColor="black" />
-            <widget name="key_blue" position="540,5" zPosition="1" size="170,45" font="Regular;20" halign="center" valign="center" backgroundColor="#18188b" shadowOffset="-2,-2" shadowColor="black" />
+            <widget name="key_red" position="8,5" zPosition="1" size="170,45" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" shadowOffset="-2,-2" shadowColor="black" />
+            <widget name="key_green" position="186,5" zPosition="1" size="170,45" font="Regular;20" halign="center" valign="center" backgroundColor="#1f771f" shadowOffset="-2,-2" shadowColor="black" />
+            <widget name="key_yellow" position="364,5" zPosition="1" size="170,45" font="Regular;20" halign="center" valign="center" backgroundColor="#a08500" shadowOffset="-2,-2" shadowColor="black" />
+            <widget name="key_blue" position="542,5" zPosition="1" size="170,45" font="Regular;20" halign="center" valign="center" backgroundColor="#18188b" shadowOffset="-2,-2" shadowColor="black" />
             <widget name="menu" position="0,55" size="720,445" transparent="1" scrollbarMode="showOnDemand" />
             <widget name="ctxmenu_img" position="0,515" size="35,25" zPosition="2" alphatest="on" />
             <widget name="ctxmenu_text" position="40,515" size="535,25" valign="center" halign="left" zPosition="2" font="Regular;18" transparent="1" foregroundColor="white" />
             <widget name="info_img" position="0,545" size="35,25" zPosition="2" alphatest="on" />
             <widget name="info_text" position="40,545" size="535,25" valign="center" halign="left" zPosition="2" font="Regular;18" transparent="1" foregroundColor="white" />
-        </screen>"""
+        </screen>
+        """
     def __init__(self, session, archive, params):
         ContentScreen.instance = self
         Screen.__init__(self, session)
@@ -97,9 +98,9 @@ class ContentScreen(Screen, DownloadList):
                 "ok": self.okClicked,
                 "cancel": self.exit,
                 "green" : self.downloads,
-                #"red": self.updateContent,
-                "blue": self.listShortcuts,
-                "yellow": self.archiveSettings,
+                #"red": self.updateContent,self.archiveSettings
+                "blue": self.archiveSettings,
+                "yellow": self.listShortcuts,
                 "up": self.up,
                 "down": self.down,
                 "info": self.info,
@@ -166,20 +167,20 @@ class ContentScreen(Screen, DownloadList):
         elif self.mode == 3:
             self["key_red"].setText("")
             self["key_green"].setText(_("Downloads"))
-            self["key_blue"].setText(_("Shortcuts"))
-            self["key_yellow"].setText(_("Settings"))
+            self["key_blue"].setText(_("Settings"))
+            self["key_yellow"].setText(_("Shortcuts"))
 
         elif self.mode == 1:
             self["key_red"].setText("")
             self["key_green"].setText(_("Downloads"))
-            self["key_yellow"].setText(_("Settings"))
-            self["key_blue"].setText(_("Shortcuts"))
+            self["key_blue"].setText(_("Settings"))
+            self["key_yellow"].setText(_("Shortcuts"))
 
         elif self.mode == 0:
             print 'date is not None:' + str(self.date)
             self["key_red"].setText(_("Update"))
-            self["key_yellow"].setText(_("Settings"))
-            self["key_blue"].setText(_("Shortcuts"))
+            self["key_blue"].setText(_("Settings"))
+            self["key_yellow"].setText(_("Shortcuts"))
         else:
             self["key_red"].setText("")
             self["key_green"].setText("")
@@ -369,8 +370,7 @@ class ContentScreen(Screen, DownloadList):
         idx = self["menu"].getSelectedIndex()
         if len(self.lst_items) > 0:
                 it = self.menu_dir[idx]
-                if len(it.info) > 0:
-                    
+                if len(it.info) > 0 and it.image is not None:
                     self["info_text"].setText(_("Additional informations are available"))
                     self['info_img'].instance.setPixmap(infoImg)
                 else:

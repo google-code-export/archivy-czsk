@@ -36,10 +36,10 @@ pluginPath = "/usr/lib/enigma2/python/Plugins/Extensions/archivCZSK/"
 class ArchiveScreen(Screen, DownloadList):
     skin = """
             <screen position="center,center" size="720,576" title="Main Menu" >
-                <widget name="key_red" position="10,5" zPosition="1" size="170,45" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" shadowOffset="-2,-2" shadowColor="black" />
-                <widget name="key_green" position="180,5" zPosition="1" size="170,45" font="Regular;20" halign="center" valign="center" backgroundColor="#1f771f" shadowOffset="-2,-2" shadowColor="black" />
-                <widget name="key_yellow" position="360,5" zPosition="1" size="170,45" font="Regular;20" halign="center" valign="center" backgroundColor="#a08500" shadowOffset="-2,-2" shadowColor="black" />
-                <widget name="key_blue" position="540,5" zPosition="1" size="170,45" font="Regular;20" halign="center" valign="center" backgroundColor="#18188b" shadowOffset="-2,-2" shadowColor="black" />
+                <widget name="key_red" position="8,5" zPosition="1" size="170,45" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" shadowOffset="-2,-2" shadowColor="black" />
+                <widget name="key_green" position="186,5" zPosition="1" size="170,45" font="Regular;20" halign="center" valign="center" backgroundColor="#1f771f" shadowOffset="-2,-2" shadowColor="black" />
+                <widget name="key_yellow" position="364,5" zPosition="1" size="170,45" font="Regular;20" halign="center" valign="center" backgroundColor="#a08500" shadowOffset="-2,-2" shadowColor="black" />
+                <widget name="key_blue" position="542,5" zPosition="1" size="170,45" font="Regular;20" halign="center" valign="center" backgroundColor="#18188b" shadowOffset="-2,-2" shadowColor="black" />
                 <widget name="menu" position="0,55" size="330,485" transparent="1" scrollbarMode="showOnDemand" />
                 <widget name="image" position="407,90" zPosition="2" size="256,256" alphatest="on" />
                 <widget name="title" position="350,55" size="370,25" halign="left" font="Regular;22" transparent="1" foregroundColor="yellow" />

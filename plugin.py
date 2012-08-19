@@ -129,9 +129,9 @@ def Plugins(**kwargs):
 	if config.plugins.archivCZSK.extensions_menu.value:
 		return [
 				PluginDescriptor(name="ArchivCZSK", description=_("playing CZ/SK archives 0.6"), where=PluginDescriptor.WHERE_EXTENSIONSMENU, fnc=main),
-				PluginDescriptor(name="ArchivCZSK", description=_("playing CZ/SK archives 0.6"), where=PluginDescriptor.WHERE_PLUGINMENU, fnc=main, icon="plugin.png"),
+				PluginDescriptor(name="ArchivCZSK", description=_("playing CZ/SK archives 0.6"), where=PluginDescriptor.WHERE_PLUGINMENU, fnc=main, icon="czsk.png"),
 				PluginDescriptor(where=[PluginDescriptor.WHERE_SESSIONSTART], fnc=sessionstart)]
 	else:
 		return [
-				PluginDescriptor(name="ArchivCZSK", description=_("playing CZ/SK archives 0.6"), where=PluginDescriptor.WHERE_PLUGINMENU, fnc=main, icon="plugin.png"),
+				PluginDescriptor(name="ArchivCZSK", description=_("playing CZ/SK archives 0.6"), where=PluginDescriptor.WHERE_PLUGINMENU, fnc=main, icon="czsk.png"),
 				PluginDescriptor(where=[PluginDescriptor.WHERE_SESSIONSTART], fnc=sessionstart)]
