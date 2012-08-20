@@ -137,7 +137,7 @@ class DownloadStatus(Screen):
             <widget name="text" position="0,0" size="550,400" font="Console;14" />
         </screen>"""
 
-    def __init__(self, session, download, title="Download Status"):
+    def __init__(self, session, download, title=_("Download Status")):
         Screen.__init__(self, session)
 
         self.download = download

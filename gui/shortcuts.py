@@ -54,7 +54,7 @@ class ShortcutsScreen(Screen):
 		self.working = False
 		self.archive = archive
 		self.lst_items = self.archive.getShortcuts()
-		self.title = _("Shortcut") + archive.name.encode('utf-8')
+		self.title = _("Shortcut") + ' ' + archive.name.encode('utf-8')
 
 		self["actions"] = NumberActionMap(["archivCZSKActions"],
 			{
