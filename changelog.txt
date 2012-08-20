@@ -2,7 +2,7 @@ verzia 0.6
 - download manager- stahovanie, stahovanie aj pocas vypnuteho pluginu, sledovanie stavu stahovanych suborov, prehravanie pocas stahovania
 - lokalizacia - slovenska, ceska - vytvoril michal47
 - automaticka aktualizacia archivov z googlecode
-- pridane archivy eserial.cz, voyo.cz
+- pridane archivy eserial.cz, zkouknito.cz, playserial.cz
 - aktualizovane archivy
 - prehravac- pridana moznost vyberu externych tituliek, ovladanie upravene aj pre mipsel DO(dik 005jon), pridany prehravac pre mipsel s nastavenim bufferu
 - vylepsene graficke rozhranie
