@@ -32,9 +32,9 @@ config.plugins.archivCZSK.downloadsPath = ConfigDirectory(default="/media/hdd")
 config.plugins.archivCZSK.subtitlesPath = ConfigDirectory(default="/tmp")
 
 choicelist = []
-for i in range(1, 10, 1):
+for i in range(5, 25, 1):
     choicelist.append(("%d" % i, "%d s" % i))
-config.plugins.archivCZSK.playDelay = Config = ConfigSelection(default="3", choices=choicelist)
+config.plugins.archivCZSK.playDelay = Config = ConfigSelection(default="7", choices=choicelist)
 
 choicelist = []
 for i in range(1000, 20000, 1000):
