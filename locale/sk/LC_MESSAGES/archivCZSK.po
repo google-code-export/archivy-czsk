@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: archivCZSK 0.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-08-18 20:29+0100\n"
-"PO-Revision-Date: 2012-08-18 20:35+0100\n"
+"POT-Creation-Date: 2012-08-20 15:23+0100\n"
+"PO-Revision-Date: 2012-08-20 15:23+0100\n"
 "Last-Translator: mx3L <mxfitsat@gmail.com>\n"
 "Language-Team: mx3L\n"
 "MIME-Version: 1.0\n"
@@ -28,17 +28,17 @@ msgstr "Nasledúce položky boli úspešne aktualizované:"
 msgid "Problems appeared during updating, try again later..."
 msgstr "Vyskytli sa problémy pri aktualizácii, skúste aktualizovať neskôr..."
 
-#: plugin.py:103
+#: plugin.py:102
 msgid "The changes will appear after restart of E2. Do you want to restart E2 now? "
 msgstr "Zmeny sa prejavia po reštarte E2. Chcete reštartovať E2 teraz?"
 
-#: plugin.py:121
+#: plugin.py:120
 msgid "ArchivCZSK"
 msgstr "ArchívCZSK"
 
+#: plugin.py:131
 #: plugin.py:132
-#: plugin.py:133
-#: plugin.py:137
+#: plugin.py:136
 msgid "playing CZ/SK archives 0.6"
 msgstr "prehrávanie CZ/SK archívov 0.6"
 
@@ -60,8 +60,8 @@ msgstr "Živé vysielanie"
 
 #: gui/archive.py:73
 #: gui/content.py:170
-#: gui/content.py:175
-#: gui/content.py:181
+#: gui/content.py:176
+#: gui/content.py:182
 msgid "Settings"
 msgstr "Nastavenia"
 
@@ -90,41 +90,41 @@ msgstr "Chcete ukončiť archivCZSK?"
 msgid "Type text of picture"
 msgstr "Opíšte text obrázku"
 
-#: gui/content.py:121
-#: gui/content.py:245
+#: gui/content.py:122
+#: gui/content.py:246
 msgid "Please enter search expression"
 msgstr "Prosím vložte hľadaný výraz"
 
-#: gui/content.py:168
-#: gui/content.py:174
+#: gui/content.py:169
+#: gui/content.py:175
 msgid "Downloads"
 msgstr "Stiahnuté súbory"
 
-#: gui/content.py:169
-#: gui/content.py:176
-#: gui/content.py:182
+#: gui/content.py:171
+#: gui/content.py:177
+#: gui/content.py:183
 msgid "Shortcuts"
 msgstr "Záložky"
 
-#: gui/content.py:180
+#: gui/content.py:181
 msgid "Update"
 msgstr "Aktualizovať"
 
-#: gui/content.py:268
+#: gui/content.py:269
 msgid "Error in updating list"
 msgstr "Chyba v aktualizovaní zoznamu"
 
-#: gui/content.py:319
-#: gui/content.py:321
+#: gui/content.py:320
+#: gui/content.py:322
 msgid "Error loading: Not accessible/supported show"
 msgstr "Chyba načítania: nedostupná/nepodporovaná relácia"
 
-#: gui/content.py:324
-#: gui/content.py:326
+#: gui/content.py:325
+#: gui/content.py:327
 msgid "Unknown error: Not supported show"
 msgstr "Neznáma chyba, nepodporovaná relácia"
 
-#: gui/content.py:345
+#: gui/content.py:346
 msgid "Loaded list is empty"
 msgstr "Načítaný zoznam je prázdny"
 
@@ -216,6 +216,10 @@ msgstr "začalo."
 #: gui/download.py:131
 msgid "The file "
 msgstr "Súbor:"
+
+#: gui/download.py:140
+msgid "Download Status"
+msgstr "Priebeh sťahovania"
 
 #: gui/download.py:168
 msgid "Execution Progress:"
@@ -355,9 +359,8 @@ msgid "Settings of "
 msgstr "Nastavenia "
 
 #: gui/menu.py:235
-#, fuzzy
 msgid "Settings of"
-msgstr "Nastavenia "
+msgstr "Nastavenia"
 
 #: gui/menu.py:250
 msgid "Enter the password:"
@@ -384,7 +387,6 @@ msgid "Remove shortcut"
 msgstr "Zmazať záložku"
 
 #: gui/shortcuts.py:57
-#, fuzzy
 msgid "Shortcut"
 msgstr "Záložky"
 
@@ -478,67 +480,65 @@ msgstr "Farba"
 msgid "Choose Subtitles"
 msgstr "Vybrať titulky"
 
-#: resources/archives/config.py:59
-msgid "Infinity"
-msgstr "nekonečno"
-
-#: resources/archives/config.py:74
-#: resources/archives/config.py:80
-#: resources/archives/config.py:86
+#: resources/archives/config.py:46
 msgid "items"
 msgstr "položky"
 
-#: resources/archives/config.py:90
+#: resources/archives/config.py:65
+msgid "Infinity"
+msgstr "nekonečno"
+
+#: resources/archives/config.py:80
 msgid "name"
 msgstr "názvu"
 
-#: resources/archives/config.py:90
+#: resources/archives/config.py:80
 msgid "year"
 msgstr "roku"
 
-#: resources/archives/config.py:90
+#: resources/archives/config.py:80
 msgid "date"
 msgstr "dátumu"
 
-#: resources/archives/config.py:90
+#: resources/archives/config.py:80
 msgid "rating"
 msgstr "hodnotenia"
 
-#: resources/archives/config.py:112
+#: resources/archives/config.py:102
 msgid "Password"
 msgstr "Heslo"
 
-#: resources/archives/config.py:115
+#: resources/archives/config.py:105
 msgid "Use alternate stream server?"
 msgstr "Použiť alternatívny streamovací server"
 
-#: resources/archives/config.py:118
-#: resources/archives/config.py:121
-#: resources/archives/config.py:124
+#: resources/archives/config.py:108
+#: resources/archives/config.py:111
+#: resources/archives/config.py:114
 msgid "Search history"
 msgstr "História vyhľadávania"
 
-#: resources/archives/config.py:125
+#: resources/archives/config.py:115
 msgid "Order by"
 msgstr "Zoradiť podľa"
 
-#: resources/archives/config.py:126
+#: resources/archives/config.py:116
 msgid "Filter languages - comma-separated e.g.: cz,sk"
 msgstr "Filtrovať jazyk - jazyky oddelené čiarkou napr. cz,sk"
 
-#: resources/archives/config.py:127
+#: resources/archives/config.py:117
 msgid "Include movies without language when filtering"
 msgstr "Zobraziť filmy bez uvedeného jazyku pri filtrovaní"
 
-#: resources/archives/config.py:130
+#: resources/archives/config.py:120
 msgid "User name"
 msgstr "Prihlasovacie meno"
 
-#: resources/archives/config.py:133
+#: resources/archives/config.py:123
 msgid "Show 18+ content"
 msgstr "Zobrazovať obsah 18+"
 
-#: resources/archives/config.py:136
+#: resources/archives/config.py:126
 msgid "Listings"
 msgstr "Stránkovanie"
 
