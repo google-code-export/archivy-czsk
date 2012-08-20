@@ -105,7 +105,7 @@ class CustomPlayer(BasePlayer):
 			if hasattr(self, 'subtitles'):
 				self.subtitles.exit()
 				del self.subtitles
-			self.setSeekState(self.SEEK_STATE_PLAY)
+			#self.setSeekState(self.SEEK_STATE_PLAY)
 			self.close()
 		
 class MipselPlayer(CustomPlayer):
