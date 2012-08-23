@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="plugin.video.dmd-czech.voyo"
        name="Voyo TV Archiv"
-       version="1.93"
-       provider-name="Jiri Vyhnalek"
-       repository="dmd_czech">
+       version="1.95"
+       provider-name="Jiri Vyhnalek">
   <requires>
     <import addon="xbmc.python" version="1.0"/>
     <import addon="script.module.dmd-czech.common" version="1.0"/>

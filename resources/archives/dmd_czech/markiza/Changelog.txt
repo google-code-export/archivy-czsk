@@ -1,3 +1,6 @@
+2012-08-19:
+ * oprava strankovani
+
 2012-07-07:
  * pridan porad Vo Stvorici po Slovensku (thanx to perso...@alanellis.co.uk)
 

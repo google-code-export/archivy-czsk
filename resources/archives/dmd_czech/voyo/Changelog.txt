@@ -1,6 +1,7 @@
+2012-08-23:
+ * opraven vypis poradu, nyni se jiz zobrazuji vsechny,opravena zmena podstranek poradu Farma,opraven vypis zpráv,zatim neni v provozu prochazeni stranek poradu
 2012-08-07:
  * zatim pouze castecna oprava zmen na webu tv nova, doplnek zobrazuje zatim pouze 35 poradu v kategorii a poslednich 35 epizod, opravu strankovani predpokladam koncem mesice
-
 2012-07-03:
  * oprava linku
 2012-06-26:

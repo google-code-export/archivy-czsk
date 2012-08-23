@@ -62,25 +62,16 @@ def CAT_VOYO(url):
             continue
         addDir(title,__baseurl__+url,5,thumb)
     try:
-        items = doc.find('div', 'pagination')
-        for item in items.findAll('span', 'normal'):
-            url = __baseurl__+str(item.a['href'])
-            
-            doc = markiza_read(url)
-            items = doc.find('div', 'productsList')    
-            for item in items.findAll('div', 'section_item'):
-                porad = item.find('div', 'poster')
-                info = item.find('div', 'item_info')
-                info = info.find('a', 'watch_now only')
-                if re.search('Prehrať', str(info), re.U):
-                    continue
-                url = porad.a['href'].encode('utf-8')
-                title = porad.a['title'].encode('utf-8')
-                thumb = porad.a.img['src'].encode('utf-8')
-                print title, url, thumb
-                if url in zakazane:
-                    continue
-                addDir(title,__baseurl__+url,5,thumb)
+        items = doc.find('div', 'productsList')
+        for item in items.findAll('li', 'item_ul'):
+            porad = item.find('div', 'poster')
+            url = porad.a['href'].encode('utf-8')
+            title = porad.a['title'].encode('utf-8')
+            thumb = porad.a.img['src'].encode('utf-8')
+            print title, url, thumb
+            if url in zakazane:
+                continue
+            addDir(title,__baseurl__+url,5,thumb)
     except:
         print 'Stránkování nenalezeno',url
 
@@ -97,11 +88,11 @@ def LIST_VOYO(url):
     try:
         pager = doc.find('div', 'pagination')
         next_item = pager.findAll('a')
-       	for item in next_item:
-	    if item.getText(" ").encode('utf-8') != '>':
-		continue
-	    else:
-		next_url = item['href']
+        for item in next_item:
+            if item.getText(" ").encode('utf-8') != '>':
+                continue
+            else:
+                next_url = item['href']
         addDir('Další strana >>',__baseurl__+ next_url,5,nexticon)
     except:
         print 'STRANKOVANI NENALEZENO'
@@ -141,6 +132,7 @@ def VIDEOLINK_VOYO(url,name):
                  'dr-oz':'droz',
                  'comeback-i':'comebacki',
                  'v-dobrom-aj-v-zlom':'vdobrom',                 
+                 'vo-stvorici-po-slovensku':'vostvorici',
                  'dokonaly-svet-i':'sveti'}
     if re.search('rychle-televizne-noviny', url, re.U):
         match = re.compile('\/[0-9]+-(.+?)-([0-9]+)-([0-9]+)-([0-9]+)-([0-9]+)-([0-9]+)-.+?').findall(url)
@@ -170,21 +162,34 @@ def VIDEOLINK_VOYO(url,name):
 
 
 
-def markiza_read(url):
-    try:
-        read_page(url)
-    except:
-        pass
-    count = 0
-    while (count < 20):
-        count = count + 1
-        try:
-            doc1 = read_page(url)
-            doc2 = read_page(url)
-        except:
-            pass
-            break
-        if doc1 == doc2:
-            return doc1
-
+def markiza_read(url):
 
+    try:
+
+        read_page(url)
+
+    except:
+
+        pass
+
+    count = 0
+
+    while (count < 20):
+
+        count = count + 1
+
+        try:
+
+            doc1 = read_page(url)
+
+            doc2 = read_page(url)
+
+        except:
+
+            pass
+
+            break
+
+        if doc1 == doc2:
+
+            return doc1

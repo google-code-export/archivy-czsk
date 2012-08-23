@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import urllib2,urllib,re,os
+import urllib2, urllib, re, os
 from urlparse import urlparse
 try:
     from Plugins.Extensions.archivCZSK.resources.archives.dmd_czech.tools.parseutils import *
@@ -13,37 +13,37 @@ try:
 except ImportError:
     print 'Unit test'
 
-name='STV Archiv'
-name_sc='stv'
-author='Jiri Vyhnalek'
-version='0.1'
-about= _('Plugin to play TV video archive www.stv.sk')
+name = 'STV Archiv'
+name_sc = 'stv'
+author = 'Jiri Vyhnalek'
+version = '0.1'
+about = _('Plugin to play TV video archive www.stv.sk')
 
 
 _UserAgent_ = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'
 __baseurl__ = 'http://www.stv.sk'
 
-icon=None
-nexticon=None
+icon = None
+nexticon = None
 
 def getContent(url, name, mode, **kwargs):  
-	if mode==None or url==None:
+	if mode == None or url == None:
 		print ""
 		OBSAH()   
-	elif mode==2:
-		print ""+url
+	elif mode == 2:
+		print "" + url
 		OBSAH_RELACE(url)
-	elif mode==10:
-		print ""+url
-		VIDEOLINK(url,name)
+	elif mode == 10:
+		print "" + url
+		VIDEOLINK(url, name)
 
 def OBSAH():
-    doc = read_page(__baseurl__+'/online/archiv/')
+    doc = read_page(__baseurl__ + '/online/archiv/')
     doc = doc.find('select', id='sel3')
     match = re.compile('<option value="(.+?)">(.+?)</option>').findall(str(doc))
-    for link,name in match:
-            print name,link
-            addDir(name,__baseurl__+link,2,icon)    
+    for link, name in match:
+            print name, link
+            addDir(name, __baseurl__ + link, 2, icon)    
 
 def OBSAH_RELACE(url):
     doc = read_page(url)
@@ -62,18 +62,18 @@ def OBSAH_RELACE(url):
     porady = re.compile('<a href="(.+?)" class=".+?">(.+?)</a>').findall(str(doc2))    
     if len(porady) < 1:
         porady = re.compile('<a href="(.+?)" class=".+?" title=".+?">(.+?)</a>').findall(str(doc2))      
-    print '<< Starší','http://' + cast_url[1] + cast_url[2] + starsical
-    addDir('<< Starší','http://' + cast_url[1] + cast_url[2] + starsical,2,nexticon)   
+    print '<< Starší', 'http://' + cast_url[1] + cast_url[2] + starsical
+    addDir('<< Starší', 'http://' + cast_url[1] + cast_url[2] + starsical, 2, nexticon)   
     for poradlink, poradden in porady:
-        poradlink = re.sub('&amp;','&',poradlink)
-        poradden = poradden +' '+ nazevcal
-        print poradlink,poradden
-        addDir(poradden,'http://' + cast_url[1] + cast_url[2] + poradlink,10,icon)   
+        poradlink = re.sub('&amp;', '&', poradlink)
+        poradden = poradden + ' ' + nazevcal
+        print poradlink, poradden
+        addDir(poradden, 'http://' + cast_url[1] + cast_url[2] + poradlink, 10, icon)   
     if next == 1:
-        print '>> Novější' ,'http://' + cast_url[1] + cast_url[2] + dalsical
-        addDir('>> Novější','http://' + cast_url[1] + cast_url[2] + dalsical,2,nexticon)   
+        print '>> Novější' , 'http://' + cast_url[1] + cast_url[2] + dalsical
+        addDir('>> Novější', 'http://' + cast_url[1] + cast_url[2] + dalsical, 2, nexticon)   
                 
-def VIDEOLINK(url,name):
+def VIDEOLINK(url, name):
     req = urllib2.Request(url)
     req.add_header('User-Agent', _UserAgent_)
     response = urllib2.urlopen(req)
@@ -81,7 +81,7 @@ def VIDEOLINK(url,name):
     response.close()
     playlist = re.compile('playlistfile=(.+?)&autostart').findall(httpdata)
     title = re.compile('<title>(.+?)</title>').findall(httpdata)
-    streamxml = re.sub('%26','&',playlist[0])  
+    streamxml = re.sub('%26', '&', playlist[0])  
     req = urllib2.Request(streamxml)
     req.add_header('User-Agent', _UserAgent_)
     response = urllib2.urlopen(req)
@@ -90,13 +90,13 @@ def VIDEOLINK(url,name):
     location = re.compile('<location>(.+?)</location>').findall(str(doc))
     streamer = re.compile('<meta rel="streamer">(.+?)</meta>').findall(str(doc))
     print location[0], streamer[0]
-    cesta = 'mp4:'+location[0]
-    server = streamer[0]   
+    cesta = 'mp4:' + location[0]
+    server = re.compile('<!\[CDATA\[(.+?)\]\]>').findall(str(streamer[0]))[0]   
     title = title[0] + ' ' + name
     swfurl = 'http://www.stv.sk/online/player/player-licensed-sh.swf'
-    rtmp_url = server[9:-3]+' playpath='+cesta+' pageUrl='+url+' swfUrl='+swfurl+' swfVfy=true'  
+    rtmp_url = server + ' playpath=' + cesta + ' pageUrl=' + url + ' swfUrl=' + swfurl + ' swfVfy=true'  
     print rtmp_url
-    addLink(title,rtmp_url,icon,name)
+    addLink(title, rtmp_url, icon, name)
     
     
 
