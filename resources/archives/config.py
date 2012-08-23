@@ -62,7 +62,7 @@ for archs_dir in archives:
         if module in tv_archives:
             
             if module == 'ivysilani':
-                choicelist = [('0', '0'), ('1', '1'), ('2', '2'), ('3', '3'), ('4', _('Infinity'))]
+                choicelist = [('0', _('Default')), ('1', '2X'), ('2', '4X'), ('3', _('Infinity'))]
                 archive_conf.listings = ConfigSelection(default="0", choices=choicelist)
                 
             if module == 'voyo':
