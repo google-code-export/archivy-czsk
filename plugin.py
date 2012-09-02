@@ -73,11 +73,10 @@ class ArchivCZSK():
 			newArchivesUpdateString = ' '.join([arch.name for arch in self.newArchivesUpdate])
 			toolsUpdateString = ' '.join(s['name'] for s in self.toolsUpdate)
 			
-			updateString = _('Do you want to update/add archives/tools: ')
-			updateString += archivesUpdateString + ' ' + newArchivesUpdateString + ' ' + toolsUpdateString + ' ?'
+			updateString = archivesUpdateString + ' ' + newArchivesUpdateString + ' ' + toolsUpdateString + ' ?'
 			
 			if len(self.archivesUpdate) > 0 or len(self.newArchivesUpdate) > 0 or len(self.toolsUpdate) > 0:
-				self.session.openWithCallback(self.updateArchives, MessageBox, updateString.encode('utf-8'), type=MessageBox.TYPE_YESNO)
+				self.session.openWithCallback(self.updateArchives, MessageBox, _('Do you want to update/add archives/tools: ') + updateString.encode('utf-8'), type=MessageBox.TYPE_YESNO)
 
 			else:
 				self.openArchiveScreen() 
@@ -89,7 +88,7 @@ class ArchivCZSK():
 			archivesUpdateInfo = updater.updateArchives(self.archivesUpdate + self.newArchivesUpdate)
 			toolsUpdateInfo = updater.updateArchiveTools(self.toolsUpdate)
 			if archivesUpdateInfo != '' or toolsUpdateInfo != '':
-				self.showInfoRestart(_('Following items were successfully updated:') + ' ' + archivesUpdateInfo + ' ' + toolsUpdateInfo)
+				self.showInfoRestart(_('Following items were successfully updated:') + ' ' + archivesUpdateInfo.encode('utf-8') + ' ' + toolsUpdateInfo('utf-8'))
 			else:
 				self.showError(_('Problems appeared during updating, try again later...'))
 		else:
@@ -107,7 +106,6 @@ class ArchivCZSK():
 			self.session.open(TryQuitMainloop, 3)
 		else:
 			self.openArchiveScreen()
-
 	
 	def showInfoRestart(self, info):
 		self.session.openWithCallback(self.askE2Restart, MessageBox, _(info), type=MessageBox.TYPE_INFO, timeout=3)
@@ -124,14 +122,17 @@ def menu(menuid, **kwargs):
 def main(session, **kwargs):
 	ArchivCZSK(session)
 
+def startSetup(menuid, **kwargs):
+	if menuid == "mainmenu":
+		return [(_("Playing CZ/SK archives"), main, "archivy_czsk", 32)]
+	return []
 
-def Plugins(**kwargs):
+def Plugins(path, **kwargs):
+	descr = _("Playing CZ/SK archives")
+	nameA= "ArchivCZSK"
+	list = [PluginDescriptor(where=[PluginDescriptor.WHERE_SESSIONSTART], fnc=sessionstart), PluginDescriptor(name=nameA, description=descr, where=PluginDescriptor.WHERE_PLUGINMENU, fnc=main, icon="czsk.png"),]
 	if config.plugins.archivCZSK.extensions_menu.value:
-		return [
-				PluginDescriptor(name="ArchivCZSK", description=_("playing CZ/SK archives 0.6"), where=PluginDescriptor.WHERE_EXTENSIONSMENU, fnc=main),
-				PluginDescriptor(name="ArchivCZSK", description=_("playing CZ/SK archives 0.6"), where=PluginDescriptor.WHERE_PLUGINMENU, fnc=main, icon="czsk.png"),
-				PluginDescriptor(where=[PluginDescriptor.WHERE_SESSIONSTART], fnc=sessionstart)]
-	else:
-		return [
-				PluginDescriptor(name="ArchivCZSK", description=_("playing CZ/SK archives 0.6"), where=PluginDescriptor.WHERE_PLUGINMENU, fnc=main, icon="czsk.png"),
-				PluginDescriptor(where=[PluginDescriptor.WHERE_SESSIONSTART], fnc=sessionstart)]
+		list.append(PluginDescriptor(name=nameA, description=descr, where=PluginDescriptor.WHERE_EXTENSIONSMENU, fnc=main))
+	if config.plugins.archivCZSK.main_menu.value:
+		list.append(PluginDescriptor(name=nameA, description=descr, where = PluginDescriptor.WHERE_MENU, fnc=startSetup))
+	return list

@@ -14,12 +14,11 @@ _DEBUG = True
 _tmpPath = '/tmp/archivCZSKupdate/'
 _tmpPathTools = '/tmp/archivCZSKupdate/tools/'
 _baseUpdateURL = 'http://archivy-czsk.googlecode.com/svn/trunk/'
-_versionURL = _baseUpdateURL + 'version.xml'
+_versionURL = _baseUpdateURL + 'test_version.xml'
 _pluginPath = "/usr/lib/enigma2/python/Plugins/Extensions/archivCZSK/"
 _relArchivesPath = 'resources/archives/'
 _archivesPath = archive_cfg.ARCHIVES_PATH
 _configRelPath = archive_cfg.CONFIG_ARCHIVES_PATH
-archiveFiles = ['default.py', 'addon.xml', 'changelog.txt', '__init__.py', 'icon.png']
 #_dmdTools = ('dmd_tools', 'resources/archives/dmd_czech/tools')
 #_doplnkyTools = ('doplnky_tools', 'resources/archives/xbmc_doplnky/tools')
 archiveTools = archive_cfg.tools
@@ -82,8 +81,14 @@ def updateNeeded(local, remote):
         return False
     
 def downloadArchive(archive, directory=_tmpPath):
+    archiveFiles = ['default.py', 'addon.xml', 'changelog.txt', '__init__.py']
+    
+    if isinstance(archive, PArchiveDummy):
+        archiveFiles.append('icon.png')
     if archive.id == 'movielibrary':
         archiveFiles.append('ulozto.py')
+        
+    archiveFilesCP = archiveFiles[:]
     for archiveFile in archiveFiles:    
         url = _baseUpdateURL + archive.relDir + '/' + archiveFile
         local = os.path.join(directory, archiveFile)
@@ -94,16 +99,18 @@ def downloadArchive(archive, directory=_tmpPath):
                 try:
                     download(_baseUpdateURL + archive.relDir + '/Changelog.txt')
                 except:
-                    removeFiles(archiveFiles)
+                    removeFiles(archiveFilesCP)
                 else:
+                    archiveFilesCP.remove('changelog.txt')
+                    archiveFilesCP.append('Changelog.txt')
                     continue
             else:
-                removeFiles(archiveFiles)
+                removeFiles(archiveFilesCP)
                 return None
         except:
-            removeFiles(archiveFiles)
+            removeFiles(archiveFilesCP)
             return None
-    return archiveFiles
+    return archiveFilesCP
 
 def downloadTool(tool, remoteBase, tmpBase):
     #download tool directories and their files 
@@ -271,7 +278,7 @@ def checkArchiveVersions(archives):
         xml = urllib2.urlopen(_versionURL, timeout=15.0)
     except:
         debug("Errors apeared while retrieving " + _versionURL)
-        return '', [], []
+        return [], [], []
     el = ElementTree()
     el.parse(xml)
     for archRemote in el.findall('addon'):
@@ -305,6 +312,12 @@ def updatePlugin():
     pass
 
 def checkPluginVersion():
+    pass
+
+def checkUpdater():
+    pass
+    
+def updateUpdater():
     pass
 
 

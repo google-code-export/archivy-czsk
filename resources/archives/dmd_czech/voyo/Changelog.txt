@@ -1,3 +1,5 @@
+2012-08-28:
+ * opraveno strankovani poradu, opet lze prohlizet vice neuz poslednich 35 epizod
 2012-08-23:
  * opraven vypis poradu, nyni se jiz zobrazuji vsechny,opravena zmena podstranek poradu Farma,opraven vypis zpráv,zatim neni v provozu prochazeni stranek poradu
 2012-08-07:

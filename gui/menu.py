@@ -24,6 +24,7 @@ choicelist = [('standard', _('standard player')), ('custom', _('custom player (s
 config.plugins.archivCZSK.player = ConfigSelection(default="custom", choices=choicelist)                   
 config.plugins.archivCZSK.seeking = ConfigYesNo(default=False)
 config.plugins.archivCZSK.extensions_menu = ConfigYesNo(default=True)
+config.plugins.archivCZSK.main_menu = ConfigYesNo(default=False)
 config.plugins.archivCZSK.clearMemory = ConfigYesNo(default=False)
 config.plugins.archivCZSK.autoUpdate = ConfigYesNo(default=False)
 config.plugins.archivCZSK.debug = ConfigYesNo(default=False) 
@@ -51,13 +52,13 @@ config.plugins.archivCZSK.liveBuffer = ConfigSelection(default="3000", choices=c
 
 class ArchiveCZSKConfigScreen(Screen, ConfigListScreen):
     try:
-		sz_w = getDesktop(0).size().width()
-		if sz_w == 1280:
-			HDSkn = True
-		else:
-			HDSkn = False
+        sz_w = getDesktop(0).size().width()
+        if sz_w == 1280:
+            HDSkn = True
+        else:
+            HDSkn = False
     except:
-		HDSkn = False
+        HDSkn = False
     
     
     if HDSkn:
@@ -121,6 +122,7 @@ class ArchiveCZSKConfigScreen(Screen, ConfigListScreen):
         self.list.append(getConfigListEntry(_("Debug mode"), config.plugins.archivCZSK.debug))
         self.list.append(getConfigListEntry(_("Free memory after exit"), config.plugins.archivCZSK.clearMemory))
         self.list.append(getConfigListEntry(_("Add to extensions menu"), config.plugins.archivCZSK.extensions_menu))
+        self.list.append(getConfigListEntry(_("Add to main menu"), config.plugins.archivCZSK.main_menu))
 
         self["config"].list = self.list
         self["config"].setList(self.list)
@@ -176,13 +178,13 @@ class ArchiveCZSKConfigScreen(Screen, ConfigListScreen):
  
 class ArchiveConfigScreen(Screen, ConfigListScreen):
     try:
-		sz_w = getDesktop(0).size().width()
-		if sz_w == 1280:
-			HDSkn = True
-		else:
-			HDSkn = False
+        sz_w = getDesktop(0).size().width()
+        if sz_w == 1280:
+            HDSkn = True
+        else:
+            HDSkn = False
     except:
-		HDSkn = False
+        HDSkn = False
     
     
     if HDSkn:
@@ -249,11 +251,11 @@ class ArchiveConfigScreen(Screen, ConfigListScreen):
             if current == config.plugins.archivCZSK.archives.voyo.password:
                 self.session.openWithCallback(lambda x : self.VirtualKeyBoardCallback(x, 'password'), VirtualKeyBoard, title=(_("Enter the password:")), text=config.plugins.archivCZSK.archives.voyo.password.value)
             elif current == config.plugins.archivCZSK.archives.stream.username:
-                self.session.openWithCallback(lambda x : self.VirtualKeyBoardCallback(x, 'username'), VirtualKeyBoard, title=(_("Enter the username:")), text=config.plugins.archivCZSK.archives.stream.username.value)    	
+                self.session.openWithCallback(lambda x : self.VirtualKeyBoardCallback(x, 'username'), VirtualKeyBoard, title=(_("Enter the username:")), text=config.plugins.archivCZSK.archives.stream.username.value)        
             else:
                 pass
         else:
-            pass		    
+            pass            
     
     def keySave(self):
         for x in self["config"].list:
