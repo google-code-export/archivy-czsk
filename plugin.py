@@ -88,7 +88,7 @@ class ArchivCZSK():
 			archivesUpdateInfo = updater.updateArchives(self.archivesUpdate + self.newArchivesUpdate)
 			toolsUpdateInfo = updater.updateArchiveTools(self.toolsUpdate)
 			if archivesUpdateInfo != '' or toolsUpdateInfo != '':
-				self.showInfoRestart(_('Following items were successfully updated:') + ' ' + archivesUpdateInfo.encode('utf-8') + ' ' + toolsUpdateInfo('utf-8'))
+				self.showInfoRestart(_('Following items were successfully updated:') + ' ' + archivesUpdateInfo.encode('utf-8') + ' ' + toolsUpdateInfo.encode('utf-8'))
 			else:
 				self.showError(_('Problems appeared during updating, try again later...'))
 		else:
