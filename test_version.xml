@@ -3,7 +3,7 @@
 
 <addon id="plugin.video.movie-library.cz"
        name="movie-library.cz"
-       version="1.2.4"
+       version="1.2.41"
        provider-name="Libor Zoubek"
        repository="xbmc_doplnky">
   <requires>

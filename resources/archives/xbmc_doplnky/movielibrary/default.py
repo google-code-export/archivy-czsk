@@ -109,13 +109,16 @@ def categories():
         add_dir(_('Search on ulozto.cz'), {'search-ulozto-list':''}, icon('ulozto.png'))
         #util.add_local_dir(__language__(30037),__addon__.getSetting('downloads'),util.icon('download.png'))
         add_dir(_('Popular'), {'popular':''}, icon('top.png'))
-        data = util.substr(util.request(BASE_URL), 'div id=\"menu\"', '</td')
-        pattern = '<a href=\"(?P<url>[^\"]+)[^>]+>(?P<name>[^<]+)'
-        for m in re.finditer(pattern, data, re.IGNORECASE | re.DOTALL):
+        try:
+            data = util.substr(util.request(BASE_URL), 'div id=\"menu\"', '</td')
+            pattern = '<a href=\"(?P<url>[^\"]+)[^>]+>(?P<name>[^<]+)'
+            for m in re.finditer(pattern, data, re.IGNORECASE | re.DOTALL):
                 if m.group('url').find('staty') > 0:
-                        add_dir(m.group('name'), {'countries':furl(m.group('url'))})
+                    add_dir(m.group('name'), {'countries':furl(m.group('url'))})
                 else:
-                        add_dir(m.group('name'), {'cat':furl(m.group('url'))})
+                    add_dir(m.group('name'), {'cat':furl(m.group('url'))})
+        except:
+            pass
 
 def countries(url):
         data = util.substr(util.request(url), 'Filmy podle států</h2>', '<div id=\"footertext\">')

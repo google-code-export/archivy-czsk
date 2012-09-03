@@ -73,7 +73,7 @@ class ArchivCZSK():
 			newArchivesUpdateString = ' '.join([arch.name for arch in self.newArchivesUpdate])
 			toolsUpdateString = ' '.join(s['name'] for s in self.toolsUpdate)
 			
-			updateString = archivesUpdateString + ' ' + newArchivesUpdateString + ' ' + toolsUpdateString + ' ?'
+			updateString = archivesUpdateString + ' ' + newArchivesUpdateString + ' ' + toolsUpdateString + '?'
 			
 			if len(self.archivesUpdate) > 0 or len(self.newArchivesUpdate) > 0 or len(self.toolsUpdate) > 0:
 				self.session.openWithCallback(self.updateArchives, MessageBox, _('Do you want to update/add archives/tools: ') + updateString.encode('utf-8'), type=MessageBox.TYPE_YESNO)

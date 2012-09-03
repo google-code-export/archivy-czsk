@@ -94,12 +94,13 @@ def downloadArchive(archive, directory=_tmpPath):
         local = os.path.join(directory, archiveFile)
         try:
             download(url, local)
-        except urllib2.HTTPError, e:
-            if url.split('/')[-1] == 'changelog.txt':
+        except:
+            if archiveFile == 'changelog.txt':
                 try:
-                    download(_baseUpdateURL + archive.relDir + '/Changelog.txt')
+                    download(_baseUpdateURL + archive.relDir + '/Changelog.txt', os.path.join(directory, 'Changelog.txt'))
                 except:
                     removeFiles(archiveFilesCP)
+                    return None
                 else:
                     archiveFilesCP.remove('changelog.txt')
                     archiveFilesCP.append('Changelog.txt')
@@ -107,9 +108,7 @@ def downloadArchive(archive, directory=_tmpPath):
             else:
                 removeFiles(archiveFilesCP)
                 return None
-        except:
-            removeFiles(archiveFilesCP)
-            return None
+    print archiveFilesCP
     return archiveFilesCP
 
 def downloadTool(tool, remoteBase, tmpBase):
