@@ -238,17 +238,8 @@ class RTMPDownloadE2(Download):
             self.downloaded = True
         else:
             self.downloaded = False
-        #if os.path.isfile(self.local):
-        #    self.localsize = os.path.getsize(self.local)
-        #    if self.localsize > 0 and self.localsize >= self.totalLength:
-        #        self.downloaded = True
-        #    elif self.localsize == 0:
-        #        self.remove(None)
-        #        self.downloaded = False
-        #    else:
-        #        self.downloaded = False
-        #if self.finishCB is not None:
-        #    self.finishCB(self)
+        if self.finishCB is not None:
+            self.finishCB(self)
 
 
     def __outputCB(self, data):
@@ -299,16 +290,6 @@ class HTTPDownloadE2(Download):
             self.downloaded = True
         else:
             self.downloaded = False
-            
-        #if os.path.isfile(self.local):
-        #    self.localsize = os.path.getsize(self.local)
-        #    if self.localsize > 0 and self.localsize >= self.totalLength:
-        #        self.downloaded = True
-        #    elif self.localsize == 0:
-        #        self.remove(None)
-        #        self.downloaded = False
-        #    else:
-        #        self.downloaded = False
         if self.finishCB is not None:
             self.finishCB(self)
 
