@@ -1,3 +1,9 @@
+verzia 0.61
+- opravena automaticka aktualizacia archivov
+- aktualizovane archivy - stv,markiza,voyo,ct,movielibrary
+- pridana moznost pridania archivov do hlavneho menu - thx shamman
+- opraveny OE2.0 balicek - thx petrkl12
+
 verzia 0.6
 - download manager- stahovanie, stahovanie aj pocas vypnuteho pluginu, sledovanie stavu stahovanych suborov, prehravanie pocas stahovania
 - lokalizacia - slovenska, ceska - vytvoril michal47
