@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: archivCZSK 0.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-08-20 15:23+0100\n"
-"PO-Revision-Date: 2012-08-20 15:23+0100\n"
+"POT-Creation-Date: 2012-09-03 12:53+0100\n"
+"PO-Revision-Date: 2012-09-03 12:56+0100\n"
 "Last-Translator: mx3L <mxfitsat@gmail.com>\n"
 "Language-Team: mx3L\n"
 "MIME-Version: 1.0\n"
@@ -16,31 +16,30 @@ msgstr ""
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Poedit-SearchPath-0: .\n"
 
-#: plugin.py:76
+#: plugin.py:79
 msgid "Do you want to update/add archives/tools: "
 msgstr "Chcete aktualizovať/pridať nasledujúce archívy/nástroje:"
 
-#: plugin.py:92
+#: plugin.py:91
 msgid "Following items were successfully updated:"
 msgstr "Nasledúce položky boli úspešne aktualizované:"
 
-#: plugin.py:94
+#: plugin.py:93
 msgid "Problems appeared during updating, try again later..."
 msgstr "Vyskytli sa problémy pri aktualizácii, skúste aktualizovať neskôr..."
 
-#: plugin.py:102
+#: plugin.py:101
 msgid "The changes will appear after restart of E2. Do you want to restart E2 now? "
 msgstr "Zmeny sa prejavia po reštarte E2. Chcete reštartovať E2 teraz?"
 
-#: plugin.py:120
+#: plugin.py:118
 msgid "ArchivCZSK"
 msgstr "ArchívCZSK"
 
+#: plugin.py:127
 #: plugin.py:131
-#: plugin.py:132
-#: plugin.py:136
-msgid "playing CZ/SK archives 0.6"
-msgstr "prehrávanie CZ/SK archívov 0.6"
+msgid "Playing CZ/SK archives"
+msgstr "prehrávanie CZ/SK archívov"
 
 #: gui/archive.py:69
 msgid "Show recent downloads"
@@ -231,15 +230,15 @@ msgid "show download list"
 msgstr "aktuálne sťahované súbory"
 
 #: gui/download.py:200
-#: gui/menu.py:99
-#: gui/menu.py:229
-#: gui/menu.py:317
+#: gui/menu.py:100
+#: gui/menu.py:231
+#: gui/menu.py:319
 #: player/subtitles.py:487
 msgid "Cancel"
 msgstr "Zrušiť"
 
 #: gui/download.py:202
-#: gui/download.py:339
+#: gui/download.py:354
 msgid "Remove"
 msgstr "Zmazať"
 
@@ -251,12 +250,20 @@ msgstr "Sťahované súbory"
 msgid "Do you want to cancel"
 msgstr "Chcete prerušiť"
 
-#: gui/download.py:257
-#: gui/download.py:375
+#: gui/download.py:258
+#: gui/download.py:390
 msgid "Do you want to remove"
 msgstr "Chcete zmazať"
 
-#: gui/download.py:348
+#: gui/download.py:277
+msgid "The file"
+msgstr "Súbor"
+
+#: gui/download.py:277
+msgid "is not downloaded yet. Do you want to play it anyway?"
+msgstr "zatiaľ nie je dosťahovaný. Chcete ho aj napriek tomu prehrať?"
+
+#: gui/download.py:363
 msgid "downloads"
 msgstr "Stiahnuté súbory"
 
@@ -284,101 +291,105 @@ msgstr "upravený prehrávač (podpora tituliek)"
 msgid "mipsel player"
 msgstr "Mipsel prehrávač (podpora bufferingu)"
 
-#: gui/menu.py:89
+#: gui/menu.py:90
 msgid "Configuration of Archiv CZSK"
 msgstr "Konfigurácia Archív CZSK"
 
-#: gui/menu.py:98
-#: gui/menu.py:228
+#: gui/menu.py:99
+#: gui/menu.py:230
 #: player/subtitles.py:486
 msgid "Save"
 msgstr "Uložiť"
 
-#: gui/menu.py:105
+#: gui/menu.py:106
 msgid "Configuration of ArchivCZSK"
 msgstr "Konfigurácia ArchívCZSK"
 
-#: gui/menu.py:109
+#: gui/menu.py:110
 msgid "Video player"
 msgstr "Video prehrávač"
 
-#: gui/menu.py:111
+#: gui/menu.py:112
 msgid "Video player Buffer"
 msgstr "nastavenie bufferu prehrávača (KB)"
 
-#: gui/menu.py:112
+#: gui/menu.py:113
 msgid "AutoPlay"
 msgstr "automaticky prehrávať"
 
-#: gui/menu.py:113
+#: gui/menu.py:114
 msgid "Video player with RTMP support"
 msgstr "Video prehrávač s RTMP podporou"
 
-#: gui/menu.py:114
+#: gui/menu.py:115
 msgid "TV archive rtmp buffer"
 msgstr "Buffer pre tv archívy"
 
-#: gui/menu.py:115
+#: gui/menu.py:116
 msgid "Live rtmp streams buffer"
 msgstr "Buffer pre živé vysielanie"
 
-#: gui/menu.py:116
+#: gui/menu.py:117
 msgid "Play after"
 msgstr "Začať prehrávať po"
 
-#: gui/menu.py:117
+#: gui/menu.py:118
 msgid "Data path"
 msgstr "Data"
 
-#: gui/menu.py:118
+#: gui/menu.py:119
 msgid "Downloads path"
 msgstr "Sťahovanie"
 
-#: gui/menu.py:119
+#: gui/menu.py:120
 msgid "Subtitles path"
 msgstr "Titulky"
 
-#: gui/menu.py:120
+#: gui/menu.py:121
 msgid "Allow auto-update"
 msgstr "Povoliť automatickú kontrolu aktualizácií"
 
-#: gui/menu.py:121
+#: gui/menu.py:122
 msgid "Debug mode"
 msgstr "Debug mód"
 
-#: gui/menu.py:122
+#: gui/menu.py:123
 msgid "Free memory after exit"
 msgstr "Uvolniť pamäť po ukončení"
 
-#: gui/menu.py:123
+#: gui/menu.py:124
 msgid "Add to extensions menu"
 msgstr "Pridať do menu rozšírení"
 
-#: gui/menu.py:216
+#: gui/menu.py:125
+msgid "Add to main menu"
+msgstr "Pridať do hlavného menu"
+
+#: gui/menu.py:218
 msgid "Settings of "
 msgstr "Nastavenia "
 
-#: gui/menu.py:235
+#: gui/menu.py:237
 msgid "Settings of"
 msgstr "Nastavenia"
 
-#: gui/menu.py:250
+#: gui/menu.py:252
 msgid "Enter the password:"
 msgstr "Zadajte heslo"
 
-#: gui/menu.py:252
+#: gui/menu.py:254
 msgid "Enter the username:"
 msgstr "Zadajte prihlasovacie meno"
 
-#: gui/menu.py:318
+#: gui/menu.py:320
 msgid "OK"
 msgstr "OK"
 
-#: gui/menu.py:322
+#: gui/menu.py:324
 msgid "Select directory"
 msgstr "Vyberte adresár"
 
-#: gui/menu.py:356
+#: gui/menu.py:358
 msgid "Invalid Location"
 msgstr "Nesprávne umiestnenie"
 
@@ -393,6 +404,10 @@ msgstr "Záložky"
 #: gui/shortcuts.py:88
 msgid "Do you want to delete"
 msgstr "Chcete zmazať"
+
+#: player/controller.py:63
+msgid "You have to wait till there will be at least 10 seconds buffered"
+msgstr ""
 
 #: player/player.py:55
 msgid "changing aspect Ratio"
@@ -485,6 +500,10 @@ msgid "items"
 msgstr "položky"
 
 #: resources/archives/config.py:65
+msgid "Default"
+msgstr ""
+
+#: resources/archives/config.py:65
 msgid "Infinity"
 msgstr "nekonečno"
 
@@ -574,11 +593,11 @@ msgstr "Pre zobrazenie vašich videí musíte najrpv zadať svoje meno v nastave
 msgid "Plugin to play TV video archive www.stv.sk"
 msgstr "Plugin pre prehrávanie videí z archívu Slovenskej televízie"
 
-#: resources/archives/dmd_czech/voyo/default.py:197
+#: resources/archives/dmd_czech/voyo/default.py:241
 msgid "Password is not correct"
 msgstr "Nesprávne tajné heslo"
 
-#: resources/archives/dmd_czech/voyo/default.py:200
+#: resources/archives/dmd_czech/voyo/default.py:244
 msgid "The show can only be played on Voyo.cz page"
 msgstr "Relácia môže byť prehraná len na Voyo.cz stránke"
 
@@ -609,7 +628,6 @@ msgid "Back"
 msgstr "Predošlá strana"
 
 #: resources/archives/xbmc_doplnky/koukni/default.py:130
-#: resources/archives/xbmc_doplnky/movielibrary/ulozto.py:236
 msgid "Next"
 msgstr "Ďaľšia strana"
 
@@ -621,23 +639,25 @@ msgstr "Vyhladávať na uložto"
 msgid "Popular"
 msgstr "Najsledovanejšie videá"
 
-#: resources/archives/xbmc_doplnky/movielibrary/default.py:251
+#: resources/archives/xbmc_doplnky/movielibrary/default.py:254
 msgid "Daily maximum (150) requests for movie was reached, try it tomorrow"
 msgstr "Denné maximum (150) požiadaviek na film bolo prekročené, skúste znova zajtra"
 
-#: resources/archives/xbmc_doplnky/movielibrary/default.py:258
+#: resources/archives/xbmc_doplnky/movielibrary/default.py:261
 msgid "Video is not available, check out if its working on the web page of archive"
 msgstr "Video nie je dostupné, skontrolujte či funguje na webe"
 
-#: resources/archives/xbmc_doplnky/movielibrary/default.py:262
+#: resources/archives/xbmc_doplnky/movielibrary/default.py:265
 msgid "Limit for downloading slots was exceeded, please try again later"
 msgstr "Bol prekročený limit voľných slotov na sťahovanie, skúste znova neskôr"
 
 #: resources/archives/xbmc_doplnky/movielibrary/ulozto.py:177
+#: resources/archives/xbmc_doplnky/tools/search.py:42
 msgid "New search"
 msgstr "Nové vyhľadávanie"
 
 #: resources/archives/xbmc_doplnky/movielibrary/ulozto.py:233
+#: resources/archives/xbmc_doplnky/nastojaka/default.py:107
 msgid "Previous"
 msgstr "Predošlé"
 
