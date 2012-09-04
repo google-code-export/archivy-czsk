@@ -22,7 +22,7 @@ from enigma import gFont, getDesktop
 
 from Plugins.Extensions.archivCZSK.resources.exceptions.archiveException import *
 from menu import ArchiveCZSKConfigScreen, ArchiveConfigScreen
-from Plugins.Extensions.archivCZSK.resources.tools.util import PArchive, PItem, PFolder, PExit, PVideo, PSearch, PDownloads
+from Plugins.Extensions.archivCZSK.resources.tools.util import PArchive, PItem, PFolder, PExit, PVideo, PSearch, PDownloads, PNotSupportedVideoFormat
 from Plugins.Extensions.archivCZSK.gui.common import *
 from Plugins.Extensions.archivCZSK.gui.captcha import Captcha
 from Plugins.Extensions.archivCZSK.gui.shortcuts import ShortcutsScreen
@@ -241,7 +241,7 @@ class ContentScreen(Screen, DownloadList):
         elif command['text'] == 'captcha':
             Captcha(self.session, command['captchaCB'], self.captchaS, self.workingFinished, command['prmLD'])
         elif command['text'] == 'play':
-            self.playVideo((command['it']))
+            self.openItem((command['it']))
         elif command['text'] == 'search':
             self.session.openWithCallback(self.searchCB, VirtualKeyBoard, title=_("Please enter search expression"))
         else:
@@ -350,39 +350,49 @@ class ContentScreen(Screen, DownloadList):
                             self.working = False
 
             elif isinstance(it, PVideo):
+               # def askToPlayVideo(callback=None):
+                    #if callback:
+                        #self.playVideo(it, False)
+                    #self.working = False
                 if it.url == '':
                     self.working = False
+                #else:
+                   # if isinstance(it, PNotSupportedVideoFormat):
+                        #self.session.openWithCallback(askToPlayVideo, MessageBox, _("You are trying to play maybe not supported video format. Do you want to continue?"), type=MessageBox.TYPE_YESNO)
                 else:
-                    player = Player(self.session, it, self.workingFinished)
-                    player.play()
+                    self.playVideo(it, False)   
             else:
                 print '[ContentScreen] - openItem: unknown item'
                 
                 
-    def hasInfo(self, it):
-        if len(it.info) > 1 or(len(it.info) == 1 and not (it.info.has_key('Title') or it.info.has_key('title'))):
-            return True
-        elif it.image:
-            return True
+    def archiveInfo(self, it):
+        return not config.plugins.archivCZSK.csfd.getValue() and (len(it.info) > 0 or it.image is not None)
+    
+    def CSFDInfo(self, it):
+        return config.plugins.archivCZSK.csfd.getValue() and not (isinstance(it, PExit) or isinstance(it, PVideo))
         
     
     def updateMenuInfoGUI(self):
         idx = self["menu"].getSelectedIndex()
         if len(self.lst_items) > 0:
-                it = self.menu_dir[idx]
-                if len(it.info) > 0 and it.image is not None:
-                    self["info_text"].setText(_("Additional informations are available"))
-                    self['info_img'].instance.setPixmap(infoImg)
-                else:
-                    self["info_text"].setText("")
-                    self['info_img'].instance.setPixmap(None)
+            it = self.menu_dir[idx]
+            if self.CSFDInfo(it):
+                self["info_text"].setText(_("Show info from name of item in CSFD plugin"))
+                self['info_img'].instance.setPixmap(infoImg)
+                      
+            elif self.archiveInfo(it):
+                self["info_text"].setText(_("Additional informations are available"))
+                self['info_img'].instance.setPixmap(infoImg)      
+            else:
+                self["info_text"].setText("")
+                self['info_img'].instance.setPixmap(None)
 
-                if isinstance(it, PExit):
-                    self['ctxmenu_img'].instance.setPixmap(None)
-                    self["ctxmenu_text"].setText("")
-                else:
-                    self['ctxmenu_img'].instance.setPixmap(ctxMenuImg)
-                    self["ctxmenu_text"].setText(_("show posibilities of current item"))
+            if isinstance(it, PExit):
+                self['ctxmenu_img'].instance.setPixmap(None)
+                self["ctxmenu_text"].setText("")
+            else:
+                self['ctxmenu_img'].instance.setPixmap(ctxMenuImg)
+                self["ctxmenu_text"].setText(_("show posibilities of current item"))
         
     def up(self):
         if not self.working:
@@ -415,8 +425,14 @@ class ContentScreen(Screen, DownloadList):
             self.working = True
             idx = self["menu"].getSelectedIndex()
             it = self.menu_dir[idx]
-            if len(it.info) > 0:
+            if self.archiveInfo(it):
                 Info(self.session, it, self.workingFinished)
+            elif self.CSFDInfo(it):
+                try:
+                    from Plugins.Extensions.CSFD.plugin import CSFD
+                    self.session.open(CSFD, it.name.encode('utf-8'), False)
+                except ImportError:
+                    self.working = False
             else:
                 self.working = False
     

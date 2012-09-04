@@ -25,6 +25,7 @@ config.plugins.archivCZSK.player = ConfigSelection(default="custom", choices=cho
 config.plugins.archivCZSK.seeking = ConfigYesNo(default=False)
 config.plugins.archivCZSK.extensions_menu = ConfigYesNo(default=True)
 config.plugins.archivCZSK.main_menu = ConfigYesNo(default=False)
+config.plugins.archivCZSK.csfd = ConfigYesNo(default=False)
 config.plugins.archivCZSK.clearMemory = ConfigYesNo(default=False)
 config.plugins.archivCZSK.autoUpdate = ConfigYesNo(default=False)
 config.plugins.archivCZSK.debug = ConfigYesNo(default=False) 
@@ -47,6 +48,17 @@ for i in range(1000, 20000, 1000):
     choicelist.append(("%d" % i, "%d ms" % i))
 config.plugins.archivCZSK.liveBuffer = ConfigSelection(default="3000", choices=choicelist)
 
+CSFD = None
+try:
+    from Plugins.Extensions.CSFD.plugin import CSFD
+    print "CSFD plugin import OK"
+except ImportError:
+    print "CSFD None"
+    CSFD = None
+if CSFD is None:
+    config.plugins.archivCZSK.csfd.setValue(False)
+    config.plugins.archivCZSK.csfd.save()
+    
 
 
 
@@ -118,6 +130,8 @@ class ArchiveCZSKConfigScreen(Screen, ConfigListScreen):
         self.list.append(getConfigListEntry(_("Data path"), config.plugins.archivCZSK.dataPath))
         self.list.append(getConfigListEntry(_("Downloads path"), config.plugins.archivCZSK.downloadsPath))
         self.list.append(getConfigListEntry(_("Subtitles path"), config.plugins.archivCZSK.subtitlesPath))
+        if CSFD is not None:
+            self.list.append(self.list.append(getConfigListEntry(_("Show info in CSFD plugin"), config.plugins.archivCZSK.csfd)))
         self.list.append(getConfigListEntry(_("Allow auto-update"), config.plugins.archivCZSK.autoUpdate))
         self.list.append(getConfigListEntry(_("Debug mode"), config.plugins.archivCZSK.debug))
         self.list.append(getConfigListEntry(_("Free memory after exit"), config.plugins.archivCZSK.clearMemory))
