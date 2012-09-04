@@ -369,7 +369,7 @@ class ContentScreen(Screen, DownloadList):
         return not config.plugins.archivCZSK.csfd.getValue() and (len(it.info) > 0 or it.image is not None)
     
     def CSFDInfo(self, it):
-        return config.plugins.archivCZSK.csfd.getValue() and not (isinstance(it, PExit) or isinstance(it, PVideo))
+        return config.plugins.archivCZSK.csfd.getValue() and not (isinstance(it, PExit) or isinstance(it, PVideo) or isinstance(it, PSearch))
         
     
     def updateMenuInfoGUI(self):
