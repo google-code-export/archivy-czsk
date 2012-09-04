@@ -22,7 +22,7 @@ from enigma import gFont, getDesktop
 
 from Plugins.Extensions.archivCZSK.resources.exceptions.archiveException import *
 from menu import ArchiveCZSKConfigScreen, ArchiveConfigScreen
-from Plugins.Extensions.archivCZSK.resources.tools.util import PArchive, PItem, PFolder, PExit, PVideo, PSearch, PDownloads, PNotSupportedVideoFormat
+from Plugins.Extensions.archivCZSK.resources.tools.util import PArchive, PItem, PFolder, PExit, PVideo, PSearch, PDownloads
 from Plugins.Extensions.archivCZSK.gui.common import *
 from Plugins.Extensions.archivCZSK.gui.captcha import Captcha
 from Plugins.Extensions.archivCZSK.gui.shortcuts import ShortcutsScreen
