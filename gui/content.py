@@ -82,9 +82,9 @@ class ContentScreen(Screen, DownloadList):
         if params.has_key('it'):
             self.parent_it = params["it"]
          
-        self.xml = None   
+        self.xml = None
         self.archive = archive
-        self.stack = []    
+        self.stack = []
                     
         self.working = False #pre blokovanie tlacidiel pri vykonavani funkcie
         self.refresh = False #pre refresh po vyhladavani
@@ -327,6 +327,7 @@ class ContentScreen(Screen, DownloadList):
                             self.showError(_("Unknown error: Not supported show"))
                             fh = open("/tmp/archivCZSKException.log", "w")
                             traceback.print_exc(file=fh)
+                            fh.close()
                     else:
                         if len(items) == 0 and len(command) > 0:
                             if command['text'] == 'captcha':
@@ -350,15 +351,8 @@ class ContentScreen(Screen, DownloadList):
                             self.working = False
 
             elif isinstance(it, PVideo):
-               # def askToPlayVideo(callback=None):
-                    #if callback:
-                        #self.playVideo(it, False)
-                    #self.working = False
                 if it.url == '':
                     self.working = False
-                #else:
-                   # if isinstance(it, PNotSupportedVideoFormat):
-                        #self.session.openWithCallback(askToPlayVideo, MessageBox, _("You are trying to play maybe not supported video format. Do you want to continue?"), type=MessageBox.TYPE_YESNO)
                 else:
                     self.playVideo(it, False)   
             else:
@@ -430,7 +424,7 @@ class ContentScreen(Screen, DownloadList):
             elif self.CSFDInfo(it):
                 try:
                     from Plugins.Extensions.CSFD.plugin import CSFD
-                    self.session.open(CSFD, it.name.encode('utf-8'), False)
+                    self.session.openWithCallback(self.workingFinished, CSFD, it.name.encode('utf-8'), False)
                 except ImportError:
                     self.working = False
             else:
