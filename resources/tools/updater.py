@@ -230,7 +230,7 @@ def updateArchives(archives):
 
 def checkArchiveToolVersion(archRemote, name, version, repository):
     archiveTool = {}
-    
+    debug('tool ' + name)
     def createTool(tool, archRemote, name):
         debug('Tool to update' + name)
         archiveTool['root'] = []
@@ -271,7 +271,7 @@ def checkArchiveToolVersion(archRemote, name, version, repository):
 
 def checkArchiveVersions(archives):
     tools = []
-    needUpdate = []
+    localArchives = []
     newArchives = []
     try:
         xml = urllib2.urlopen(_versionURL, timeout=15.0)
@@ -285,6 +285,7 @@ def checkArchiveVersions(archives):
         name = archRemote.attrib.get("name")
         version = archRemote.attrib.get('version')
         repository = archRemote.attrib.get('repository')
+        print 'remote', name, version 
         if name not in [archLocal.name for archLocal in archives]:
             if name.find('tools') == -1:
                 debug("found new archive " + name)
@@ -293,17 +294,16 @@ def checkArchiveVersions(archives):
                 tool = checkArchiveToolVersion(archRemote, name, version, repository)
                 if len(tool) > 0:
                     tools.append(tool)
-
-        #print 'remote', name, version        
-        for archLocal in archives:
+        else:
+            for archLocal in archives:
             #print 'local', archLocal.name, archLocal.version
-            if name == archLocal.name and updateNeeded(archLocal.version, version):
-                debug("%s > %s" % (version, archLocal.version))
-                needUpdate.append(archLocal)
-                archLocal.needUpdate = True
+                if name == archLocal.name and updateNeeded(archLocal.version, version):
+                    debug("archive %s need update: %s > %s" % (name, version, archLocal.version))
+                    localArchives.append(archLocal)
+                    archLocal.needUpdate = True
             
     
-    return needUpdate, tools, newArchives
+    return localArchives, tools, newArchives
 
 
 
