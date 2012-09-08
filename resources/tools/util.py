@@ -203,6 +203,8 @@ class PItem(object):
         self.mode = u''
         self.mode_text = u''
         self.folder = True
+        self.thumb = u''
+        self.image = None
         self.info = {}
         self.menu = {}
         self.page = None

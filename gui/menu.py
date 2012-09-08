@@ -131,7 +131,7 @@ class ArchiveCZSKConfigScreen(Screen, ConfigListScreen):
         self.list.append(getConfigListEntry(_("Downloads path"), config.plugins.archivCZSK.downloadsPath))
         self.list.append(getConfigListEntry(_("Subtitles path"), config.plugins.archivCZSK.subtitlesPath))
         if CSFD is not None:
-            self.list.append(self.list.append(getConfigListEntry(_("Show info in CSFD plugin"), config.plugins.archivCZSK.csfd)))
+            self.list.append((_("Show info in CSFD plugin"), config.plugins.archivCZSK.csfd))
         self.list.append(getConfigListEntry(_("Allow auto-update"), config.plugins.archivCZSK.autoUpdate))
         self.list.append(getConfigListEntry(_("Debug mode"), config.plugins.archivCZSK.debug))
         self.list.append(getConfigListEntry(_("Free memory after exit"), config.plugins.archivCZSK.clearMemory))

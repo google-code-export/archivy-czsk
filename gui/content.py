@@ -36,7 +36,6 @@ _iconPath = "/usr/lib/enigma2/python/Plugins/Extensions/archivCZSK/gui/icon"
 ctxMenuImg = LoadPixmap(cached=True, path=os.path.join(_iconPath, 'key_menu.png'))
 infoImg = LoadPixmap(cached=True, path=os.path.join(_iconPath, 'key_info.png'))
 
-
 class ContentScreen(Screen, DownloadList):
     instance = None
     skin = """
@@ -103,7 +102,8 @@ class ContentScreen(Screen, DownloadList):
                 "yellow": self.listShortcuts,
                 "up": self.up,
                 "down": self.down,
-                "info": self.info,
+                "info": self.showArchiveInfo,
+                "csfd": self.showCSFDInfo,
                 "menu": self.ctxmenu
             }, -2)
 
@@ -360,7 +360,7 @@ class ContentScreen(Screen, DownloadList):
                 
                 
     def archiveInfo(self, it):
-        return not config.plugins.archivCZSK.csfd.getValue() and (len(it.info) > 0 or it.image is not None)
+        return len(it.info) > 0 or it.image is not None
     
     def CSFDInfo(self, it):
         return config.plugins.archivCZSK.csfd.getValue() and not (isinstance(it, PExit) or isinstance(it, PVideo) or isinstance(it, PSearch))
@@ -370,11 +370,7 @@ class ContentScreen(Screen, DownloadList):
         idx = self["menu"].getSelectedIndex()
         if len(self.lst_items) > 0:
             it = self.menu_dir[idx]
-            if self.CSFDInfo(it):
-                self["info_text"].setText(_("Show info from name of item in CSFD plugin"))
-                self['info_img'].instance.setPixmap(infoImg)
-                      
-            elif self.archiveInfo(it):
+            if self.archiveInfo(it):
                 self["info_text"].setText(_("Additional informations are available"))
                 self['info_img'].instance.setPixmap(infoImg)      
             else:
@@ -414,14 +410,22 @@ class ContentScreen(Screen, DownloadList):
             self.session.openWithCallback(self.shortcutCallback, ShortcutsScreen, self.archive)    
             
             
-    def info(self):
+    def showArchiveInfo(self):
         if not self.working and len(self.lst_items) > 0:
             self.working = True
             idx = self["menu"].getSelectedIndex()
             it = self.menu_dir[idx]
             if self.archiveInfo(it):
                 Info(self.session, it, self.workingFinished)
-            elif self.CSFDInfo(it):
+            else:
+                self.working = False
+                
+    def showCSFDInfo(self):
+        if not self.working and len(self.lst_items) > 0:
+            self.working = True
+            idx = self["menu"].getSelectedIndex()
+            it = self.menu_dir[idx]
+            if self.CSFDInfo(it):
                 try:
                     from Plugins.Extensions.CSFD.plugin import CSFD
                     self.session.openWithCallback(self.workingFinished, CSFD, it.name.encode('utf-8'), False)
@@ -429,6 +433,7 @@ class ContentScreen(Screen, DownloadList):
                     self.working = False
             else:
                 self.working = False
+        
     
     def ctxmenu(self):
         if not self.working and len(self.lst_items) > 0:
