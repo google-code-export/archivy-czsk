@@ -285,7 +285,7 @@ def checkArchiveVersions(archives):
         name = archRemote.attrib.get("name")
         version = archRemote.attrib.get('version')
         repository = archRemote.attrib.get('repository')
-        print 'remote', name, version 
+        #print 'remote', name, version 
         if name not in [archLocal.name for archLocal in archives]:
             if name.find('tools') == -1:
                 debug("found new archive " + name)
