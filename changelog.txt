@@ -3,6 +3,7 @@ verzia 0.61
 - aktualizovane archivy - stv,markiza,voyo,ct,movielibrary
 - pridana moznost pridania archivov do hlavneho menu - thx shamman
 - opraveny OE2.0 balicek - thx petrkl12
+- pridana moznost zobrazovat info v CSFD plugine - thx petrkl12
 
 verzia 0.6
 - download manager- stahovanie, stahovanie aj pocas vypnuteho pluginu, sledovanie stavu stahovanych suborov, prehravanie pocas stahovania
