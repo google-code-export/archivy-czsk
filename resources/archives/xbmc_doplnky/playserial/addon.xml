@@ -2,7 +2,8 @@
 <addon id="plugin.video.playserial.cz"
        name="PlaySerialCZ"
        version="1.0.1"
-       provider-name="Ivo Brhel">
+       provider-name="Ivo Brhel"
+       repository="xbmc_doplnky">
   <requires>
     <import addon="xbmc.python" version="1.0"/>
     <import addon="script.module.stream.resolver" version="1.2.8"/>
