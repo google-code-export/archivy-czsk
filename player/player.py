@@ -207,6 +207,8 @@ class Player():
 	
 	
 	def createRTMPGwProcessLive(self):
+		if  not self.isPortFree():
+				self.port += 1
 		cmd = []
 		cmd.append('/usr/bin/rtmpgw')
 		cmd.append('-q')
@@ -227,10 +229,12 @@ class Player():
 		self.rtmpproc = Popen(cmd, shell=False)
 		
 	def createRTMPGwProcess(self, url):
-			cmd = '/usr/bin/rtmpgw -q -r ' + str(url) + ' --buffer ' + str(self.rtmpBuffer) + ' --sport ' + str(self.port)
-			print cmd
-			self.rtmpproc = Popen(cmd.split(), shell=False)
-			return 0	
+		if  not self.isPortFree():
+				self.port += 1
+		cmd = '/usr/bin/rtmpgw -q -r ' + str(url) + ' --buffer ' + str(self.rtmpBuffer) + ' --sport ' + str(self.port)
+		print cmd
+		self.rtmpproc = Popen(cmd.split(), shell=False)
+		return 0	
 		
 	def stop(self):
 		self.videoController.exitbox(True)
@@ -248,9 +252,6 @@ class Player():
 		self.session.nav.stopService()
 		
 		if url[0:4] == 'rtmp':
-			
-			if  not self.isPortFree():
-				self.port += 1
 				
 			if self.live: 
 				if config.plugins.archivCZSK.seeking.value:
