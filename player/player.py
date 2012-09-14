@@ -4,56 +4,96 @@ Created on 20.3.2012
 
 @author: marko
 '''
-from Plugins.Extensions.archivCZSK import _
-from Plugins.Extensions.archivCZSK.gui.download import DownloadList
-from enigma import  eServiceCenter, iServiceInformation, eServiceReference, iSeekableService, iPlayableService, iPlayableServicePtr, eAVSwitch
-from Components.ServiceEventTracker import ServiceEventTracker
-from Components.ActionMap import HelpableActionMap
-from Screens.Screen import Screen
-from Screens.MessageBox import MessageBox
-from Components.config import config, ConfigInteger, ConfigSubsection
-from Screens.InfoBar import MoviePlayer
+import logging
+import os
 from subprocess import Popen, PIPE, STDOUT
 from subtitles import Subtitles
 
-RTMP_LIVE_BUFFER = config.plugins.archivCZSK.liveBuffer.getValue()	#3000 #(ms) buffer pre live streamy
-RTMP_ARCHIVE_BUFFER = config.plugins.archivCZSK.archiveBuffer.getValue() # 5000 #(ms) buffer pre archivy
-ENIGMA_BUFFER = 512
+from enigma import  eServiceCenter, iServiceInformation, eServiceReference, iSeekableService, iPlayableService, iPlayableServicePtr, eAVSwitch, eConsoleAppContainer
+from Screens.Screen import Screen
+from Screens.MessageBox import MessageBox
+from Screens.InfoBar import MoviePlayer
+from Components.ServiceEventTracker import ServiceEventTracker
+from Components.ActionMap import HelpableActionMap
+from Components.config import config, ConfigInteger, ConfigSubsection
+
+from Plugins.Extensions.archivCZSK import _
+from Plugins.Extensions.archivCZSK.gui.download import DownloadList
+
+DEFAULT_LOGGING_LEVEL = 'INFO' #logging.INFO
+DEFAULT_LOGGING_FORMAT = '%(levelname)s: %(message)s'
+log = logging.getLogger(__name__)
+log.setLevel('DEBUG')
+
 aspectratiomode = "1"
+RTMPGW_PATH = '/usr/bin/rtmpgw'
+NETSTAT_PATH = 'netstat'
 
 
 class BasePlayer(MoviePlayer, DownloadList):
-	instance = None
-	def __init__(self, session, sref):
-		BasePlayer.instance = self
+	def __init__(self, session, sref, seekable=True, pausable=True):
+		self.seekable = seekable
+		self.pausable = pausable
 		MoviePlayer.__init__(self, session, sref)
 		DownloadList.__init__(self)
+		
 		self.skinName = "MoviePlayer"   
 		self.onClose.append(self.__onClose)
 		
+	def __getSeekable(self):
+		service = self.session.nav.getCurrentService()
+		if service is None:
+			return None
+		return service.seek()
+
+	def getCurrentPosition(self):
+		seek = self.__getSeekable()
+		if seek is None:
+			return None
+		r = seek.getPlayPosition()
+		if r[0]:
+			return None
+		return long(r[1])
+
+	def getCurrentLength(self):
+		seek = self.__getSeekable()
+		if seek is None:
+			return None
+		r = seek.getLength()
+		if r[0]:
+			return None
+		return long(r[1])
+	
+	def isSeekable(self):
+		if self.seekable:
+			return super(BasePlayer, self).isSeekable()
+		return None
+	
 	def __onClose(self):
-		BasePlayer.instance = None
+		pass
 	
 
 class StandardPlayer(BasePlayer):
 	instance = None
 	def __init__(self, session, sref):
 		BasePlayer.__init__(self, session, sref)
+		StandardPlayer.instance = self
+		
+	def __onClose(self):
+		StandardPlayer.instance = None
 
 
 class CustomPlayer(BasePlayer):
 	instance = None
-	def __init__(self, session, sref, subfile=None):
+	def __init__(self, session, sref, subtitles=None):
 		CustomPlayer.instance = self
-		self.session = session
-		self.subs = False
-		self.subtitles = Subtitles(self.session, subfile)
-
 		BasePlayer.__init__(self, session, sref)
+		self.session = session
+		self.subtitles = Subtitles(self.session, subtitles)
 		self["actions"] = HelpableActionMap(self, "CustomPlayerActions",
             {
                 "aspectChange": (self.aspectratioSelection, _("changing aspect Ratio")),
-                "subtitles": (self.subsetup, _("show/hide subtitles")),
+                "subtitles": (self.subtitlesSetup, _("show/hide subtitles")),
                 "leavePlayer": (self.leavePlayer, _("leave player?"))
             }, 0)    
 		self.subtitles.play()		 
@@ -70,6 +110,9 @@ class CustomPlayer(BasePlayer):
 		super(CustomPlayer, self).unPauseService()
 		self.subtitles.resume()
 	
+	def subtitlesSetup(self):
+		self.subtitles.setup() 
+	
 	def aspectratioSelection(self):
 		global aspectratiomode
 		if aspectratiomode == "1": #letterbox
@@ -85,30 +128,40 @@ class CustomPlayer(BasePlayer):
 			eAVSwitch.getInstance().setAspectRatio(3)
 			aspectratiomode = "1"
 
-	def subsetup(self):
-		self.subtitles.setup() 
-
 	def handleLeave(self, how):
-		self.exitbox(True)  
+		self.is_closing = True
+		self.exitVideoPlayer(True)
 		
 	def doEofInternal(self, playing):
-		self.exitbox(True)
+		if not self.execing:
+			return
+		if not playing :
+			return
+		self.handleLeave(None)  
 			
 	def leavePlayerConfirmed(self, answer):
-		self.exitbox(True)
+		self.exitVideoPlayer(True)
+		
 		
 	def leavePlayer(self):
-		self.session.openWithCallback(self.exitbox, MessageBox, _("Do you want to exit player?"), type=MessageBox.TYPE_YESNO)
+		self.session.openWithCallback(self.exitVideoPlayer, MessageBox, _("Do you want to exit player?"), type=MessageBox.TYPE_YESNO)
 		
-	def exitbox(self, message=None):
+	def exitVideoPlayer(self, message=None):
 		if message:
 			if hasattr(self, 'subtitles'):
 				self.subtitles.exit()
 				del self.subtitles
-			#self.setSeekState(self.SEEK_STATE_PLAY)
+			# make sure that playback is unpaused otherwise the  
+			# player driver might stop working 
+			self.setSeekState(self.SEEK_STATE_PLAY)
 			self.close()
+	
+	def __onClose(self):
+		CustomPlayer.instance = None
+		
 		
 class MipselPlayer(CustomPlayer):
+	instance = None
 	def __init__(self, session, sref, subfile=None):
 		self.session = session
 		self.bufferSeconds = 0
@@ -117,6 +170,7 @@ class MipselPlayer(CustomPlayer):
 		self.autoPlay = config.plugins.archivCZSK.mipselPlayer.autoPlay.value
 		CustomPlayer.__init__(self, session, sref)
 		session.nav.getCurrentService().streamed().setBufferSize(config.plugins.archivCZSK.mipselPlayer.buffer.value)
+		MipselPlayer.instance = self
 		self.__event_tracker = ServiceEventTracker(screen=self, eventmap=
             {
                 iPlayableService.evBuffering: self.__evUpdatedBufferInfo,
@@ -148,150 +202,109 @@ class MipselPlayer(CustomPlayer):
 			if self.seekstate != self.SEEK_STATE_PAUSE :
 				self.setSeekState(self.SEEK_STATE_PAUSE)
 				
-	def exitbox(self, message=None):
-		if message:
-			if hasattr(self, 'subtitles'):
-				self.subtitles.exit()
-				del self.subtitles
-			#self.setSeekState(self.SEEK_STATE_PLAY)
-			self.close()
+	def __onClose(self):
+		MipselPlayer.instance = None
 	
 			
 class Player():
-	"""Player for playing it content"""
+	"""Player for playing PVideo it content"""
 	instance = None
-	def __init__(self, session, it, callback=None, downloadCB=None):
-		Player.instance = self
-		self.videoController = None
-		self.it = it
+	def __init__(self, session, it, callback=None, downloadCB=None, seekable=True, pausable=True):
 		self.session = session
-		self.name = it.name
-		self.port = 8902 #streaming port for rtmpgw
-		self.ebuff = int(ENIGMA_BUFFER) #buffer for gstreamer/libeplayer if supported
-		self.live = it.live #if stream is live
-		self.streamObj = None
-		self.callback = callback
-		self.downloadCB = downloadCB
-		self.oldService = self.session.nav.getCurrentlyPlayingServiceReference()
-		self.subs = it.subs
-
-		if self.live:
-			self.rtmpBuffer = RTMP_LIVE_BUFFER
-			#self.timeBuffer = int(RTMP_LIVE_RECORD_BUFFER)
-		else:
-			self.rtmpBuffer = RTMP_ARCHIVE_BUFFER
-			#self.timebuff = int(RTMP_ARCHIVE_RECORD_BUFFER)
 		
+		self.port = 8902 # streaming port for rtmpgw
+		self.videoController = None 
+		self.oldService = self.session.nav.getCurrentlyPlayingServiceReference()
+		self.seekable = seekable
+		self.pausable = pausable
+		
+		self.it = it
+		self.name = it.name
+		self.live = it.live
+		self.subtitles = it.subs
+		self.playUrl = it.url
+		self.rtmpBuffer = '3000'
+		self.rtmpStream = None
+		self.rtmpgwProcess = None
+		
+		if self.live:
+			self.rtmpBuffer = config.plugins.archivCZSK.liveBuffer.getValue()
+			self.rtmpStream = it.stream
+		else:
+			self.rtmpBuffer = config.plugins.archivCZSK.archiveBuffer.getValue()
 		if it.rtmpBuffer is not None:
 			self.rtmpBuffer = it.rtmpBuffer
-		#if it.timebuff is not None:
-		#	self.timebuff = int(it.timebuff)
-		if self.live:
-			self.streamObj = it.stream
-				
-		self.url = it.url		
-		self.rtmpproc = None
 		
-	def isPortFree(self):
-		"""Finds out if streaming port for rmtpgw is free"""
-		netstat = Popen(['netstat', '-tulna'], stderr=STDOUT, stdout=PIPE)
+		self.callback = callback
+		self.downloadCB = downloadCB
+		
+		if self.live:
+			self.rtmpStream = it.stream
+			
+		#to make sure that rtmpgw is not running (ie. player crashed)	
+		os.system('killall rtmpgw')
+					
+		
+	def _setPort(self):
+		"""Sets streaming port for rmtpgw"""
+		netstat = Popen(NETSTAT_PATH + ' -tulna', stderr=STDOUT, stdout=PIPE, shell=True)
 		out, err = netstat.communicate()
 		if str(self.port) in out:
-			return False
-		return True		
+			self.port = self.port + 1
+			log.debug('Changing port for rtmpgw to %s', self.port)
+		
+	def _startRTMPGWProcess(self):
+		log.info('starting rtmpgw process')
+		if self.live:
+			cmd = "%s -v -q -r %s -W %s -p %s -y %s --buffer %s --sport %s --buffer %s" % (RTMPGW_PATH, self.rtmpStream.url, self.rtmpStream.swfUrl, self.pageUrl, self.playpath, str(self.port), str(self.rtmpBuffer))
+		else:
+			rtmpUrl = ' --'.join(self.playUrl.split()[0:])
+			cmd = '%s -q -r %s --sport %s --buffer %s' % (RTMPGW_PATH, rtmpUrl, str(self.port), str(self.rtmpBuffer))
+		log.info('rtmpgw server streaming: %s', cmd)
+		
+		self.rtmpgwProcess = eConsoleAppContainer()
+		self.rtmpgwProcess.appClosed.append(self._exitRTMPGWProcess)
+		self.rtmpgwProcess.execute(cmd)
+		
+	def _exitRTMPGWProcess(self, status):
+		log.info('rtmpgw process exited with status %d', status)
+		self.rtmpgwProcess = None	
 
-	def createRTMPAddress(self):
-		cmd = self.url.split()
-		address = ' --'.join(cmd[0:])
-		return address
-	
-	
-	def createRTMPGwProcessLive(self):
-		if  not self.isPortFree():
-				self.port += 1
-		cmd = []
-		cmd.append('/usr/bin/rtmpgw')
-		cmd.append('-q')
-		cmd.append('-r')
-		cmd.append('%s' % self.streamObj.url)
-		cmd.append('-W')
-		cmd.append('%s' % self.streamObj.swfUrl)
-		cmd.append('-p')
-		cmd.append('%s' % self.streamObj.pageUrl)
-		cmd.append('-y')
-		cmd.append('%s' % self.streamObj.playpath)
-		cmd.append('--live')
-		cmd.append('--sport')
-		cmd.append(str(self.port))
-		cmd.append('--buffer')
-		cmd.append(str(self.rtmpBuffer))
-		print cmd
-		self.rtmpproc = Popen(cmd, shell=False)
-		
-	def createRTMPGwProcess(self, url):
-		if  not self.isPortFree():
-				self.port += 1
-		cmd = '/usr/bin/rtmpgw -q -r ' + str(url) + ' --buffer ' + str(self.rtmpBuffer) + ' --sport ' + str(self.port)
-		print cmd
-		self.rtmpproc = Popen(cmd.split(), shell=False)
-		return 0	
-		
+	def play(self):
+		self.session.nav.stopService()
+		if self.playUrl.startswith('rtmp'):
+			if config.plugins.archivCZSK.seeking.value:
+				self._playStream(str(self.playUrl + ' buffer=' + self.rtmpBuffer), self.subtitles)
+			else:
+				self._setPort()
+				self._startRTMPGWProcess()
+				self._playStream('http://0.0.0.0:' + str(self.port), self.subtitles)	
+		else:
+			self._playStream(str(self.playUrl), self.subtitles)
+					
 	def stop(self):
 		self.videoController.exitbox(True)
-		
-
-	def play(self, subs=None):
-		url = self.url
-		self.timeoutbool = False
-		self.iter = 0
-		if self.rtmpproc is not None:
-			self.rtmpproc.terminate()
-			self.rtmpproc.wait()
-			self.rtmpproc = None	
-			
-		self.session.nav.stopService()
-		
-		if url[0:4] == 'rtmp':
-				
-			if self.live: 
-				if config.plugins.archivCZSK.seeking.value:
-					self.playStream(str(url + ' buffer= ' + self.rtmpBuffer), self.subs)
-				else:
-					self.createRTMPGwProcessLive()
-					self.playStream('http://0.0.0.0:' + str(self.port), self.subs)	
-			else:
-				if config.plugins.archivCZSK.seeking.value: 
-					self.playStream(str(url + ' buffer= ' + self.rtmpBuffer), self.subs)
-					print url
-				else:
-					self.createRTMPGwProcess(self.createRTMPAddress())
-					self.playStream('http://0.0.0.0:' + str(self.port), self.subs)		
-		else:
-			self.playStream(str(url), self.subs)
 			
 			
-	def playStream(self, streamURL, subs=None):
-		#sref.setData(2, int(int(config.plugins.archivCZSK.playerBuffer.value) * 1024))
+	def _playStream(self, streamURL, subtitles=None):
 		sref = eServiceReference(4097, 0, streamURL)
-		#sref.setName(self.name.encode('utf-8'))
+		sref.setName(self.name.encode('utf-8'))
 		
-		if config.plugins.archivCZSK.player.value == 'custom':
-			self.session.openWithCallback(self.exit, CustomPlayer, sref, subs)
-			self.videoController = CustomPlayer.instance
-			
-		elif config.plugins.archivCZSK.player.value == 'standard':
+		if config.plugins.archivCZSK.player.value == 'standard':
 			self.session.openWithCallback(self.exit, StandardPlayer, sref)
 			self.videoController = StandardPlayer.instance
+		
+		elif config.plugins.archivCZSK.player.value == 'custom':
+			self.session.openWithCallback(self.exit, CustomPlayer, sref, subtitles)
+			self.videoController = CustomPlayer.instance
 			
 		elif config.plugins.archivCZSK.player.value == 'mipsel':
-			self.session.openWithCallback(self.exit, MipselPlayer, sref, subs)
+			self.session.openWithCallback(self.exit, MipselPlayer, sref, subtitles)
 			self.videoController = MipselPlayer.instance
 
-	def exit(self):
-		if self.rtmpproc is not None:
-			self.rtmpproc.terminate()
-			self.rtmpproc.wait()
-			self.rtmpproc = None    
+	def exit(self, callback=None):
+		if self.rtmpgwProcess is not None:
+			self.rtmpgwProcess.sendCtrlC()
 		self.session.nav.playService(self.oldService)
 		if self.callback:
 			self.callback()
