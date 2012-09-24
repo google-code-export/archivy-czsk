@@ -221,7 +221,7 @@ class ContentScreen(Screen, DownloadList):
             self.date = dir_dict["date"]
             self.parent_it = dir_dict["parent_it"]
             if self.parent_it:
-                print self.parent_it.name
+                print self.parent_it.name.encode('utf-8')
             if dir_dict['refresh']:
                 self.refreshList()
             else:
@@ -289,7 +289,7 @@ class ContentScreen(Screen, DownloadList):
         player.play()
 
     def openItem(self, it):
-            print it.name, it.url
+            print it.name.encode('utf-8'), it.url
             if isinstance(it, PExit): 
                 self.working = False
                 self.exit()

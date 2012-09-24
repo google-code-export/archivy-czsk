@@ -354,12 +354,12 @@ class RTMPDumpProcessProtocol(protocol.ProcessProtocol):
         self.download = download
 
     def connectionMade(self):
-        print '[RTMPDumpProcessProtocol] connectionMade', self.download.name
+        print '[RTMPDumpProcessProtocol] connectionMade', self.download.name.encode('utf-8')
         self.download.running = True
         self.download.startDeffer.callback(self.download)
 
     def processEnded(self, reason):
-        print '[RTMPDumpProcessProtocol] processEnded', self.download.name, reason.value.exitCode
+        print '[RTMPDumpProcessProtocol] processEnded', self.download.name.encode('utf-8'), reason.value.exitCode
         self.download.running = False
         self.download.finish_time = time.time()
 
@@ -372,7 +372,6 @@ class RTMPDumpProcessProtocol(protocol.ProcessProtocol):
 
     def errReceived(self, data):
         if self.download.showOutput:
-            print data
             if self.download.outputCB:
                 self.download.outputCB(data)
 
@@ -412,12 +411,12 @@ class wgetProcessProtocol(protocol.ProcessProtocol):
         self.download = download
 
     def connectionMade(self):
-        print '[wgetProcessProtocol] connectionMade', self.download.name
+        print '[wgetProcessProtocol] connectionMade', self.download.name.encode('utf-8')
         self.download.running = True
         self.download.startDeffer.callback(self.download)
 
     def processEnded(self, reason):
-        print '[wgetProcessProtocol] processEnded', self.download.name, reason.value.exitCode
+        print '[wgetProcessProtocol] processEnded', self.download.name.encode('utf-8'), reason.value.exitCode
         self.download.running = False
         self.download.finish_time = time.time()
 
@@ -430,7 +429,6 @@ class wgetProcessProtocol(protocol.ProcessProtocol):
 
     def errReceived(self, data):
         if self.download.showOutput:
-            print data
             if self.download.outputCB:
                 self.download.outputCB(data)
 

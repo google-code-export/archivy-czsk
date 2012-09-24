@@ -25,7 +25,7 @@ archiveTools = archive_cfg.tools
 #archiveTools = [_dmdTools, _doplnkyTools]
 
 def debug(text):
-    text = '[archivCZSK [update] ] %s' % text
+    text = '[archivCZSK [update] ] %s' % text.encode('utf-8')
     if GUI_CB is not None:
         GUI_CB(text)
     if _DEBUG:
@@ -108,7 +108,6 @@ def downloadArchive(archive, directory=_tmpPath):
             else:
                 removeFiles(archiveFilesCP)
                 return None
-    print archiveFilesCP
     return archiveFilesCP
 
 def downloadTool(tool, remoteBase, tmpBase):
@@ -182,7 +181,6 @@ def updateArchiveTools(tools):
                 if not os.path.isdir(localDir):
                     os.makedirs(localDir)
                 for f in tool[dir]: 
-                    print f, '   ', tmpDir
                     shutil.copy(os.path.join(tmpDir, f), os.path.join(localDir, f))                                                           
                     if os.path.splitext(f)[1] == '.py':
                         removePyOC(f)                                                                                                                                                                            
@@ -206,7 +204,6 @@ def updateArchives(archives):
                 for f in files:
                     tmpfile = os.path.join(_tmpPath, f)
                     localfile = os.path.join(localBase, f)
-                    print tmpfile, localfile
                     shutil.copy(tmpfile, localfile)
                     if os.path.splitext(f)[1] == '.py':
                         removePyOC(localfile)

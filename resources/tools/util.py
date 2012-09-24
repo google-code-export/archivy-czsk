@@ -33,7 +33,7 @@ class PArchive(object):
         self.loadInfo()
         self.modul.addonName = self.id
         self.downloadsPath = os.path.join(config.plugins.archivCZSK.downloadsPath.value, self.id)
-        print '[PArchive]', self.name, 'loaded'
+        print '[PArchive]', self.name.encode('utf-8'), 'loaded'
 
     def loadInfo(self):
         """Loading changelog and archive info"""
@@ -89,7 +89,7 @@ class PArchive(object):
             if self.config.xml.value:
                 self.xml = xmlarchive.archiveXML(self.id)
         except:
-            print '[PArchive] cannot load', self.id, 'xml'
+            print '[PArchive] cannot load', self.id.encode('utf-8'), 'xml'
         self.xml_sc = xmlarchive.shortcutXML(self.id_sc)
         #self.json_downloads = jsonarchive.downloadJSON()
         #self.downloads = self.json_downloads.getDownloads()
