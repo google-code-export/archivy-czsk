@@ -49,7 +49,7 @@ from Plugins.Extensions.archivCZSK import _
 PLUGIN_NAME = 'archivCZSK'
 
 # set supported encodings, you have to make sure, that you have corresponding python libraries in %PYTHON_PATH%/encodings/ (ie. iso-8859-2 requires iso_8859_2.py library)
-ENCODINGS = ('utf-8', 'windows-1250', 'iso-8859-2') #Common Eastern Europe encodings
+ENCODINGS = ('utf-8', 'cp1250', 'iso-8859-2') #Common Eastern Europe encodings
 
 plugin_settings = getattr(config.plugins, PLUGIN_NAME)
 setattr(plugin_settings, 'subtitles', ConfigSubsection())
