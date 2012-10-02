@@ -29,7 +29,7 @@ from Components.config import config, ConfigInteger, ConfigSubsection
 from Components.AVSwitch import AVSwitch
 
 
-from subtitles import Subtitles
+from subtitles.subtitles import Subtitles
 from controller import VideoPlayerController
 from infobar import CustomPlayerInfobar
 
