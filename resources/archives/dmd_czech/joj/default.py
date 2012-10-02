@@ -112,6 +112,7 @@ def OBSAH_SER():
     addDir('Mafstory','http://mafstory.joj.sk/mafstory-epizody.html',4,__dmdbase__+'mafstory.jpg',1)
     addDir('Nevinní','http://nevinni.joj.sk/nevinni-epizody.html',4,__dmdbase__+'nevinni.jpg',1)    
     addDir('Panelák','http://panelak.joj.sk/panelak-epizody.html',4,__dmdbase__+'panelak.jpg',1)
+    addDir('Pod povrchom','http://www.joj.sk/pod-povrchom/pod-povrchom-epizody.html',4,__dmdbase__+'podpovrchom.jpg',1)
     addDir('Profesionáli','http://profesionali.joj.sk/profesionali-epizody.html',4,__dmdbase__+'profesionali.jpg',1)
     addDir('Prvé oddelenie','http://www.joj.sk/prve-oddelenie/prve-oddelenie-epizody.html',4,__dmdbase__+'prve-oddelenie.jpg',1)
 

@@ -1,3 +1,5 @@
+2012-10-02:
+* pridan serial Pod Povrchom
 2012-07-11:
  * oprava strankovani a vypisu dilu, vice informaci na strankach projektu Issue 56!!!
 2012-04-08:
