@@ -56,6 +56,8 @@ for archs_dir in archives:
         setattr(config.plugins.archivCZSK.archives, module, ConfigSubsection())
         archive_conf = getattr(config.plugins.archivCZSK.archives, module)
         archive_conf.enabled = ConfigYesNo(default=True)
+        archive_conf.seekable = ConfigYesNo(default=True)
+        archive_conf.pausable = ConfigYesNo(default=True)
         #archive_conf.xml = ConfigYesNo(default=False)
 
 #tv archives
@@ -73,6 +75,8 @@ for archs_dir in archives:
                 
 #video_archives
         elif module in video_archives:
+            archive_conf.seekable = ConfigYesNo(default=True)
+            archive_conf.pausable = ConfigYesNo(default=True)
             
             if module == 'movielibrary':
                 archive_conf.captcha_text = ConfigText(default="abcd")
@@ -81,6 +85,8 @@ for archs_dir in archives:
                 archive_conf.lang_filter = ConfigText(default="")
                 archive_conf.lang_filter_include = ConfigYesNo(default=True)
                 archive_conf.order = ConfigSelection(default="2", choices=choicelist)
+                archive_conf.seekable = ConfigYesNo(default=False)
+                archive_conf.pausable = ConfigYesNo(default=False)
                     
             if module == 'stream':
                 archive_conf.username = ConfigText(default="")
@@ -89,7 +95,8 @@ for archs_dir in archives:
                 archive_conf.adult = ConfigYesNo(default=False)
 #streamy   
         elif module == 'streamy':
-            pass
+            archive_conf.seekable = ConfigYesNo(default=False)
+            archive_conf.pausable = ConfigYesNo(default=False)
                 
             
             
