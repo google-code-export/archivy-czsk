@@ -329,7 +329,7 @@
 </addon>
 <addon id="plugin.video.dmd-czech.joj"
        name="JOJ TV Archiv"
-       version="1.8"
+       version="1.7"
        provider-name="Jiri Vyhnalek"
        repository="dmd_czech">
   <requires>
