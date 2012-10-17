@@ -1,23 +1,9 @@
 # -*- coding: utf-8 -*-
 import urllib2, urllib, re, os
 from urlparse import urlparse
-try:
-    from Plugins.Extensions.archivCZSK.resources.archives.dmd_czech.tools.parseutils import *
-    from Plugins.Extensions.archivCZSK.resources.tools.dmd import addDir, addLink
-except ImportError:
-    from resources.archives.dmd_czech.tools.parseutils import *
-    from resources.tools.dmd import addDir, addLink
-try:
-    from Plugins.Extensions.archivCZSK import _
-
-except ImportError:
-    print 'Unit test'
-
-name = 'STV Archiv'
-name_sc = 'stv'
-author = 'Jiri Vyhnalek'
-version = '0.1'
-about = _('Plugin to play TV video archive www.stv.sk')
+from Plugins.Extensions.archivCZSK.resources.archives.dmd_czech.tools.parseutils import *
+from Plugins.Extensions.archivCZSK.resources.tools.dmd import addDir, addLink
+from Plugins.Extensions.archivCZSK import _
 
 
 _UserAgent_ = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'
@@ -26,16 +12,27 @@ __baseurl__ = 'http://www.stv.sk'
 icon = None
 nexticon = None
 
-def getContent(url, name, mode, **kwargs):  
-	if mode == None or url == None:
-		print ""
-		OBSAH()   
-	elif mode == 2:
-		print "" + url
-		OBSAH_RELACE(url)
-	elif mode == 10:
-		print "" + url
-		VIDEOLINK(url, name)
+def getContent(session, params):
+    mode = None
+    url = None
+    name = None
+    
+    if 'url' in params:
+        url = params['url']
+    if 'mode' in params:
+        mode = params['mode']
+    if 'name' in params:
+        name = params['name']
+        
+    if mode == None or url == None:
+        print ""
+        OBSAH()   
+    elif mode == 2:
+        print "" + url
+        OBSAH_RELACE(url)
+    elif mode == 10:
+        print "" + url
+        VIDEOLINK(url, name)
 
 def OBSAH():
     doc = read_page(__baseurl__ + '/online/archiv/')

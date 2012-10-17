@@ -34,7 +34,7 @@ from controller import VideoPlayerController
 from infobar import CustomPlayerInfobar
 
 from Plugins.Extensions.archivCZSK import _
-from Plugins.Extensions.archivCZSK.resources.tools.util import RtmpStream
+from Plugins.Extensions.archivCZSK.resources.tools.items import RtmpStream
 from Plugins.Extensions.archivCZSK.resources.exceptions.archiveException import CustomInfoError
 from Plugins.Extensions.archivCZSK.gui.base import BaseArchivCZSKScreen
 
@@ -74,6 +74,9 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, CustomPlayerInfobar, InfoBarBa
 			self.__event_tracker = ServiceEventTracker(screen=self, eventmap=
 			{
 				iPlayableService.evStart: self.__serviceStarted,
+				iPlayableService.evUser + 10: self.__evAudioDecodeError,
+				iPlayableService.evUser + 11: self.__evVideoDecodeError,
+				iPlayableService.evUser + 12: self.__evPluginError
 			})
 			
 
@@ -92,12 +95,19 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, CustomPlayerInfobar, InfoBarBa
 			self.video_length = 0
 				
 			self.AVswitch = AVSwitch()
-			self.defaultAVmode = self.AVswitch.getAspectRatioSetting()
+			self.defaultAVmode = self.getAspectRatioMode()
 			self.currentAVmode = self.defaultAVmode
 			
 			self.onClose.append(self._onClose)
-			
-			
+		
+		
+		
+		
+		def getAspectRatioMode(self):
+			aspects = ["letterbox", "panscan", "non", "bestfit"]
+			mode = open("/proc/stb/video/policy").read()[:-1]
+			return aspects.index(mode)
+		
 		def _play(self):	
 			self.session.nav.playService(self.service)
 			
@@ -107,8 +117,27 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, CustomPlayerInfobar, InfoBarBa
 				return None
 			return service.seek()
 		
+		def __evAudioDecodeError(self):
+			currPlay = self.session.nav.getCurrentService()
+			sAudioType = currPlay.info().getInfoString(iServiceInformation.sUser + 10)
+			print "[__evAudioDecodeError] audio-codec %s can't be decoded by hardware" % (sAudioType)
+			self.session.open(MessageBox, _("This Dreambox can't decode %s streams!") % sAudioType, type=MessageBox.TYPE_INFO, timeout=20)
+
+		def __evVideoDecodeError(self):
+			currPlay = self.session.nav.getCurrentService()
+			sVideoType = currPlay.info().getInfoString(iServiceInformation.sVideoType)
+			print "[__evVideoDecodeError] video-codec %s can't be decoded by hardware" % (sVideoType)
+			self.session.open(MessageBox, _("This Dreambox can't decode %s streams!") % sVideoType, type=MessageBox.TYPE_INFO, timeout=20)
+
+		def __evPluginError(self):
+			currPlay = self.session.nav.getCurrentService()
+			message = currPlay.info().getInfoString(iServiceInformation.sUser + 12)
+			print "[__evPluginError]" , message
+			self.session.open(MessageBox, message, type=MessageBox.TYPE_INFO, timeout=20)
+		
 		def __serviceStarted(self):
-			self.video_length = self.getCurrentLength()
+			if self.getCurrentLength() is not None:
+				self.video_length = self.getCurrentLength()
 			#not working
 			#self.setBufferSliderRange(self.video_length)
 			self.__subtitles.play()
@@ -170,16 +199,16 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, CustomPlayerInfobar, InfoBarBa
 		def aspectratioSelection(self):
 			debug("aspect mode %d" % self.currentAVmode)
 			if self.currentAVmode == 0: #letterbox
-				self.AVswitch.setAspectRatio(0)
+				self.AVswitch.setAspectRatio(1)
+				self.currentAVmode = 1
+			elif self.currentAVmode == 1: #nonlinear
+				self.AVswitch.setAspectRatio(2)
 				self.currentAVmode = 2
 			elif self.currentAVmode == 2: #nonlinear
-				self.AVswitch.setAspectRatio(4)
-				self.currentAVmode = 3
-			elif self.currentAVmode == 2: #nonlinear
-				self.AVswitch.setAspectRatio(2)
+				self.AVswitch.setAspectRatio(3)
 				self.currentAVmode = 3
 			elif self.currentAVmode == 3: #panscan
-				self.AVswitch.setAspectRatio(3)
+				self.AVswitch.setAspectRatio(0)
 				self.currentAVmode = 0
 				
 		
@@ -441,8 +470,8 @@ class Player():
 	
 	def setArchive(self, archive):
 		self.archive = archive
-		self.seekable = archive.seekable
-		self.pausable = archive.pausable
+		self.seekable = archive.get_settings('seekable')
+		self.pausable = archive.get_settings('pausable')
 		
 	def setVideoItem(self, it):
 		#loading video item

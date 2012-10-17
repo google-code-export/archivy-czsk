@@ -25,7 +25,7 @@ archiveTools = archive_cfg.tools
 #archiveTools = [_dmdTools, _doplnkyTools]
 
 def debug(text):
-    text = '[archivCZSK [update] ] %s' % text.encode('utf-8')
+    text = '[archivCZSK [update] ] %s' % text
     if GUI_CB is not None:
         GUI_CB(text)
     if _DEBUG:
@@ -58,7 +58,7 @@ def download(remote, local):
         debug("URL Error: %s %s" % (e.reason, remote))
         raise
     except IOError, e:
-        debug('cannot open archive file')
+        debug("I/O error(%d): %s" % (e.errno, e.strerror))
         raise
     else:
         debug(local + ' succesfully downloaded')
@@ -108,6 +108,7 @@ def downloadArchive(archive, directory=_tmpPath):
             else:
                 removeFiles(archiveFilesCP)
                 return None
+    print archiveFilesCP
     return archiveFilesCP
 
 def downloadTool(tool, remoteBase, tmpBase):
@@ -181,6 +182,7 @@ def updateArchiveTools(tools):
                 if not os.path.isdir(localDir):
                     os.makedirs(localDir)
                 for f in tool[dir]: 
+                    print f, '   ', tmpDir
                     shutil.copy(os.path.join(tmpDir, f), os.path.join(localDir, f))                                                           
                     if os.path.splitext(f)[1] == '.py':
                         removePyOC(f)                                                                                                                                                                            
@@ -204,6 +206,7 @@ def updateArchives(archives):
                 for f in files:
                     tmpfile = os.path.join(_tmpPath, f)
                     localfile = os.path.join(localBase, f)
+                    print tmpfile, localfile
                     shutil.copy(tmpfile, localfile)
                     if os.path.splitext(f)[1] == '.py':
                         removePyOC(localfile)
@@ -282,7 +285,7 @@ def checkArchiveVersions(archives):
         name = archRemote.attrib.get("name")
         version = archRemote.attrib.get('version')
         repository = archRemote.attrib.get('repository')
-        #print 'remote', name, version 
+        print 'remote', name, version 
         if name not in [archLocal.name for archLocal in archives]:
             if name.find('tools') == -1:
                 debug("found new archive " + name)

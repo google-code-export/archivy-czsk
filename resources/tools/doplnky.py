@@ -3,24 +3,31 @@ Created on 18.6.2012
 
 @author: marko
 '''
-from util import PFolder, PVideo, PSearch
-try:
-    from Plugins.Extensions.archivCZSK import _
-    import Plugins.Extensions.archivCZSK.resources.tools.util as util
-except ImportError:
-    import resources.tools.util as util
+from items import PFolder, PVideo, PSearch, PNotSupportedVideo
+#try:
+import Plugins.Extensions.archivCZSK.resources.tools.util2 as util
+import Plugins.Extensions.archivCZSK.resources.exceptions.archiveException as exceptions
+from Plugins.Extensions.archivCZSK import _
+from task import Task
+import contentprovider
 
-GItem_lst = util.getGlobalList()
+GItem_lst = contentprovider.Archive.gui_item_list
+
 search = [_('Search'), _('New search')] 
 
 
 def set_command(name, **kwargs):
-    GItem_lst[1]['text'] = name
-    for command in kwargs:
-        GItem_lst[1][command] = kwargs[command]
+    GItem_lst[1] = name
+    for arg in kwargs:
+        GItem_lst[2][arg] = kwargs[arg]
 
 
 def add_dir(name, url_dict, image=None, infoLabels={}, menuItems={}):
+    #controlling if task shouldnt be _aborted(ie. we pushed exit button when loading)
+    task = Task.getInstance()
+    if task and task._aborted:
+        raise exceptions.ArchiveThreadException
+    else:
         if name in search:
             it = PSearch()
         else:
@@ -50,8 +57,16 @@ def add_dir(name, url_dict, image=None, infoLabels={}, menuItems={}):
             elif isinstance(key, unicode):
                 menuItems_uni[key] = value
             else:
-                menuItems_uni[unicode(str(key), 'utf-8', 'ignore')] = value    
-
+                menuItems_uni[unicode(str(key), 'utf-8', 'ignore')] = value
+        
+        params={}
+        for key in url_dict.keys():
+            value=url_dict[key]
+            if not isinstance(value,unicode):
+                unicode(value, 'utf-8', errors='ignore')
+            params[key]=value        
+            
+        it.params=params
         it.info = infolabel_uni         
         it.image = image
         it.menu = menuItems_uni
@@ -60,6 +75,11 @@ def add_dir(name, url_dict, image=None, infoLabels={}, menuItems={}):
 
 
 def add_video(name, url_dict, image=None, infoLabels={}, menuItems={}):
+    #controling if task shouldnt be _aborted(ie. we pushed exit button when loading)
+    task = Task.getInstance()
+    if task and task._aborted:
+        raise exceptions.ArchiveThreadException
+    else:
         if name == _('Search'):
             it = PSearch()
         else:
@@ -90,7 +110,17 @@ def add_video(name, url_dict, image=None, infoLabels={}, menuItems={}):
             elif isinstance(key, unicode):
                 menuItems_uni[key] = value
             else:
-                menuItems_uni[unicode(str(key), 'utf-8', 'ignore')] = value     
+                menuItems_uni[unicode(str(key), 'utf-8', 'ignore')] = value
+        params={}
+        for key in url_dict.keys():
+            value=url_dict[key]
+            if not isinstance(value,unicode):
+                unicode(value, 'utf-8', errors='ignore')
+            params[key]=value  
+            
+                  
+        
+        it.params = params    
         it.info = infolabel_uni      
         it.image = image
         it.menu = menuItems_uni
@@ -99,7 +129,16 @@ def add_video(name, url_dict, image=None, infoLabels={}, menuItems={}):
 
 
 def add_play(name, url, subs=None, image=None, infoLabels={}, filename=None):
-        it = PVideo()
+    #controling if task shouldnt be _aborted(ie. we pushed exit button when loading)
+    task = Task.getInstance()
+    if task and task._aborted:
+        raise exceptions.ArchiveThreadException
+    else:
+        if util.isSupportedVideo(url):
+            it = PVideo()
+        else:
+            it = PNotSupportedVideo()
+            
         if isinstance(name, str):
             it.name = unicode(name, 'utf-8', 'ignore')
         else:
@@ -113,7 +152,8 @@ def add_play(name, url, subs=None, image=None, infoLabels={}, filename=None):
             else:
                 infolabel_uni[key] = unicode(str(value), 'utf-8', 'ignore')
         if not 'Title' in infolabel_uni:
-            infolabel_uni["Title"] = it.name  
+            infolabel_uni["Title"] = it.name
+        it.params = url
         it.info = infolabel_uni
         it.url_text = url
         it.mode_text = ''

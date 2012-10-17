@@ -3,25 +3,32 @@ Created on 18.6.2012
 
 @author: marko
 '''
-from util import PFolder, PVideo, PSearch
+from items import PFolder, PVideo, PSearch, PNotSupportedVideo
 #try:
-import Plugins.Extensions.archivCZSK.resources.tools.util as util
+import Plugins.Extensions.archivCZSK.resources.tools.util2 as util
+import Plugins.Extensions.archivCZSK.resources.exceptions.archiveException as exceptions
 from Plugins.Extensions.archivCZSK import _
-#except ImportError:
- #   import resources.tools.util.getGlobalList as ggL
-GItem_lst = util.getGlobalList()
+from task import Task
+import contentprovider
+
+GItem_lst = contentprovider.Archive.gui_item_list
 
 def set_command(name, **kwargs):
-    GItem_lst[1]['text'] = name
-    for command in kwargs:
-        GItem_lst[1][command] = kwargs[command]
+    GItem_lst[1] = name
+    for arg in kwargs:
+        GItem_lst[2][arg] = kwargs[arg]
  
 nexticon = None #_pluginPath + 'icon/nexticon.png'
 fanart = None
 search = [_('Search'), _('New search')]  
 
-
 def addDir(name, url, mode, image, page=None, kanal=None, **kwargs):
+    #controling if task shouldnt be _aborted(ie. we pushed exit button when loading)
+    print 'adddir'
+    task = Task.getInstance()
+    if task and task._aborted:
+        raise exceptions.ArchiveThreadException
+    else:
         if name in search:
             it = PSearch()
         else:
@@ -55,7 +62,15 @@ def addDir(name, url, mode, image, page=None, kanal=None, **kwargs):
         GItem_lst[0].append(it)
           
 def addLink(name, url, image, name2):
-        it = PVideo()
+    #controling if task shouldnt be _aborted(ie. we pushed exit button when loading)
+    task = Task.getInstance()
+    if task and task._aborted:
+        raise exceptions.ArchiveThreadException
+    else:
+        if util.isSupportedVideo(url):
+            it = PVideo()
+        else:
+            it = PNotSupportedVideo()
         if isinstance(name, str):
             it.name = unicode(name, 'utf-8', 'ignore')
         else:

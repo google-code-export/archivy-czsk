@@ -1,24 +1,20 @@
 # -*- coding: utf-8 -*-
 import urllib2, urllib, re, os
 from urlparse import urlparse
-try:
-    from Plugins.Extensions.archivCZSK.resources.archives.dmd_czech.tools.parseutils import *
-    from Plugins.Extensions.archivCZSK.resources.tools.dmd import addDir, addLink, set_command
-    from Plugins.Extensions.archivCZSK.resources.exceptions import archiveException
-except ImportError:
-    from resources.archives.dmd_czech.tools.parseutils import *
-    from resources.tools.dmd import addDir, addLink, set_command
-    from resources.exceptions import archiveException
-try:
-    from Plugins.Extensions.archivCZSK import _
-    from Components.config import config
-except ImportError:
-    print 'Unit test'
+
+import Plugins.Extensions.archivCZSK.resources.tools.client as client
+from Plugins.Extensions.archivCZSK.resources.archives.dmd_czech.tools.parseutils import *
+from Plugins.Extensions.archivCZSK.resources.tools.dmd import addDir, addLink, set_command
+from Plugins.Extensions.archivCZSK.resources.exceptions import archiveException
+from Plugins.Extensions.archivCZSK import _
+
+
 
 __baseurl__ = 'http://www.stream.cz'
 __dmdbase__ = 'http://iamm.netuje.cz/xbmc/stream/'
 __cdn_url__ = 'http://cdn-dispatcher.stream.cz/?id='
 _UserAgent_ = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'
+__settings__=None
 
 icon = None
 nexticon = None
@@ -29,8 +25,32 @@ page_pole_no = []
 searchurl = 'http://www.stream.cz/?a=search&search_text='
 
 
-def getContent(url, name, mode, **kwargs):
-    search = kwargs['input']  
+def getContent(session, params):
+    global __settings__
+    import Plugins.Extensions.archivCZSK.plugin as archivczsk
+    
+    __scriptid__ = 'stream'
+    __addon__ = archivczsk.archive_dict[__scriptid__]
+    __settings__ = __addon__.get_settings
+    
+    url = None
+    name = None
+    thumb = None
+    mode = None
+
+    try:
+        url = urllib.unquote_plus(params["url"])
+    except:
+        pass
+    try:
+        name = urllib.unquote_plus(params["name"])
+    except:
+        pass
+    try:
+        mode = int(params["mode"])
+    except:
+        pass
+  
     if mode == None or url == None or len(url) < 1:
         print ""
         OBSAH()
@@ -65,10 +85,9 @@ def getContent(url, name, mode, **kwargs):
 
     elif mode == 13:
         print "" + url
-        if search:
-            SEARCH(search)
-        else:
-            set_command('search')
+        search = client.getTextInput(session, _("Set your search expression"))
+        SEARCH(search)
+        
     elif mode == 14:
         print "" + url
         SEARCH2(url)  
@@ -186,7 +205,7 @@ def INDEX_KOMERCNI(url):
 
 def MY_VIDEO(url):
     if url == __baseurl__:
-        user_name = config.plugins.archivCZSK.archives.stream.username.value
+        user_name = __settings__('user_name')
         if user_name == '':
             raise archiveException.CustomInfoError(_('To show your videos you need to set your username in Stream archive menu'))
         if re.search('@', user_name, re.U):

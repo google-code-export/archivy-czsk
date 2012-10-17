@@ -1,0 +1,33 @@
+from Plugins.Extensions.archivCZSK import _
+
+strings = {
+    30000:_("Size of search history"),
+    30001:_("Video is not available, check\nwhether it works using web page."),
+    30002:_("Enable service"),
+    30003:_("Download using VIP account"),
+    30004:_("Ask"),
+    30005:_("Always"),
+    30006:_("Never"),
+    30007:_("Username"),
+    30008:_("Password"),
+    30009:_("bezvadata.cz"),
+    30010:_("hellspy.cz"),
+    30011:_("ulozto.cz"),
+    30012:_("Would you like to use VIP account to get this file?"),
+    30030:_("Downloads"),
+    30031:_("Please setup downloads folder"),
+    30032:_("Notify when downloading"),
+    30033:_("display notification every"),
+    30034:_("10 %"),
+    30035:_("5 %"),
+    30036:_("1 %"),
+    30037:_("Downloads"),
+    30050:_("Show adult only content"),
+    30051:_("Do not show files with extensions"),
+    30052:_("General"),
+    30053:_("Most Downloaded"),
+    30054:_("Downloading now"),
+    30055:_("Saved to download later"),
+    30056:_("Add to later downloads"),
+    31000:_("Usage of plugin is tracked whenever you play or download video. We do NOT track what has been played")
+    }

@@ -5,21 +5,12 @@ try:
     import hashlib
 except ImportError:
     import md5
-try:
-    from Plugins.Extensions.archivCZSK.resources.archives.dmd_czech.tools.parseutils import *
-    from Plugins.Extensions.archivCZSK.resources.tools.dmd import addDir, addLink
-    from Plugins.Extensions.archivCZSK.resources.exceptions import archiveException
-except ImportError:
-    from resources.archives.dmd_czech.tools.parseutils import *
-    from resources.tools.dmd import addDir, addLink
-    from resources.exceptions import archiveException
-try:
-    from Plugins.Extensions.archivCZSK import _
-    from Components.config import config
-    cfg = config
-except ImportError:
-    print 'Unit test'
-    secret_token = ''
+
+from Plugins.Extensions.archivCZSK.resources.archives.dmd_czech.tools.parseutils import *
+from Plugins.Extensions.archivCZSK.resources.tools.dmd import addDir, addLink
+from Plugins.Extensions.archivCZSK.resources.exceptions import archiveException
+from Plugins.Extensions.archivCZSK import _
+
 
 __baseurl__ = 'http://voyo.nova.cz'
 __dmdbase__ = 'http://iamm.uvadi.cz/xbmc/voyo/'
@@ -35,10 +26,38 @@ nova_app_id = 'nova-vod'
 nexticon = None
 icon = None
 
-def getContent(url, name, mode, **kwargs):  
-    page = kwargs['page']
-    if page != '' and page is not None:
-        page = int(page)     
+def getContent(session, params):
+    global __settings__
+    import Plugins.Extensions.archivCZSK.plugin as archivczsk
+    
+    __scriptid__ = 'stream'
+    __addon__ = archivczsk.archive_dict[__scriptid__]
+    __settings__ = __addon__.get_settings
+    
+    
+    url = None
+    name = None
+    thumb = None
+    mode = None
+    page = None
+
+    try:
+        url = urllib.unquote_plus(params["url"])
+    except:
+        pass
+    try:
+        name = urllib.unquote_plus(params["name"])
+    except:
+        pass
+    try:
+        mode = int(params["mode"])
+    except:
+        pass
+    try:
+        page = int(params["page"])
+    except:
+        pass
+
     if mode == None or url == None or len(url) < 1:
         print ""
         OBSAH()
@@ -200,7 +219,7 @@ def INDEX(url, page):
 
         
 def VIDEOLINK(url, name):
-    secret_token = cfg.plugins.archivCZSK.archives.voyo.password.value
+    secret_token = __settings__('secret_token')
     req = urllib2.Request(url)
     req.add_header('User-Agent', _UserAgent_)
     response = urllib2.urlopen(req)

@@ -1,3 +1,17 @@
+verzia 0.7
+- pridane nastavenie pravidiel(pretacanie/zastavovanie) prehravania pre kazdy archiv
+- pridany video kontroler - zabezpecuje kontrolu dodrziavania tychto pravidiel, zabezpecuje kontrolu pohybu v streame pocas jeho stahovania.
+- aktualizovany stream player - zobrazenie dodatocnych informacii(protocol, rtmpbuffer, playdelay, videoplayerbuffer, livestream,), moznost ich zmeny
+- opravene prehravanie rtmp streamov, nahravanie streamov je funkcne
+- mipselplayer zobrazuje titulky
+- nacitavanie archivov vykonavane v samostatnom vlakne - moze byt prerusene
+- vytvoreny skin pre HD/SD
+- oprava captchy v ulozto.cz
+- pridany statusbar a tipinfo - inspiracia s CSFD pluginu :)
+- aktualizovany prehravac tituliek
+- zjednoteny balik pre mipsel OE1.6 (Python2.6/Python2.7)
+- doplneny mipsel balicke o shutil.py,numbers.py -thx moulikpeta, doplnene kniznice pre titulky
+    
 verzia 0.61
 - opravena automaticka aktualizacia archivov
 - aktualizovane archivy - stv,markiza,voyo,ct,movielibrary

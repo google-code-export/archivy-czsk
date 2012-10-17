@@ -11,50 +11,15 @@ from twisted.web import client
 from twisted.internet import reactor, protocol, defer
 import urlparse, urllib2
 try:
-    from enigma import eConsoleAppContainer
+    from enigma import eConsoleAppContainer, eTimer
 except ImportError:
     pass
 
-rtmpdump_path = '/usr/bin/rtmpdump'
-wget_path = 'wget'
-user_agent = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:14.0) Gecko/20100101 Firefox/14.0.1'
-#rtmpdump_path = 'd:/rtpmp/rtmpdump.exe'
-#wget_path = 'd:/rtpmp/wget.exe'
-video_extensions = ('.avi', '.flv', '.mp4', '.mkv', '.mpeg', '.asf', '.wmv', '.divx')
+RTMP_DUMP_PATH = '/usr/bin/rtmpdump'
+WGET_PATH = 'wget'
+USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:14.0) Gecko/20100101 Firefox/14.0.1'
+VIDEO_EXTENSIONS = ('.avi', '.flv', '.mp4', '.mkv', '.mpeg', '.asf', '.wmv', '.divx')
 
-class DownloadInfo():
-    def __init__(self, download, refreshTime):
-        self.download = download
-        self.refreshTime = refreshTime
-        self.tempLength = download.tempLength 
-        self.speed = 0
-        self.speedKB = 0
-        self.speedMB = 0
-        self.eta = -1
-        self.etaM = -1
-        self.etaMS = (-1, -1)
-        self.etaHMS = (-1, -1, -1)
-        
-    def updateInfo(self):
-        totalLength = self.download.totalLength
-        tempLength = self.download.tempLength
-        speedB = 0
-        if os.path.isfile(self.download.local):
-            currentLength = os.path.getsize(self.download.local)
-            if tempLength == 0:
-                speedB = currentLength / self.refreshTime
-            elif tempLength > 0:
-                speedB = (tempLength - currentLength) / self.refreshTime
-            if speedB > 0:
-                self.speed = speedB
-                self.speedKB = self.speed / 1024
-                self.speedMB = self.speedKB / 1024
-                if totalLength > 0:
-                    self.eta = (totalLength - currentLength) / speedB
-                    self.etaM = self.eta / 60
-                    self.etaMS = (self.etaM, self.eta)
-                    self.etaHMS = (self.etaM / 60, self.etaM, self.eta)
-            self.download.tempLength = currentLength
 
 
 class DownloadManager(object):
@@ -68,6 +33,7 @@ class DownloadManager(object):
         print 'initializing downloadManager'
         DownloadManager.instance = self
         self.download_lst = download_lst
+        self.count = len(download_lst)
 
     def addDownload(self, download, overrideCB=None):
         if not download.url in [down.url for down in self.download_lst]:
@@ -82,11 +48,11 @@ class DownloadManager(object):
             download.cancel()
 
     def removeDownload(self, download):
-        if download.running:
-            if download.e2download:
+        if download.running: 
+            if not isinstance(download, HTTPDownloadTwisted):
                 download.pp.appClosed.append(download.remove)
             else:
-                download.finishDeffer.addCallback(download.remove)
+                download.defer.addCallback(download.remove)
             download.cancel()
             self.download_lst.remove(download)
         else:
@@ -99,25 +65,26 @@ class DownloadManager(object):
                 return download
         return None
     
-    def createDownload(self, name, url, destination, filename=None, live=False, startCB=None, finishCB=None, e2download=True, quite=False, playDownload=False):
+    def createDownload(self, name, url, destination, filename=None, live=False, startCB=None, finishCB=None, quiet=False, stream=None, playDownload=False):
         d = None
         if not os.path.exists(destination):
             os.makedirs(destination)
 
         if url[0:4] == 'rtmp':
-            url = url.split()
-            url = ' --'.join(url[0:])
-            if e2download:
-                d = RTMPDownloadE2(url=url, name=name, destDir=destination, live=live, quite=quite)
-                d.startCB = startCB
-                d.finishCB = finishCB
-                d.e2download = e2download
+            if stream is not None:
+                url = stream.getRtmpGwUrl()
             else:
-                d = RTMPDownloadTW(url=url, name=name, destDir=destination, live=live, quite=quite)
-                if startCB is not None:
-                    d.startDeffer.addCallback(startCB)
-                if finishCB is not None:
-                    d.finishDeffer.addCallback(finishCB)
+                urlList = url.split()
+                rtmp_url = []
+                for url in urlList[1:]:
+                    rtmp = url.split('=')
+                    rtmp_url.append(' --' + rtmp[0])
+                    rtmp_url.append("'%s'" % rtmp[1])
+                url = "'%s'" % urlList[0] + ' '.join(rtmp_url)
+
+            d = RTMPDownloadE2(url=url, name=name, destDir=destination, live=live, quiet=quiet)
+            d.startCB = startCB
+            d.finishCB = finishCB
             return d
 
         elif url[0:4] == 'http':
@@ -127,7 +94,7 @@ class DownloadManager(object):
             length = resp.info().get('Content-Length')
             resp.close()
             if filename is not None:
-                if os.path.splitext(filename)[1] in video_extensions:
+                if os.path.splitext(filename)[1] in VIDEO_EXTENSIONS:
                     pass
                 else:
                     ext = mimetypes.guess_extension(exttype)
@@ -137,35 +104,76 @@ class DownloadManager(object):
             else:
                 path = urlparse.urlparse(url).path
                 filename = os.path.basename(path)
-                
-            if os.path.splitext(filename)[1] == '.avi' and playDownload:
-                d = HTTPDownloadTwisted(name=filename, url=url, filename=filename, destDir=destination, quite=quite)
-                d.startCB = startCB
-                d.finishCB = finishCB
-                d.e2download = False
-
-            elif e2download:
-                d = HTTPDownloadE2(name=filename, url=url, filename=filename, destDir=destination, quite=quite)
-                d.startCB = startCB
-                d.finishCB = finishCB
-                d.e2download = e2download
-            else:
-                d = HTTPDownloadTW(name=filename, url=url, filename=filename, destDir=destination, quite=quite)
-                if startCB is not None:
-                    d.startDeffer.addCallback(startCB)
-                if finishCB is not None:
-                    d.finishDeffer.addCallback(finishCB)
             
-            d.totalLength = length
+            # When playing and downloading avi/mkv container then use HTTPTwistedDownload instead of wget
+            # Reason is that when we use wget download, downloading file is progressively increasing its size, and ffmpeg isnt updating size of file accordingly
+            # so when video gets to place what ffmpeg read in start, playing prematurely stops because of EOF. 
+            # When we use HTTPDownloadTwisted, we firstly create the file of length of the downloading file, and then download to it, so ffmpeg reads
+            # full length filesize.
+            # Its not nice fix but its working ...
+                 
+            if os.path.splitext(filename)[1] in ('.avi', '.mkv') and playDownload:
+                d = HTTPDownloadTwisted(name=filename, url=url, filename=filename, destDir=destination, quiet=quiet)
+                d.startCB = startCB
+                d.finishCB = finishCB
+
+            else:
+                d = HTTPDownloadE2(name=filename, url=url, filename=filename, destDir=destination, quiet=quiet)
+                d.startCB = startCB
+                d.finishCB = finishCB
+            d.length = long(length)
+            d.status = DownloadStatus(d)
             return d
             
         else:
             print 'Cannot download file', url, 'not supported protocol'
             return None
+        
+class DownloadStatus():
+    def __init__(self, download):
+        self.download = download
+        self.totalLength = download.length
+        self.currentLength = 0
+        self.speed = 0
+        self.percent = -1
+        self.eta = -1
+        
+                      
+    def update(self, refreshTime):
+        
+        totalLength = self.totalLength
+        tempLength = self.currentLength
+        speedB = 0
+        
+        if os.path.isfile(self.download.local):
+            currentLength = self.download.getCurrentLength()
+            
+            # download just started
+            if tempLength == 0:
+                speedB = long(float(currentLength) / float(refreshTime))
+                    
+            elif tempLength > 0:
+                speedB = long(float(currentLength - tempLength) / float(refreshTime))
+                
+            self.speed = speedB
+            if totalLength > 0:
+                self.eta = int(float(totalLength - currentLength) / float(speedB))
+                self.percent = float(totalLength - currentLength) / float(totalLength) * 100
+            self.currentLength = currentLength
+            
+            print '[DownloadStatus] update: speed %s' % self.speed
+            
+        else:
+            print "[Downloader] status: cannot update, file doesnt exist"
+            
+    def dumpInfo(self):
+        return "Name=%s  downloaded: [%d MB/ %d MB] remaining time %dh:%dm:%ds"\
+            % (self.download.name, self.currentLength, self.totalLength, self.etaHMS[0], self.etaHMS[1], self.etaHMS[2])
+
 
 
 class Download(object):
-    def __init__(self, name, url, destDir, filename, quite):
+    def __init__(self, name, url, destDir, filename, quiet):
         self.init_time = time.time()
         self.finish_time = None
         self.url = url
@@ -173,24 +181,34 @@ class Download(object):
         self.filename = filename.encode('ascii', 'ignore')
         self.destDir = destDir.encode('ascii', 'ignore')
         self.local = os.path.join(destDir, filename).encode('ascii', 'ignore')
-        self.quite = quite
+        self.length = 0
+        self.quiet = quiet
         self.running = False
         self.killed = False
         self.paused = False
         self.downloaded = False
         self.showOutput = False
         self.outputCB = None
-        self.totalLength = 0
-        self.pp = None
         self.startCB = None
         self.finishCB = None
-        self.e2download = False
+        self.pp = None
 
     def remove(self, callback=None):
         """removes download"""
         if not self.running and os.path.isfile(self.local):
             print 'removing', self.filename
             os.remove(self.local)
+            
+    def getLength(self):
+        pass
+        
+    def getCurrentLength(self):
+        currentLength = 0
+        if os.path.isfile(self.local):
+            currentLength = long(os.path.getsize(self.local))
+            print "Name=%s  downloaded: [%lu B/ %lu B]" % (self.name, currentLength, self.length)
+        return currentLength
+        
 
     def start(self):
         """Starts downloading file"""
@@ -210,15 +228,14 @@ class Download(object):
 
 
 class RTMPDownloadE2(Download):
-    def __init__(self, name, url, destDir, filename=None, live=False, quite=False):
-        self.e2download = True
+    def __init__(self, name, url, destDir, filename=None, live=False, quiet=False):
         if not filename:
             filename = name + '.flv'
             filename = filename.replace(' ', '_')
             filename = filename.replace('/', '')
             filename = filename.replace('(', '')
             filename = filename.replace(')', '')
-        Download.__init__(self, name, url, destDir, filename, quite)
+        Download.__init__(self, name, url, destDir, filename, quiet)
         self.pp = eConsoleAppContainer()
         #self.pp.dataAvail.append(self.__startCB)
         self.pp.appClosed.append(self.__finishCB)
@@ -247,10 +264,10 @@ class RTMPDownloadE2(Download):
             self.outputCB(data)
 
     def start(self):
-        cmd = rtmpdump_path + ' -r ' + self.url + ' -o ' + '"' + self.local + '"'
+        cmd = RTMP_DUMP_PATH + ' -r ' + self.url + ' -o ' + '"' + self.local + '"'
         cmd = cmd.encode('utf-8')
         print cmd
-        if self.quite:
+        if self.quiet:
             cmd += ' -q '
         if self.live:
             cmd += ' -v'
@@ -266,12 +283,11 @@ class RTMPDownloadE2(Download):
 
 
 class HTTPDownloadE2(Download):
-    def __init__(self, name, url, destDir, filename=None, quite=False):
-        self.e2download = True
+    def __init__(self, name, url, destDir, filename=None, quiet=False):
         if filename is None:
             path = urlparse.urlparse(url).path
             filename = os.path.basename(path)
-        Download.__init__(self, name, url, destDir, filename, quite)
+        Download.__init__(self, name, url, destDir, filename, quiet)
         self.pp = eConsoleAppContainer()
         #self.pp.dataAvail.append(self.__startCB)
         self.pp.stderrAvail.append(self.__outputCB)
@@ -302,10 +318,10 @@ class HTTPDownloadE2(Download):
             self.pp.kill()
 
     def start(self):
-        cmd = wget_path + ' "' + self.url + '"' + ' -O ' + '"' + self.local + '"' ' -U ' + '"' + user_agent + '"'
+        cmd = WGET_PATH + ' "' + self.url + '"' + ' -O ' + '"' + self.local + '"' ' -U ' + '"' + USER_AGENT + '"'
         cmd = cmd.encode('utf-8')
         print cmd
-        if self.quite:
+        if self.quiet:
             cmd += ' -q'
         print '[HTTPDownloadE2] starting downloading', self.url
         self.__startCB()
@@ -315,132 +331,15 @@ class HTTPDownloadE2(Download):
         if self.pp.running():
             self.killed = True
             self.pp.sendCtrlC()
-
-
-class RTMPDownloadTW(Download):
-    """Downloads rtmp stream with rtmpdump, using Twisted as process controler and creator""" 
-    def __init__(self, name, url, destDir, filename=None, live=False, quite=False):
-        if not filename:
-            filename = name + '.flv'
-            filename = filename.replace(' ', '_')
-            filename = filename.replace('/', '')
-            filename = filename.replace('(', '')
-            filename = filename.replace(')', '')
-        Download.__init__(self, name, url, destDir, filename, quite)
-        self.startDeffer = defer.Deferred()
-        self.finishDeffer = defer.Deferred()
-        self.pp = RTMPDumpProcessProtocol(self)
-        self.live = live
-
-    def start(self):
-        cmd = rtmpdump_path + ' -r ' + self.url + ' -o ' + self.local
-        cmd = cmd.encode('utf-8')
-        print cmd
-        cmd = cmd.split()
-        if self.quite:
-            cmd.append('-q')
-        if self.live:
-            cmd.append('-v')
-        print '[RTMPDownloadTW] starting downloading', self.url, 'to', self.local
-        reactor.spawnProcess(self.pp, cmd[0], cmd)
-
-    def cancel(self):
-        if self.running:
-            self.pp.kill()
-
-
-class RTMPDumpProcessProtocol(protocol.ProcessProtocol):
-    def __init__(self, download):
-        self.download = download
-
-    def connectionMade(self):
-        print '[RTMPDumpProcessProtocol] connectionMade', self.download.name.encode('utf-8')
-        self.download.running = True
-        self.download.startDeffer.callback(self.download)
-
-    def processEnded(self, reason):
-        print '[RTMPDumpProcessProtocol] processEnded', self.download.name.encode('utf-8'), reason.value.exitCode
-        self.download.running = False
-        self.download.finish_time = time.time()
-
-        if reason.value.exitCode == 0:
-            self.download.downloaded = True
-            self.download.totalLength = os.path.getsize(self.download.local)
-        else:
-            self.download.downloaded = False
-        self.download.finishDeffer.callback(self.download)
-
-    def errReceived(self, data):
-        if self.download.showOutput:
-            if self.download.outputCB:
-                self.download.outputCB(data)
-
-    def kill(self):
-        self.transport.signalProcess('KILL')
-
-
-class HTTPDownloadTW(Download):
-    """Downloads http stream with wget, using Twisted as process controller and creator""" 
-    def __init__(self, name, url, destDir, filename=None, quite=False):
-        if filename is None:
-            path = urlparse.urlparse(url).path
-            filename = os.path.basename(path)
-        Download.__init__(self, name, url, destDir, filename, quite)
-        self.startDeffer = defer.Deferred()
-        self.finishDeffer = defer.Deferred()
-        self.pp = wgetProcessProtocol(self)
-
-    def start(self):
-        cmd = wget_path + ' -c ' + self.url + ' -O ' + self.local #+ ' -U ' + '"' + user_agent + '"'
-        cmd = cmd.encode('utf-8')
-        print cmd
-        cmd = cmd.split()
-        if self.quite:
-            cmd.append('-q')
-        print '[HTTPDownloadTW] starting downloading', self.url
-        reactor.spawnProcess(self.pp, cmd[0], cmd)
-
-    def cancel(self):
-        if self.running:
-            self.pp.kill()
-        #self.removeDownload()
-
-
-class wgetProcessProtocol(protocol.ProcessProtocol):
-    def __init__(self, download):
-        self.download = download
-
-    def connectionMade(self):
-        print '[wgetProcessProtocol] connectionMade', self.download.name.encode('utf-8')
-        self.download.running = True
-        self.download.startDeffer.callback(self.download)
-
-    def processEnded(self, reason):
-        print '[wgetProcessProtocol] processEnded', self.download.name.encode('utf-8'), reason.value.exitCode
-        self.download.running = False
-        self.download.finish_time = time.time()
-
-        if reason.value.exitCode == 0:
-            self.download.downloaded = True
-            self.download.totalLength = os.path.getsize(self.download.local)
-        else:
-            self.download.downloaded = False
-        self.download.finishDeffer.callback(self.download)
-
-    def errReceived(self, data):
-        if self.download.showOutput:
-            if self.download.outputCB:
-                self.download.outputCB(data)
-
-    def kill(self):
-        self.transport.signalProcess('KILL')
         
 class HTTPProgressDownloader(client.HTTPDownloader):
     
-    def __init__(self, url, fileOrName, writeToEmptyFile=False, outputCB=None, *args, **kwargs):
+    def __init__(self, url, fileOrName, updateCurrentLength, writeToEmptyFile=False, outputCB=None, *args, **kwargs):
         self.writeToEmptyFile = writeToEmptyFile
         self.outputCB = outputCB
+        self.updateCurrentLength = updateCurrentLength
         self.totalLength = 0
+        self.currentLength = 0
         client.HTTPDownloader.__init__(self, url, fileOrName, *args, **kwargs)
         
 
@@ -474,12 +373,11 @@ class HTTPProgressDownloader(client.HTTPDownloader):
     def pagePart(self, data):
         if self.status == '200':
             self.currentLength += len(data)
+            self.updateCurrentLength(self.currentLength)
             if self.totalLength:
                 percent = "%i%%" % ((self.currentLength / self.totalLength) * 100)
                 outputstr = "%.3f/%.3f MB %s percent" % (float(self.currentLength / (1024 * 1024)), float(self.totalLength / (1024 * 1024)), percent)
                 self.outputCB(outputstr)
-                #print "3[1FProgress: " + percent
-               # log.msg("3[1FProgress: " + percent)
             else:
                 percent = '%dK' % (self.currentLength / 1000)
                 outputstr = "%d/%i MB %d percent" % (self.currentLength, percent)
@@ -506,12 +404,13 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
 
 class HTTPDownloadTwisted(Download):
-    def __init__(self, name, url, destDir, filename=None, quite=False):
+    def __init__(self, name, url, destDir, filename=None, quiet=False):
         if filename is None:
             path = urlparse.urlparse(url).path
             filename = os.path.basename(path)
-        Download.__init__(self, name, url, destDir, filename, quite)
+        Download.__init__(self, name, url, destDir, filename, quiet)
         self.connector = None
+        self.currentLength = 0
 
     def __startCB(self):
         self.running = True
@@ -521,14 +420,23 @@ class HTTPDownloadTwisted(Download):
     def __finishCB(self, retval):
         self.running = False
         self.finish_time = time.time()
-        self.downloaded = True
+        if not self.killed:
+            self.downloaded = True
+        else:
+            self.downloaded = False
         if self.finishCB is not None:
             self.finishCB(self)
 
     def __outputCB(self, data):
         if self.showOutput and self.outputCB is not None:
             self.outputCB(data)
-
+    
+    def updateCurrentLength(self, currentLength):
+        self.currentLength = currentLength
+        
+    def getCurrentLength(self):
+        return self.currentLength
+    
     def start(self):
         self.__startCB()
         self.defer = self.downloadWithProgress(self.url, self.local, writeToEmptyFile=True, outputCB=self.__outputCB).addCallback(self.__finishCB).addErrback(self.downloadError)
@@ -537,12 +445,12 @@ class HTTPDownloadTwisted(Download):
         if self.running and self.connector is not None:
             self.downloaded = False
             self.running = False
+            self.killed = True
             self.connector.disconnect()
     
     def downloadWithProgress(self, url, file, contextFactory=None, *args, **kwargs):
-        print 'downloadWithProgress'
         scheme, host, port, path = client._parse(url)
-        factory = HTTPProgressDownloader(url, file, *args, **kwargs)
+        factory = HTTPProgressDownloader(url, file, self.updateCurrentLength, *args, **kwargs)
         if scheme == 'https':
             from twisted.internet import ssl
             if contextFactory is None:
@@ -556,5 +464,4 @@ class HTTPDownloadTwisted(Download):
         self.downloaded = False
         self.running = False
         print "Error:", failure.getErrorMessage()
-        if self.finishCB is not None:
-            self.finishCB(self)
+        self.__finishCB(None)

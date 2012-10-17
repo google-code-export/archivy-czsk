@@ -860,7 +860,7 @@ class SubProcessPath(object):
             try:
                 f = open(subfile, 'r')
             except IOError:
-                print '[srtParser] cannot open subtitle file %s' % subfile
+                print '[Subtitles] cannot open subtitle file %s' % subfile
                 self.text = None
             else:
                 text = f.read()
@@ -886,8 +886,9 @@ class SubProcessPath(object):
                 if enc == self.encodings[-1]:
                     if self.current_encoding is not None:
                         utext = text.decode(self.current_encoding)
-                        used_encoding = self.current_encoding   
-                    print '[Subtitles] cannot decode file'
+                        used_encoding = self.current_encoding
+                    else:    
+                        print '[Subtitles] cannot decode file'
                 continue
         return utext, used_encoding
     

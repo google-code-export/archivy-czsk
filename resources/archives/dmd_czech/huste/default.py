@@ -26,7 +26,17 @@ _UserAgent_ = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko
 icon=None
 nexticon=None
 
-def getContent(url, name, mode, **kwargs): 
+def getContent(session, params):
+    mode = None
+    url = None
+    name = None
+    
+    if 'url' in params:
+        url = params['url']
+    if 'mode' in params:
+        mode = params['mode']
+    if 'name' in params:
+        name = params['name']
         
     if mode==None or url==None or len(url)<1:
         print ""

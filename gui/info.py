@@ -4,7 +4,9 @@ Created on 28.4.2012
 
 @author: marko
 '''
-from Plugins.Extensions.archivCZSK import _
+import os
+from twisted.web.client import downloadPage
+
 from Screens.Screen import Screen
 from Components.Label import Label
 from Components.ActionMap import ActionMap, NumberActionMap
@@ -13,25 +15,22 @@ from Components.Pixmap import Pixmap
 from Screens.MessageBox import MessageBox
 from Components.AVSwitch import AVSwitch
 from enigma import ePicLoad, getDesktop
-from twisted.web.client import downloadPage
-import os
+from base import BaseArchivCZSKScreen
 
-class ChangelogScreen(Screen):
-	skin = """
-			<screen position="center,center" size="720,576" title="Info" >
-				<widget name="changelog" position="0,0" size="720,576" font="Regular;23" transparent="1" foregroundColor="white" />
-			</screen>"""
+from Plugins.Extensions.archivCZSK import _
 
+
+class ChangelogScreen(BaseArchivCZSKScreen):
 	def __init__(self, session, archive):
-		Screen.__init__(self, session)
-		self.changelog = archive.changelog
+		BaseArchivCZSKScreen.__init__(self, session)
+		self.changelog = archive.info.changelog
 		self.title = archive.name
+		
 		if self.changelog is not None:
 			self["changelog"] = ScrollLabel(self.changelog.encode('utf-8'))
 		else:
 			self["changelog"] = ScrollLabel('')
-			
-			
+				
 		self["actions"] = NumberActionMap(["archivCZSKActions"],
 		{
 			"cancel": self.close,
@@ -86,19 +85,9 @@ class Info(object):
 		print '[Info] showInfo'
 		self.session.openWithCallback(self.closeInfo, InfoScreen, self.it)
 
-class InfoScreen(Screen):
-	skin = """
-			<screen position="center,center" size="720,576" title="Info" >
-				<widget name="genre" position="320,50" size="400,30" font="Regular;22" transparent="1" foregroundColor="yellow" />
-				<widget name="year" position="320,90" size="400,30" font="Regular;22" transparent="1" foregroundColor="yellow" />
-				<widget name="rating" position="320,130" size="400,30" font="Regular;22" transparent="1" foregroundColor="yellow" />
-				<widget name="plot" position="0,310" size="720,306" font="Regular;23" transparent="1" foregroundColor="white" />
-				<widget name="img" position="10,0" zPosition="2" size="300,300"  alphatest="on"/>
-			</screen>"""
-
+class InfoScreen(BaseArchivCZSKScreen):
 	def __init__(self, session, it):
-		Screen.__init__(self, session)
-		self.session = session
+		BaseArchivCZSKScreen.__init__(self, session)
 		self.image_link = None
 		self.it = it
 		self.image_dest = None

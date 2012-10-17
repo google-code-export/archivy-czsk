@@ -1,0 +1,4 @@
+<settings>
+   <setting id="secret_token" type="text" label="Zadejte tajné heslo" default="" />
+   <setting id="test_nastaveni" type="bool" label="Použít testovací nastavení" default="false"/>
+</settings>

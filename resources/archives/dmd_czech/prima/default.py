@@ -1,21 +1,9 @@
 # -*- coding: utf-8 -*-
 import urllib2, urllib, re, os, random, decimal
-try:
-    from Plugins.Extensions.archivCZSK.resources.archives.dmd_czech.tools.parseutils import *
-    from Plugins.Extensions.archivCZSK.resources.tools.dmd import addDir,addLink
-except ImportError:
-    from resources.archives.dmd_czech.tools.parseutils import *
-    from resources.tools.dmd import addDir,addLink
-try:
-    from Plugins.Extensions.archivCZSK import _
-except ImportError:
-    print 'Unit test'
+from Plugins.Extensions.archivCZSK.resources.archives.dmd_czech.tools.parseutils import *
+from Plugins.Extensions.archivCZSK.resources.tools.dmd import addDir,addLink
+from Plugins.Extensions.archivCZSK import _
 
-name = 'Prima PLAY'
-name_sc = 'prima'
-author = 'Jiri Vyhnalek'
-version = '2.4'
-about = _('Plugin to play TV video archive iprima.cz/videoarchiv')
 
 __baseurl__ = 'http://www.iprima.cz/videoarchiv'
 __cdn_url__ = 'http://cdn-dispatcher.stream.cz/?id='
@@ -29,14 +17,34 @@ cool = None
 icon = None
 nexticon = None
 
-def getContent(url, name, mode, **kwargs):  
-    page = kwargs['page']
-    kanal = kwargs['kanal']
+def getContent(session, params):
+    url=None
+    name=None
+    thumb=None
+    mode=None
+    page=None
+    kanal=None
     
-    if page != '' and page is not None:
-        page = int(page)
-    if kanal != '' and kanal is not None:
-        kanal = int(kanal)
+    try:
+        url = urllib.unquote_plus(params["url"])
+    except:
+        pass
+    try:
+        name = urllib.unquote_plus(params["name"])
+    except:
+        pass
+    try:
+        mode=int(params["mode"])
+    except:
+        pass
+    try:
+        page=int(params["page"])
+    except:
+        pass
+    try:
+        kanal=int(params["kanal"])
+    except:
+        pass
         
     if mode == None or url == None or len(url) < 1:
         OBSAH()

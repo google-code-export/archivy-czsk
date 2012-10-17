@@ -19,67 +19,57 @@
 # *  http://www.gnu.org/copyleft/gpl.html
 # *
 # */
-import os,re,sys
+import os, re, sys
 import util
-try:
-    from Plugins.Extensions.archivCZSK.resources.tools.doplnky import set_command, add_dir
-except ImportError:
-    from resources.tools.doplnky import set_command,add_dir, add_video
-    from resources.exceptions import archiveException
-try:
-    from Plugins.Extensions.archivCZSK import _
-    from Components.config import config
-except ImportError:
-    pass
+from Plugins.Extensions.archivCZSK.resources.tools.doplnky import set_command, add_dir
+from Plugins.Extensions.archivCZSK.gui import common
 
-def _list(addon,history,key,value):
+
+def _list(addon, history, key, value):
         params = {}
         menuItems = {}
         if key:
                 params[key] = value
                 menuItems[key] = value
         params['search'] = ''
-        add_dir(_("New search"),params,util.icon('search.png'))
-        for what in util.get_searches(addon,history):
-                params={}
+        add_dir(_("New search"), params, util.icon('search.png'))
+        for what in util.get_searches(addon, history):
+                params = {}
                 params['search'] = what
                 menuItems['search-remove'] = what
-                add_dir(what.encode('utf-8'),params,menuItems={_('Remove'):menuItems})
-        #xbmcplugin.endOfDirectory(int(sys.argv[1]))
+                add_dir(what.encode('utf-8'), params, menuItems={_('Remove'):menuItems})
 
-def _remove(addon,history,search):
-        util.remove_search(addon,history,search)
+def _remove(addon, history, search):
+        util.remove_search(addon, history, search)
         set_command('refreshnow')
 
-def _search(addon,history,what,update_history,callback):
+def _search(session, addon, history, what, update_history, callback):
         if what == '':
-            set_command('search')
-            pass
+            what = common.getTextInput(session, _("Set your search expression"))
 
         if not what == '':
-                print '[doplnky_tools.util] _search',what
                 maximum = 20
                 try:
-                        maximum = int(config.plugins.archivCZSK.keep_searches.value)
+                    maximum = int(addon.get_setting('keep-searches'))
                 except:
                         util.error('Unable to parse convert addon setting to number')
                         pass
                 if update_history:
-                        util.add_search(addon,history,what,maximum)
+                        util.add_search(addon, history, what, maximum)
                 callback(what)
 
-def item(items={},label=_("Search")):
+def item(items={}, label=_("Search")):
         items['search-list'] = ''
-        add_dir(label,items,util.icon('search.png'))
+        add_dir(label, items, util.icon('search.png'))
 
-def main(addon,history,p,callback,key=None,value=None):
-        if (key==None) or (key in p and p[key] == value):
+def main(addon, history, p, callback, key=None, value=None):
+        if (key == None) or (key in p and p[key] == value):
                 if 'search-list' in p.keys():
-                        _list(addon,history,key,value)
+                        _list(addon, history, key, value)
                 if 'search' in p.keys():
-                        update_history=True
+                        update_history = True
                         if 'search-no-history' in p.keys():
-                                update_history=False
-                        _search(addon,history,p['search'],update_history,callback)
+                                update_history = False
+                        _search(addon, history, p['search'], update_history, callback)
                 if 'search-remove' in p.keys():
-                        _remove(addon,history,p['search-remove'])
+                        _remove(addon, history, p['search-remove'])

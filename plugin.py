@@ -4,7 +4,7 @@ Created on 28.2.2012
 
 @author: marko
 '''
-import os
+import os, traceback
 
 from . import _
 from Plugins.Plugin import PluginDescriptor
@@ -13,13 +13,19 @@ from Screens.Screen import Screen
 from Screens.PluginBrowser import *
 from Components.PluginComponent import plugins
 from Components.config import config
+
 from gui.archive import ArchiveScreen
+import gui.download as dwnld
 import resources.tools.updater as updater
 import resources.archives as archive_modul
-from resources.tools.util import PArchive
-import gui.download as dwnld
+from resources.tools.contentprovider import Archive, DmdArchive, DoplnkyArchive
 from resources.tools.downloader import DownloadManager
 from resources.archives import config as archive_cfg
+import version
+
+
+
+
 
 def sessionstart(reason, session):
 	dwnld.setGlobalSession(session)
@@ -44,12 +50,21 @@ def loadArchives():
 			md = getattr(archive_modul, archs_dir.split('/')[-1])
 			mm = getattr(md, arch_dir)
 			modul = getattr(mm, 'default')
-			archive = PArchive(modul)
+			
+			if arch_dir in archive_cfg.dmd:
+				archive = DmdArchive(modul)
+			elif arch_dir == 'streamy':
+				archive = Archive(modul)
+			elif arch_dir in archive_cfg.doplnky:
+				archive = DoplnkyArchive(modul)
+				
 			if archive.id in archive_cfg.tv_archives:
 				tv_archives.append(archive)
 			elif archive.id in archive_cfg.video_archives:
 				video_archives.append(archive)	 
+				
 			arch_dict[archive.id] = archive 
+			
 	tv_archives.sort()
 	video_archives.sort()
 	
@@ -58,28 +73,30 @@ def loadArchives():
 archive_dict, tv_archives, video_archives = loadArchives()
 
 class ArchivCZSK():
+
 	def __init__(self, session):
 		self.session = session
 		self.toolsUpdate = []
 		self.archivesUpdate = []
-		self.newArchivesUpdate = []		
-		self.checkUpdates()
+		self.newArchivesUpdate = []
+		
+		#if config.plugins.archivCZSK.autoUpdate.value:
+			#self.checkUpdates()
+		#else:
+		self.openArchiveScreen()
 
 	def checkUpdates(self):
-		if config.plugins.archivCZSK.autoUpdate.value:
-			self.archivesUpdate, self.toolsUpdate , self.newArchivesUpdate = updater.checkArchiveVersions(tv_archives + video_archives)
+		self.archivesUpdate, self.toolsUpdate , self.newArchivesUpdate = updater.checkArchiveVersions(tv_archives + video_archives)
 			
-			archivesUpdateString = ' '.join([arch.name for arch in self.archivesUpdate])
-			newArchivesUpdateString = ' '.join([arch.name for arch in self.newArchivesUpdate])
-			toolsUpdateString = ' '.join(s['name'] for s in self.toolsUpdate)
+		archivesUpdateString = ' '.join([arch.name for arch in self.archivesUpdate])
+		newArchivesUpdateString = ' '.join([arch.name for arch in self.newArchivesUpdate])
+		toolsUpdateString = ' '.join(s['name'] for s in self.toolsUpdate)
 			
-			updateString = archivesUpdateString + ' ' + newArchivesUpdateString + ' ' + toolsUpdateString + '?'
+		updateString = archivesUpdateString + ' ' + newArchivesUpdateString + ' ' + toolsUpdateString + '?'
 			
-			if len(self.archivesUpdate) > 0 or len(self.newArchivesUpdate) > 0 or len(self.toolsUpdate) > 0:
-				self.session.openWithCallback(self.updateArchives, MessageBox, _('Do you want to update/add archives/tools: ') + updateString.encode('utf-8'), type=MessageBox.TYPE_YESNO)
+		if len(self.archivesUpdate) > 0 or len(self.newArchivesUpdate) > 0 or len(self.toolsUpdate) > 0:
+			self.session.openWithCallback(self.updateArchives, MessageBox, _('Do you want to update/add archives/tools: ') + updateString.encode('utf-8'), type=MessageBox.TYPE_YESNO)
 
-			else:
-				self.openArchiveScreen() 
 		else:
 			self.openArchiveScreen()   
 
@@ -115,7 +132,7 @@ class ArchivCZSK():
 
 def menu(menuid, **kwargs):
 	if menuid == "mainmenu":
-		return [(_("ArchivCZSK"), main, "mainmenu", 32)]
+		return [(version.title, main, "mainmenu", 32)]
 	else:
 		return []
 
@@ -124,15 +141,15 @@ def main(session, **kwargs):
 
 def startSetup(menuid, **kwargs):
 	if menuid == "mainmenu":
-		return [(_("Playing CZ/SK archives"), main, "archivy_czsk", 32)]
+		return [(version.description, main, "archivy_czsk", 32)]
 	return []
 
 def Plugins(path, **kwargs):
-	descr = _("Playing CZ/SK archives")
-	nameA= "ArchivCZSK"
-	list = [PluginDescriptor(where=[PluginDescriptor.WHERE_SESSIONSTART], fnc=sessionstart), PluginDescriptor(name=nameA, description=descr, where=PluginDescriptor.WHERE_PLUGINMENU, fnc=main, icon="czsk.png"),]
+	descr = version.description
+	nameA = version.title
+	list = [PluginDescriptor(where=[PluginDescriptor.WHERE_SESSIONSTART], fnc=sessionstart), PluginDescriptor(name=nameA, description=descr, where=PluginDescriptor.WHERE_PLUGINMENU, fnc=main, icon="czsk.png"), ]
 	if config.plugins.archivCZSK.extensions_menu.value:
 		list.append(PluginDescriptor(name=nameA, description=descr, where=PluginDescriptor.WHERE_EXTENSIONSMENU, fnc=main))
 	if config.plugins.archivCZSK.main_menu.value:
-		list.append(PluginDescriptor(name=nameA, description=descr, where = PluginDescriptor.WHERE_MENU, fnc=startSetup))
+		list.append(PluginDescriptor(name=nameA, description=descr, where=PluginDescriptor.WHERE_MENU, fnc=startSetup))
 	return list

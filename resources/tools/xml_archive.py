@@ -7,7 +7,7 @@ Created on 20.3.2012
 from  xml.etree.cElementTree import ElementTree, Element, SubElement, Comment, tostring
 import datetime
 import os
-import util
+import items as util
 from Components.config import config
 _dataPath = config.plugins.archivCZSK.dataPath.value
     

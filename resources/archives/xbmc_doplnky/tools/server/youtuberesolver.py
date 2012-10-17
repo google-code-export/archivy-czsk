@@ -19,13 +19,16 @@
 # *  http://www.gnu.org/copyleft/gpl.html
 # *
 # */
+
 import re, urllib
 try:
     from Plugins.Extensions.archivCZSK.resources.archives.xbmc_doplnky.tools import util
 except ImportError:
     from resources.archives.xbmc_doplnky.tools import util
+    
 __name__ = 'youtube'
 __eurl__ = ''
+
 fmt_value = {
         '5': 'flv_240p',
         '6': 'flv_240p',
@@ -62,45 +65,45 @@ def supports(url):
 def resolve(url):
         m = _regex(url)
         if not m == None:
-                request = urllib.urlencode({'video_id':m.group('id'), 'el':'embedded', 'asv':'3', 'hl':'en_US', 'eurl':__eurl__})
+                request = urllib.urlencode({'video_id':m.group('id'),'el':'embedded','asv':'3','hl':'en_US','eurl':__eurl__})
                 data = util.request('http://www.youtube.com/get_video_info?%s' % request)
                 data = urllib.unquote(util.decode_html(data))
-                
                 if data.find('status=fail') > -1:
-                        util.error('youtube resolver failed: ' + data + ' videoid:' + m.group('id'))
+                        util.error('youtube resolver failed: '+data+' videoid:'+m.group('id'))
                 else:
                         # to avoid returning more than 1 url of same quality
                         qualities = []
                         resolved = []
-                        for n in re.finditer('(=|,|\|)url=(?P<url>.+?)(,|\||fallback_host).+?itag=(?P<q>\d+)', data):
-                            if fmt_value.has_key(n.group('q')):
-                                quality = fmt_value[n.group('q')]
-                            else:
-                                quality = 'unknown' 
-                            stream = urllib.unquote(n.group('url'))
-                            item = {}
-                            item['name'] = __name__
-                            item['url'] = stream
-                            item['quality'] = quality
-                            item['surl'] = url
-                            qualities.append(quality)
-                            resolved.append(item)
+                        for n in re.finditer('itag=(?P<q>\d+)\&url=(?P<url>.+?)\&quality',data):
+                                stream = urllib.unquote(n.group('url'))
+                                quality = '???'
+                                if n.group('q') in fmt_value.keys():
+                                        quality = fmt_value[n.group('q')]
+                                if not quality in qualities:
+                                        item = {}
+                                        item['name'] = __name__
+                                        item['url'] = stream
+                                        item['quality'] = quality
+                                        item['surl'] = url
+                                        item['subs'] = ''
+                                        qualities.append(quality)
+                                        resolved.append(item)
                         return resolved
-                
+               
 # returns the steam url
 def url(url):
         m = _regex(url)
         if not m == None:
-                request = urllib.urlencode({'video_id':m.group('id'), 'el':'embedded', 'asv':'3', 'hl':'en_US', 'eurl':__eurl__})
+                request = urllib.urlencode({'video_id':m.group('id'),'el':'embedded','asv':'3','hl':'en_US','eurl':__eurl__})
                 data = util.request('http://www.youtube.com/get_video_info?%s' % request)
                 data = urllib.unquote(util.decode_html(data))
-                
+               
                 if data.find('status=fail') > -1:
-                        util.error('youtube resolver failed: ' + data + ' videoid:' + m.group('id'))
+                        util.error('youtube resolver failed: '+data+' videoid:'+m.group('id'))
                 else:
-                        print data
-                        stream = re.search('url_encoded_fmt_stream_map=url=(.+?)fallback_host', data, re.IGNORECASE | re.DOTALL).group(1)                 
+                        stream = re.search('url_encoded_fmt_stream_map=url=(.+?)fallback_host',data,re.IGNORECASE | re.DOTALL).group(1)                
                         return [urllib.unquote(stream)]
 
 def _regex(url):
-        return re.search('https?\://www\.youtube\.com/(watch\?v=|v/|embed/)(?P<id>.+?)(\?|$|&)', url, re.IGNORECASE | re.DOTALL)
+        return re.search('https?\://www\.youtube\.com/(watch\?v=|v/|embed/)(?P<id>.+?)(\?|$|&)',url,re.IGNORECASE | re.DOTALL)
+

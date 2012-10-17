@@ -1,18 +1,12 @@
 # -*- coding: utf-8 -*-
 import urllib2, urllib, re, os
+from twisted.internet import reactor
 
-try:
-    from Plugins.Extensions.archivCZSK.resources.archives.dmd_czech.tools.parseutils import *
-    from Plugins.Extensions.archivCZSK.resources.archives.dmd_czech.tools import vk, novamov, videobb, videonet, youtube, servertools
-    from Plugins.Extensions.archivCZSK.resources.tools.dmd import addDir, addLink, set_command
-except ImportError:
-    from resources.archives.dmd_czech.tools import vk, novamov, videobb, videonet, youtube, servertools
-    from resources.archives.dmd_czech.tools.parseutils import *
-    from resources.tools.dmd import addDir, addLink, set_command
-try:
-    from Plugins.Extensions.archivCZSK import _
-except ImportError:
-    print 'Unit test'
+from Plugins.Extensions.archivCZSK.resources.archives.dmd_czech.tools.parseutils import *
+from Plugins.Extensions.archivCZSK.resources.archives.dmd_czech.tools import vk, novamov, videobb, videonet, youtube, servertools
+from Plugins.Extensions.archivCZSK.resources.tools.dmd import addDir, addLink, set_command
+import Plugins.Extensions.archivCZSK.resources.tools.client as client
+from Plugins.Extensions.archivCZSK import _
 
 __baseurl__ = 'http://filmycz.com'
 #_UserAgent_ = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'
@@ -20,8 +14,20 @@ _UserAgent_ = 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0; SLCC1; .NET CL
 icon = None
 nexticon = None
 
-def getContent(url, name, mode, **kwargs): 
-    search = kwargs['input']
+def getContent(session, params):
+    mode = None
+    url = None
+    name = None
+    
+    if 'url' in params:
+        url = params['url']
+    if 'mode' in params:
+        mode = params['mode']
+    if 'name' in params:
+        name = params['name']
+        
+    print mode   
+    
     if mode == None:
         print ""
         OBSAH()
@@ -40,11 +46,10 @@ def getContent(url, name, mode, **kwargs):
 
     elif mode == 4:
         print "" + url
-        if search:
+        search = client.getTextInput(session, _("set your search expression"))
+        if search is not None:
             SEARCH(search)
-        else:
-            set_command('search')
-
+        
     elif mode == 5:
         print "" + url
         SERIALY(url)
@@ -65,6 +70,7 @@ def OBSAH():
 
 #==========================================================================
 def KATEGORIE():
+    print 'kategorie'
     addDir('Akční', __baseurl__ + '/film/category/akcni/', 2, icon)
     addDir('Animovaný', __baseurl__ + '/film/category/animovany/', 2, icon)
     addDir('Dobrodružný', __baseurl__ + '/film/category/dobrodruzny/', 2, icon)
@@ -263,52 +269,52 @@ def YOUTUBE_LINK(url, name):
 
 
 #==========================================================================
-def VIDEOLINK(url,name):
+def VIDEOLINK(url, name):
         
-    print "URL: "+url
-    data=getUrlData(url) 
+    print "URL: " + url
+    data = getUrlData(url) 
     
     
-    match=re.compile('<p>(.+?)</p>\s*.*<p style=.*><.*mce_(src|href)=\"(.+?)\".*').findall(data)
+    match = re.compile('<p>(.+?)</p>\s*.*<p style=.*><.*mce_(src|href)=\"(.+?)\".*').findall(data)
     if (len(match) < 1) or (match[0][0].find('<br /></p><p><br />') != -1) :
         items = servertools.findvideo(data)
-        for server,adresa in items:
-                adresa = adresa.replace('&amp;','&')
+        for server, adresa in items:
+                adresa = adresa.replace('&amp;', '&')
                 server = server.lower()
         
                 if server == "youtube":
-                        YOUTUBE_LINK(adresa,name+' - UKAZKA')
+                        YOUTUBE_LINK(adresa, name + ' - UKAZKA')
 
                 if server == "24video":
-                        VIDEONET_LINK(adresa,name)
+                        VIDEONET_LINK(adresa, name)
                 if server == "videobb":
-                        VIDEOBB_LINK(adresa,name)
+                        VIDEOBB_LINK(adresa, name)
                 if server == "novamov":
-                        NOVAMOV_LINK(adresa,name)
+                        NOVAMOV_LINK(adresa, name)
                 if server == "vk":
-                        VKCOM_LINK(adresa,name)
+                        VKCOM_LINK(adresa, name)
                 #else:
                 #       print "VIDEOLINK URL: "+url
     else:
         for item in match:
-                url = item[len(item)-1].replace('&amp;','&')
+                url = item[len(item) - 1].replace('&amp;', '&')
                 try:
-                        n=item[2]
-                        name=item[0]
+                        n = item[2]
+                        name = item[0]
                 except:
                         pass        
                 if url.find('youtube.com') != -1:
-                        YOUTUBE_LINK(url,name)
+                        YOUTUBE_LINK(url, name)
                 elif url.find('24video.net') != -1:
-                        match=re.search('flash[v|V]ars.*\"id=(?P<id>.+?)&amp;idHtml=(?P<html>.+?)&amp;.*rootUrl=(?P<url>.+?)&amp;', data, re.IGNORECASE | re.DOTALL)
-                        VIDEONET_LINK(('%s%s%s?mode=play'% (match.group('url') , match.group('html'),match.group('id'))),name)
+                        match = re.search('flash[v|V]ars.*\"id=(?P<id>.+?)&amp;idHtml=(?P<html>.+?)&amp;.*rootUrl=(?P<url>.+?)&amp;', data, re.IGNORECASE | re.DOTALL)
+                        VIDEONET_LINK(('%s%s%s?mode=play' % (match.group('url') , match.group('html'), match.group('id'))), name)
                 elif url.find('videobb.com') != -1:
-                        VIDEOBB_LINK(url,name)
+                        VIDEOBB_LINK(url, name)
                 elif url.find('novamov.com') != -1:
-                        NOVAMOV_LINK(url,name)
+                        NOVAMOV_LINK(url, name)
                 elif url.find('vk.com') != -1 or url.find('vkontakte.ru') != -1:
-                        VKCOM_LINK(url,name)
+                        VKCOM_LINK(url, name)
                 else:
-                        print "VIDEOLINK URL: "+url
+                        print "VIDEOLINK URL: " + url
 #==========================================================================
         

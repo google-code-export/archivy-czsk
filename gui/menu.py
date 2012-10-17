@@ -1,145 +1,256 @@
 # -*- coding: UTF-8 -*-
-import os
+from skin import parseColor
+
 from Screens.Screen import Screen
-from Plugins.Extensions.archivCZSK import _
-import Plugins.Extensions.archivCZSK.resources.archives.config as archive_conf
+from Screens.VirtualKeyBoard import VirtualKeyBoard
 from Components.ConfigList import ConfigList, ConfigListScreen
-from Components.config import *
+from Components.config import config, configfile
 from Components.ActionMap import ActionMap
 from Components.Label import Label
 from Components.ProgressBar import ProgressBar
-from Screens.VirtualKeyBoard import VirtualKeyBoard
-from enigma import getDesktop
-from info import ChangelogScreen
 from Components.FileList import FileList
 from Components.Sources.StaticText import StaticText
 
-                      
-config.plugins.archivCZSK.archives.streamy = ConfigSubsection()
-config.plugins.archivCZSK.mipselPlayer = ConfigSubsection()
-config.plugins.archivCZSK.mipselPlayer.autoPlay = ConfigYesNo(default=True)
-config.plugins.archivCZSK.mipselPlayer.buffer = ConfigInteger(default=8 * 1024 * 1024)
+from Plugins.Extensions.archivCZSK import _
+import Plugins.Extensions.archivCZSK.settings as settings
+import Plugins.Extensions.archivCZSK.resources.archives.config as archives_config
 
-choicelist = [('standard', _('standard player')), ('custom', _('custom player (subtitle support)')), ('mipsel', _('mipsel player'))]   
-config.plugins.archivCZSK.player = ConfigSelection(default="custom", choices=choicelist)                   
-config.plugins.archivCZSK.seeking = ConfigYesNo(default=False)
-config.plugins.archivCZSK.extensions_menu = ConfigYesNo(default=True)
-config.plugins.archivCZSK.main_menu = ConfigYesNo(default=False)
-config.plugins.archivCZSK.csfd = ConfigYesNo(default=False)
-config.plugins.archivCZSK.clearMemory = ConfigYesNo(default=False)
-config.plugins.archivCZSK.autoUpdate = ConfigYesNo(default=False)
-config.plugins.archivCZSK.debug = ConfigYesNo(default=False) 
-config.plugins.archivCZSK.dataPath = ConfigDirectory(default="/usr/lib/enigma2/python/Plugins/Extensions/archivCZSK/resources/data")
-config.plugins.archivCZSK.downloadsPath = ConfigDirectory(default="/media/hdd")
-config.plugins.archivCZSK.subtitlesPath = ConfigDirectory(default="/tmp")
+from base import BaseArchivCZSKScreen
+from info import ChangelogScreen
 
-choicelist = []
-for i in range(5, 250, 1):
-    choicelist.append(("%d" % i, "%d s" % i))
-config.plugins.archivCZSK.playDelay = Config = ConfigSelection(default="7", choices=choicelist)
 
-choicelist = []
-for i in range(1000, 20000, 1000):
-    choicelist.append(("%d" % i, "%d ms" % i))
-config.plugins.archivCZSK.archiveBuffer = ConfigSelection(default="3000", choices=choicelist)
 
-choicelist = []
-for i in range(1000, 20000, 1000):
-    choicelist.append(("%d" % i, "%d ms" % i))
-config.plugins.archivCZSK.liveBuffer = ConfigSelection(default="3000", choices=choicelist)
-
-CSFD = None
-try:
-    from Plugins.Extensions.CSFD.plugin import CSFD
-    print "CSFD plugin import OK"
-except ImportError:
-    print "CSFD None"
-    CSFD = None
-if CSFD is None:
-    config.plugins.archivCZSK.csfd.setValue(False)
-    config.plugins.archivCZSK.csfd.save()
+class CategoryWidget():
+    color_black = "#000000"
+    color_white = "#ffffff"
+    color_red = "#ff0000"
+    color_grey = "#5c5b5b"
     
+    def __init__(self, screen, name, label):
+        print 'intializing category widget %s-%s' % (name, label.encode('utf-8'))
+        self.screen = screen
+        self.name = name
+        self.label = label
+        self.x_position = 0
+        self.y_position = 0
+        self.x_size = 100
+        self.y_size = 100
+        self.active = False
 
+        self.foregroundColor_inactive = self.color_white
+        self.backgroundColor_inactive = self.color_black
+        self.foregroundColor_active = self.color_red
+        self.backgroundColor_active = self.color_black
+        
+        self.screen[self.name] = Label(label.encode('utf-8'))
+        
+    def get_skin_string(self):
+        return """<widget name="%s" size="%d,%d" position="%d,%d" zPosition="1" backgroundColor="%s" foregroundColor="%s" font="Regular;20"  halign="center" valign="center" />"""\
+             % (self.name, self.x_size, self.y_size, self.x_position, self.y_position, self.backgroundColor_inactive, self.foregroundColor_inactive)
+    
+    def setText(self, text):
+        self.screen[self.name].setText(text)
+        
+    def activate(self):
+        self.active = True
+        self.setText(self.label.encode('utf-8'))
+        self.screen[self.name].instance.setForegroundColor(parseColor(self.foregroundColor_active))
+        self.screen[self.name].instance.setBackgroundColor(parseColor(self.backgroundColor_active))
+        
+    def deactivate(self):
+        self.active = False
+        self.setText(self.label.encode('utf-8'))
+        self.screen[self.name].instance.setForegroundColor(parseColor(self.foregroundColor_inactive))
+        self.screen[self.name].instance.setBackgroundColor(parseColor(self.backgroundColor_inactive))
+        
+        
+class CategoryWidgetHD(CategoryWidget):
+    def __init__(self, screen, name, label, x_position, y_position):
+        CategoryWidget.__init__(self, screen, name, label)
+        self.x_position = x_position
+        self.y_position = y_position
+        self.x_size = 130
+        self.y_size = 30
+        
+class CategoryWidgetSD(CategoryWidget):
+    def __init__(self, screen, name, label, x_position, y_position):
+        CategoryWidget.__init__(self, screen, name, label)
+        self.x_position = x_position
+        self.y_position = y_position
+        self.x_size = 80
+        self.y_size = 30
+    
+class BaseArchivCZSKConfigScreen(BaseArchivCZSKScreen, ConfigListScreen):
 
-
-class ArchiveCZSKConfigScreen(Screen, ConfigListScreen):
-    try:
-        sz_w = getDesktop(0).size().width()
-        if sz_w == 1280:
-            HDSkn = True
-        else:
-            HDSkn = False
-    except:
-        HDSkn = False
-    
-    
-    if HDSkn:
-        skin = """
-            <screen position="335,140" size="610,435" >
-                <widget name="key_red" position="10,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" shadowOffset="-2,-2" shadowColor="black" />
-                <widget name="key_green" position="160,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#1f771f" shadowOffset="-2,-2" shadowColor="black" />
-                <widget name="key_yellow" position="310,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#a08500" shadowOffset="-2,-2" shadowColor="black" />
-                <widget name="key_blue" position="460,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#18188b" shadowOffset="-2,-2" shadowColor="black" />
-                <eLabel position="-1,55" size="612,1" backgroundColor="#999999" />
-                <widget name="config" position="0,55" size="610,350" scrollbarMode="showOnDemand" />
-            </screen>"""
-    else:
-        skin = """
-            <screen position="170,120" size="381,320" >
-                <widget name="key_red" position="3,0" zPosition="1" size="90,40" font="Regular;17" halign="center" valign="center" backgroundColor="#9f1313" shadowOffset="-2,-2" shadowColor="black" />
-                <widget name="key_green" position="98,0" zPosition="1" size="90,40" font="Regular;17" halign="center" valign="center" backgroundColor="#1f771f" shadowOffset="-2,-2" shadowColor="black" />
-                <widget name="key_yellow" position="193,0" zPosition="1" size="90,40" font="Regular;17" halign="center" valign="center" backgroundColor="#a08500" shadowOffset="-2,-2" shadowColor="black" />
-                <widget name="key_blue" position="288,0" zPosition="1" size="90,40" font="Regular;17" halign="center" valign="center" backgroundColor="#18188b" shadowOffset="-2,-2" shadowColor="black" />
-                <eLabel position="-1,45" size="383,1" backgroundColor="#999999" />
-                <widget name="config" position="0,45" size="390,245" scrollbarMode="showOnDemand" />
-            </screen>"""
-    
-    def __init__(self, session):
-        Screen.__init__(self, session)
+    def __init__(self, session, categories=[]):
+        BaseArchivCZSKScreen.__init__(self, session)
+        ConfigListScreen.__init__(self, [], session=session, on_change=self.changedEntry)
         self.onChangedEntry = [ ]
-        self.list = [ ]
-        ConfigListScreen.__init__(self, self.list, session=session, on_change=self.changedEntry)
-        self.setup_title = _("Configuration of Archiv CZSK")
+        
+        self.categories = categories
+        self.selected_category = 0
+        self.config_list_entries = []
+        self.category_widgets = []
+        
+        self.initializeCategories()
+        self.initializeSkin()
+        
+        self["key_yellow"] = Label(_("changelog"))
+        self["key_green"] = Label(_("Save"))
+        self["key_red"] = Label(_("Cancel"))
+        self["key_blue"] = Label(_("Next"))
+        
         self["actions"] = ActionMap(["SetupActions", "ColorActions"],
             {
                 "cancel": self.keyCancel,
                 "green": self.keySave,
                 "ok": self.keyOk,
                 "red": self.keyCancel,
+                "blue": self.nextCategory,
+                "yellow": self.changelog
             }, -2)
-        self["key_yellow"] = Label("")
-        self["key_green"] = Label(_("Save"))
-        self["key_red"] = Label(_("Cancel"))
-        self["key_blue"] = Label("")
-        self.buildMenu()
+        
+    def initializeSkin(self):
+        if self.HD:
+            self.skin = """
+            <screen position="335,140" size="610,435" >
+                <widget name="key_red" position="10,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" shadowOffset="-2,-2" shadowColor="black" />
+                <widget name="key_green" position="160,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#1f771f" shadowOffset="-2,-2" shadowColor="black" />
+                <widget name="key_yellow" position="310,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#a08500" shadowOffset="-2,-2" shadowColor="black" />
+                <widget name="key_blue" position="460,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#18188b" shadowOffset="-2,-2" shadowColor="black" />
+                <eLabel position="-1,55" size="612,1" backgroundColor="#999999" />"""   
+            self.skin += '\n' + self.getCategoriesWidgetString()
+                
+            self.skin += """<widget name="config" position="0,100" size="610,300" scrollbarMode="showOnDemand" />
+                        </screen>"""
+        else:
+            self.skin = """
+            <screen position="335,140" size="610,435" >
+                <widget name="key_red" position="10,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" shadowOffset="-2,-2" shadowColor="black" />
+                <widget name="key_green" position="160,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#1f771f" shadowOffset="-2,-2" shadowColor="black" />
+                <widget name="key_yellow" position="310,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#a08500" shadowOffset="-2,-2" shadowColor="black" />
+                <widget name="key_blue" position="460,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#18188b" shadowOffset="-2,-2" shadowColor="black" />
+                <eLabel position="-1,55" size="612,1" backgroundColor="#999999" />"""   
+            self.skin += '\n' + self.getCategoriesWidgetString()
+                
+            self.skin += """<widget name="config" position="0,100" size="610,300" scrollbarMode="showOnDemand" />
+                        </screen>"""
+                        
+        #print "initialized skin %s" % self.skin
+                        
+     
+    def initializeCategories(self):
+        self.createCategoryWidgets() 
+     
+                                 
+    def createCategoryWidget(self, name, label, x_position, y_position):
+        if self.HD:
+            return CategoryWidgetHD(self, name, label, x_position, y_position)
+        else:
+            return CategoryWidgetSD(self, name, label, x_position, y_position)
+    
+    def createCategoryWidgets(self):
+        space = 5
+        x_position = 5
+        y_position = 60
+        for idx, category in enumerate(self.categories):
+            cat_widget = self.createCategoryWidget('category' + str(idx), category['label'], x_position, y_position)
+            self.category_widgets.append(cat_widget)
+            x_position += cat_widget.x_size + space
+            
+
+    def getCategoriesWidgetString(self):
+        return '\n'.join(cat_widget.get_skin_string() for cat_widget in self.category_widgets)
+    
+    def nextCategory(self):
+        if len(self.categories) > 0:
+            self.changeCategory()     
+            
+    def refreshConfigList(self):
+        if len(self.categories) > 0:  
+            config_list = self.categories[self.selected_category]['subentries']
+            if hasattr(config_list, '__call__'):
+                config_list = config_list()
+            
+            self.config_list_entries = config_list
+        
+        self.category_widgets[self.selected_category].activate()
+        self["config"].list = self.config_list_entries
+        self["config"].setList(self.config_list_entries)
+        
+           
+     
+    def changeCategory(self):
+        current_category = self.selected_category
+        if self.selected_category == len(self.categories) - 1:
+            self.selected_category = 0
+        else:
+            self.selected_category += 1
+            
+        config_list = self.categories[self.selected_category]['subentries']
+        
+        # for dynamic menus we can use functions to retrieve config list
+        if hasattr(config_list, '__call__'):
+            config_list = config_list()
+            
+        self.config_list_entries = config_list
+        
+        self.category_widgets[current_category].deactivate()
+        self.category_widgets[self.selected_category].activate()
+        
+        self["config"].list = self.config_list_entries
+        self["config"].setList(self.config_list_entries)
+        
+            
+    def changelog(self):
+        pass     
+    
+    def KeyOk(self):
+        pass
+    
+    def KeyCancel(self):
+        pass
+        
+    def changedEntry(self):
+        for x in self.onChangedEntry:
+            x()
+        
+    def keySave(self):
+        self.saveAll()
+        self.close(True)
+
+    def keyCancel(self):
+        for x in self["config"].list:
+            x[1].cancel()
+        self.close()
+        
+    def keyLeft(self):
+        ConfigListScreen.keyLeft(self) 
+
+    def keyRight(self):
+        ConfigListScreen.keyRight(self)
+
+
+
+class ArchiveCZSKConfigScreen(BaseArchivCZSKConfigScreen): 
+    def __init__(self, session):
+        
+        categories = [
+                      {'label':_("Main"), 'subentries':settings.get_main_settings},
+                      {'label':_("Player"), 'subentries':settings.get_player_settings},
+                      {'label':_("Path"), 'subentries':settings.get_path_settings}
+                     ]
+        
+        BaseArchivCZSKConfigScreen.__init__(self, session, categories=categories)
         self.onLayoutFinish.append(self.layoutFinished)
+        self.onShown.append(self.buildMenu)
 
     def layoutFinished(self):
         self.setTitle(_("Configuration of ArchivCZSK"))
-
+        
+    
     def buildMenu(self):
-        self.list = []
-        self.list.append(getConfigListEntry(_("Video player"), config.plugins.archivCZSK.player))
-        if config.plugins.archivCZSK.player.getValue() == 'mipsel':
-            self.list.append(getConfigListEntry(_("Video player Buffer"), config.plugins.archivCZSK.mipselPlayer.buffer))
-            self.list.append(getConfigListEntry(_("AutoPlay"), config.plugins.archivCZSK.mipselPlayer.autoPlay))
-        self.list.append(getConfigListEntry(_("Video player with RTMP support"), config.plugins.archivCZSK.seeking))
-        self.list.append(getConfigListEntry(_("TV archive rtmp buffer"), config.plugins.archivCZSK.archiveBuffer))                                                 
-        self.list.append(getConfigListEntry(_("Live rtmp streams buffer"), config.plugins.archivCZSK.liveBuffer))                                
-        self.list.append(getConfigListEntry(_("Play after"), config.plugins.archivCZSK.playDelay))
-        self.list.append(getConfigListEntry(_("Data path"), config.plugins.archivCZSK.dataPath))
-        self.list.append(getConfigListEntry(_("Downloads path"), config.plugins.archivCZSK.downloadsPath))
-        self.list.append(getConfigListEntry(_("Subtitles path"), config.plugins.archivCZSK.subtitlesPath))
-        if CSFD is not None:
-            self.list.append((_("Show info in CSFD plugin"), config.plugins.archivCZSK.csfd))
-        self.list.append(getConfigListEntry(_("Allow auto-update"), config.plugins.archivCZSK.autoUpdate))
-        self.list.append(getConfigListEntry(_("Debug mode"), config.plugins.archivCZSK.debug))
-        self.list.append(getConfigListEntry(_("Free memory after exit"), config.plugins.archivCZSK.clearMemory))
-        self.list.append(getConfigListEntry(_("Add to extensions menu"), config.plugins.archivCZSK.extensions_menu))
-        self.list.append(getConfigListEntry(_("Add to main menu"), config.plugins.archivCZSK.main_menu))
-
-        self["config"].list = self.list
-        self["config"].setList(self.list)
+        self.refreshConfigList()
     
     def keyOk(self):
         current = self["config"].getCurrent()[1]
@@ -163,17 +274,6 @@ class ArchiveCZSKConfigScreen(Screen, ConfigListScreen):
         if res is not None:
             config.plugins.archivCZSK.downloadsPath.value = res
 
-    def keySave(self):
-        for x in self["config"].list:
-            x[1].save()
-        configfile.save()
-        self.close()
-
-    def keyCancel(self):
-        for x in self["config"].list:
-            x[1].cancel()
-        self.close()
-
     def keyLeft(self):
         ConfigListScreen.keyLeft(self) 
         if self["config"].getCurrent()[1] == config.plugins.archivCZSK.player:
@@ -183,68 +283,20 @@ class ArchiveCZSKConfigScreen(Screen, ConfigListScreen):
         ConfigListScreen.keyRight(self)
         if self["config"].getCurrent()[1] == config.plugins.archivCZSK.player:
             self.buildMenu()
-
-    def changedEntry(self):
-        for x in self.onChangedEntry:
-            x()
           
         
  
-class ArchiveConfigScreen(Screen, ConfigListScreen):
-    try:
-        sz_w = getDesktop(0).size().width()
-        if sz_w == 1280:
-            HDSkn = True
-        else:
-            HDSkn = False
-    except:
-        HDSkn = False
-    
-    
-    if HDSkn:
-        skin = """
-            <screen position="335,140" size="610,435" >
-                <widget name="key_red" position="10,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" shadowOffset="-2,-2" shadowColor="black" />
-                <widget name="key_green" position="160,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#1f771f" shadowOffset="-2,-2" shadowColor="black" />
-                <widget name="key_yellow" position="310,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#a08500" shadowOffset="-2,-2" shadowColor="black" />
-                <widget name="key_blue" position="460,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#18188b" shadowOffset="-2,-2" shadowColor="black" />
-                <eLabel position="-1,55" size="612,1" backgroundColor="#999999" />
-                <widget name="config" position="0,55" size="610,350" scrollbarMode="showOnDemand" />
-            </screen>"""
-    else:
-        skin = """
-            <screen position="170,120" size="381,320" >
-                <widget name="key_red" position="3,0" zPosition="1" size="90,40" font="Regular;17" halign="center" valign="center" backgroundColor="#9f1313" shadowOffset="-2,-2" shadowColor="black" />
-                <widget name="key_green" position="98,0" zPosition="1" size="90,40" font="Regular;17" halign="center" valign="center" backgroundColor="#1f771f" shadowOffset="-2,-2" shadowColor="black" />
-                <widget name="key_yellow" position="193,0" zPosition="1" size="90,40" font="Regular;17" halign="center" valign="center" backgroundColor="#a08500" shadowOffset="-2,-2" shadowColor="black" />
-                <widget name="key_blue" position="288,0" zPosition="1" size="90,40" font="Regular;17" halign="center" valign="center" backgroundColor="#18188b" shadowOffset="-2,-2" shadowColor="black" />
-                <eLabel position="-1,45" size="383,1" backgroundColor="#999999" />
-                <widget name="config" position="0,45" size="390,245" scrollbarMode="showOnDemand" />
-            </screen>"""
-    
+class ArchiveConfigScreen(BaseArchivCZSKConfigScreen):
     def __init__(self, session, archive):
-        Screen.__init__(self, session)
         self.session = session
         self.archive = archive
-        self.onChangedEntry = [ ]
-        self.list = [ ]
-        ConfigListScreen.__init__(self, self.list, session=session, on_change=self.changedEntry)
         self.setup_title = _("Settings of ") + archive.name.encode('utf-8')
-        self.archive_conf = getattr(config.plugins.archivCZSK.archives, archive.id)
-            
-        self["actions"] = ActionMap(["SetupActions", "ColorActions"],
-            {
-                "cancel": self.keyCancel,
-                "green": self.keySave,
-                "ok": self.keyOk,
-                "red": self.keyCancel,
-                "blue": self.changelog
-            }, -2)
-        self["key_yellow"] = Label("")
-        self["key_green"] = Label(_("Save"))
-        self["key_red"] = Label(_("Cancel"))
-        self["key_blue"] = Label("Changelog")
-        self.buildMenu()
+        categories = archives_config.getArchiveConfigList(self.archive)
+        
+        BaseArchivCZSKConfigScreen.__init__(self, session, categories=categories)
+        
+        
+        self.onShown.append(self.buildMenu)
         self.onLayoutFinish.append(self.layoutFinished)
 
     def layoutFinished(self):
@@ -255,42 +307,16 @@ class ArchiveConfigScreen(Screen, ConfigListScreen):
         self.session.open(ChangelogScreen, self.archive)
         
     def buildMenu(self):
-        self.list = archive_conf.getArchiveConfigListEntries(self.archive)
-        self["config"].list = self.list
-        self["config"].setList(self.list)  
+        self.refreshConfigList() 
         
     def keyOk(self):
-        if len(self.list) > 0:
-            current = self["config"].getCurrent()[1]
-            if current == config.plugins.archivCZSK.archives.voyo.password:
-                self.session.openWithCallback(lambda x : self.VirtualKeyBoardCallback(x, 'password'), VirtualKeyBoard, title=(_("Enter the password:")), text=config.plugins.archivCZSK.archives.voyo.password.value)
-            elif current == config.plugins.archivCZSK.archives.stream.username:
-                self.session.openWithCallback(lambda x : self.VirtualKeyBoardCallback(x, 'username'), VirtualKeyBoard, title=(_("Enter the username:")), text=config.plugins.archivCZSK.archives.stream.username.value)        
-            else:
-                pass
+        current = self["config"].getCurrent()[1]
+        if current == config.plugins.archivCZSK.archives.voyo.password:
+            self.session.openWithCallback(lambda x : self.VirtualKeyBoardCallback(x, 'password'), VirtualKeyBoard, title=(_("Enter the password:")), text=config.plugins.archivCZSK.archives.voyo.password.value)
+        elif current == config.plugins.archivCZSK.archives.stream.username:
+            self.session.openWithCallback(lambda x : self.VirtualKeyBoardCallback(x, 'username'), VirtualKeyBoard, title=(_("Enter the username:")), text=config.plugins.archivCZSK.archives.stream.username.value)        
         else:
-            pass            
-    
-    def keySave(self):
-        for x in self["config"].list:
-            x[1].save()
-        configfile.save()
-        self.close()
-
-    def keyCancel(self):
-        for x in self["config"].list:
-            x[1].cancel()
-        self.close()
-
-    def keyLeft(self):
-        ConfigListScreen.keyLeft(self) 
-
-    def keyRight(self):
-        ConfigListScreen.keyRight(self)
-
-    def changedEntry(self):
-        for x in self.onChangedEntry:
-            x()    
+            pass          
             
     def VirtualKeyBoardCallback(self, callback=None, entry=None):
         if callback is not None and len(callback) and entry is not None and len(entry):

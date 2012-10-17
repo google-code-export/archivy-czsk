@@ -1,16 +1,9 @@
 # -*- coding: utf-8 -*-
 import urllib2,urllib,re,os
-try:
-    from Plugins.Extensions.archivCZSK.resources.archives.dmd_czech.tools.parseutils import *
-    from Plugins.Extensions.archivCZSK.resources.tools.dmd import addDir, addLink
-except ImportError:
-    from resources.archives.dmd_czech.tools.parseutils import *
-    from resources.tools.dmd import addDir, addLink
-try:
-    from Plugins.Extensions.archivCZSK import _
-    from Components.config import config
-except ImportError:
-    print 'Unit test'
+from Plugins.Extensions.archivCZSK.resources.archives.dmd_czech.tools.parseutils import *
+from Plugins.Extensions.archivCZSK.resources.tools.dmd import addDir, addLink
+from Plugins.Extensions.archivCZSK import _
+
 
 __baseurl__= 'http://voyo.markiza.sk'
 _UserAgent_ = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'
@@ -19,7 +12,18 @@ icon = None
 nexticon = None
 fanart = None
 
-def getContent(url, name, mode, **kwargs):  
+def getContent(session, params):
+    mode = None
+    url = None
+    name = None
+    
+    if 'url' in params:
+        url = params['url']
+    if 'mode' in params:
+        mode = params['mode']
+    if 'name' in params:
+        name = params['name']
+        
     if mode==None or url==None or len(url)<1:
         print ""
         OBSAH()
