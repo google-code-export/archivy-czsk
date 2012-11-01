@@ -7,7 +7,6 @@ Created on 28.4.2012
 import os
 from twisted.web.client import downloadPage
 
-from Screens.Screen import Screen
 from Components.Label import Label
 from Components.ActionMap import ActionMap, NumberActionMap
 from Components.ScrollLabel import ScrollLabel
@@ -15,16 +14,33 @@ from Components.Pixmap import Pixmap
 from Screens.MessageBox import MessageBox
 from Components.AVSwitch import AVSwitch
 from enigma import ePicLoad, getDesktop
-from base import BaseArchivCZSKScreen
 
+from base import BaseArchivCZSKScreen
 from Plugins.Extensions.archivCZSK import _
+
+def showChangelog(session, changelog_title, changelog_text):
+	session.open(ChangelogScreen, changelog_title, changelog_text)
+
+def showItemInfo(session, item):
+	Info(session, item)
+	
+def showCSFDInfo(session, name):
+	try:
+		from Plugins.Extensions.CSFD.plugin import CSFD
+	except ImportError:
+		showInfo(session, _("Plugin CSFD is not installed."))
+	else:
+		session.open(CSFD, name, False)
+	
+def showInfo(session, text):
+	session.open(MessageBox, text=text, type=MessageBox.TYPE_INFO, timeout=5)
 
 
 class ChangelogScreen(BaseArchivCZSKScreen):
-	def __init__(self, session, archive):
+	def __init__(self, session, title, text=None):
 		BaseArchivCZSKScreen.__init__(self, session)
-		self.changelog = archive.info.changelog
-		self.title = archive.name
+		self.changelog = text
+		self.title = title
 		
 		if self.changelog is not None:
 			self["changelog"] = ScrollLabel(self.changelog.encode('utf-8'))
@@ -47,10 +63,9 @@ class ChangelogScreen(BaseArchivCZSKScreen):
 
 
 class Info(object):
-	def __init__(self, session, it, callback):
+	def __init__(self, session, it):
 		self.session = session
 		self.it = it
-		self.callback = callback
 		self.dest = ''
 		self.imagelink = ''
 		if it.image is not None:
@@ -79,7 +94,6 @@ class Info(object):
 		
 	def closeInfo(self):
 		print '[Info] closeInfo'
-		self.callback()
 		
 	def showInfo(self):
 		print '[Info] showInfo'

@@ -4,50 +4,34 @@ Created on 28.4.2012
 
 @author: marko
 '''
-import os
-
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
-from enigma import loadPNG, RT_HALIGN_RIGHT, RT_VALIGN_TOP, eSize, eListbox, ePoint, RT_HALIGN_LEFT, RT_HALIGN_RIGHT, RT_HALIGN_CENTER, RT_VALIGN_CENTER, eListboxPythonMultiContent, gFont, getDesktop, ePicLoad, eServiceCenter, iServiceInformation, eServiceReference, iSeekableService, iPlayableService, iPlayableServicePtr
 from Components.ActionMap import ActionMap, NumberActionMap
-from Components.MultiContent import MultiContentEntryText, MultiContentEntryPixmapAlphaTest
-from Components.MenuList import MenuList
 from Components.ScrollLabel import ScrollLabel
 from Components.ActionMap import ActionMap, HelpableActionMap
-from Components.config import config
 from Components.Button import Button
-from Components.Label import Label, MultiColorLabel
-from Tools.Directories import resolveFilename, pathExists, fileExists
+from Components.Label import Label
 
 from Plugins.Extensions.archivCZSK import _
-from Plugins.Extensions.archivCZSK.resources.tools.items import PVideo
-from Plugins.Extensions.archivCZSK.resources.tools.downloader import DownloadManager
-from base import BaseArchivCZSKScreen, BaseArchivCZSKMenuListScreen
-from common import PanelList
+from Plugins.Extensions.archivCZSK.engine.downloader import DownloadManager
+
+from base import  BaseArchivCZSKMenuListScreen
+from common import PanelListEntryHD, PanelListDownloadEntry
+PanelListEntry = PanelListEntryHD
 
 global_session = None
+
+
+def openDownloads(session, name, content_provider, cb):
+    session.openWithCallback(cb, DownloadsScreen, name, content_provider)
+    
+def openAddonDownloads(session, addon, cb):
+    openDownloads(session, addon.name, addon.provider, cb)
+
 
 def setGlobalSession(session):
     global global_session
     global_session = session
-
-def PanelListEntry(name, idx, png):
-    res = [(name)]
-    res.append(MultiContentEntryPixmapAlphaTest(pos=(5, 5), size=(35, 25), png=loadPNG(png)))
-    res.append(MultiContentEntryText(pos=(60, 5), size=(550, 30), font=0, flags=RT_VALIGN_TOP, text=name))
-    return res
-
-
-def PanelListDownloadEntry(name, download):
-    res = [(name)]
-    res.append(MultiContentEntryText(pos=(0, 5), size=(400, 30), font=0, flags=RT_VALIGN_TOP, text=name))
-    if download.downloaded and not download.running:
-        res.append(MultiContentEntryText(pos=(420, 5), size=(180, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('finished'), color=0x00FF00))
-    elif not download.downloaded and not download.running:
-        res.append(MultiContentEntryText(pos=(420, 5), size=(180, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('finished with errors'), color=0xff0000))
-    else:
-        res.append(MultiContentEntryText(pos=(420, 5), size=(180, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('downloading'))) 
-    return res
 
 class DownloadManagerMessages(object):
 
@@ -137,7 +121,8 @@ class DownloadList:
             })
 
     def showDownloadListScreen(self):
-        self.session.open(DownloadListScreen)
+        self.workingStarted()
+        self.session.openWithCallback(self.workingFinished, DownloadListScreen)
 
 class DownloadListScreen(BaseArchivCZSKMenuListScreen):
     instance = None       
@@ -148,6 +133,9 @@ class DownloadListScreen(BaseArchivCZSKMenuListScreen):
         self["key_green"] = Button(_("Play"))
         self["key_yellow"] = Button(_("Remove"))
         self["key_blue"] = Button("")
+        
+        from Plugins.Extensions.archivCZSK.engine.player.player import Player
+        self.player = Player(session, self.workingFinished)
         
         self.lst_items = []
         self.title = _("Recent downloads")
@@ -205,29 +193,23 @@ class DownloadListScreen(BaseArchivCZSKMenuListScreen):
         if len(self.lst_items) > 0:
             self.working = True
             download = self.getSelectedItem()
-            if download.downloaded:
+            if download.downloaded or not download.running:
                 self.playDownload(True)
             else:
                 message = '%s %s %s' % (_("The file"), download.name.encode('utf-8'), _('is not downloaded yet. Do you want to play it anyway?'))
-                self.session.openWithCallback(self.cancelDownload, MessageBox, message, type=MessageBox.TYPE_YESNO)    
+                self.session.openWithCallback(self.playDownload, MessageBox, message, type=MessageBox.TYPE_YESNO)
     
             
     def playDownload(self, callback=None):
         if callback:
             download = self.getSelectedItem()
-            from Plugins.Extensions.archivCZSK.player.player import Player
-            video = Player(self.session)
-            video.playDownload(download)
+            self.player.playDownload(download)
 
     def updateMenuList(self):
-        del self.menu_list[:]
-        list = []
-        idx = 0
-        for x in self.lst_items:
-            list.append(PanelListDownloadEntry(x.name.encode('utf-8'), x))
-            self.menu_list.append(x)
-            idx += 1    
-        self["menu"].setList(list)        
+        menu_list = []
+        for idx, x in enumerate(self.lst_items):
+            menu_list.append(PanelListDownloadEntry(x.name.encode('utf-8'), x)) 
+        self["menu"].setList(menu_list)      
 
     def ok(self):
         if  len(self.lst_items) > 0:
@@ -235,20 +217,24 @@ class DownloadListScreen(BaseArchivCZSKMenuListScreen):
             self.session.openWithCallback(self.workingFinished, DownloadStatusScreen, download)
         
 
-class ArchiveDownloadsScreen(BaseArchivCZSKMenuListScreen, DownloadList):
+class DownloadsScreen(BaseArchivCZSKMenuListScreen, DownloadList):
     instance = None        
-    def __init__(self, session, archive):
+    def __init__(self, session, name, content_provider):
         BaseArchivCZSKMenuListScreen.__init__(self, session)
         DownloadList.__init__(self)
-        self.archive = archive
+        self.name = name
+        self.content_provider = content_provider
+        
+        from Plugins.Extensions.archivCZSK.engine.player.player import Player
+        self.player = Player(session, self.workingFinished)
         
         self["key_red"] = Button(_("Remove"))
         self["key_green"] = Button("")
         self["key_yellow"] = Button("")
         self["key_blue"] = Button("")
         
-        self.lst_items = self.archive.get_downloads()
-        self.title = self.archive.name.encode('utf-8') + ' ' + (_("downloads"))
+        self.lst_items = self.content_provider.get_downloads()
+        self.title = self.name.encode('utf-8') + ' ' + (_("downloads"))
 
         self["actions"] = NumberActionMap(["archivCZSKActions"],
             {
@@ -266,36 +252,33 @@ class ArchiveDownloadsScreen(BaseArchivCZSKMenuListScreen, DownloadList):
         self.setTitle(self.title)
     
     def updateGUI(self):
-        self.lst_items = self.pdownloads.getDownloads()
+        self.lst_items = self.content_provider.get_downloads()
         self.updateMenuList()
         
     def askRemoveDownload(self):
         if len(self.lst_items) > 0:
-            self.working = True
             download = self.getSelectedItem()
             self.session.openWithCallback(self.removeDownload, MessageBox, _('Do you want to remove') \
                                           + ' ' + download.name.encode('utf-8') + ' ?', type=MessageBox.TYPE_YESNO)    
     
     def removeDownload(self, callback=None):
         if callback:
-            it = self.getSelectedItem()
-            self.pdownloads.removeDownload(it)
+            self.addon.provider.remove_download(self.getSelectedItem())
             self.updateGUI()
 
     def updateMenuList(self):
-        del self.menu_list[:]
-        list = []
-        idx = 0
-        for x in self.lst_items:
-            list.append(PanelListEntry(x.name.encode('utf-8'), idx, x.thumb))
-            self.menu_list.append(x)
-            idx += 1    
-        self["menu"].setList(list)        
+        menu_list = []
+        for idx, x in enumerate(self.lst_items):
+            menu_list.append(PanelListEntry(x.name.encode('utf-8'), idx, x.thumb)) 
+        self["menu"].setList(menu_list)        
 
     def ok(self):
-        if len(self.lst_items) > 0:
+        if not self.working and len(self.lst_items) > 0:
             it = self.getSelectedItem()
-            from Plugins.Extensions.archivCZSK.player.player import Player
-            video = Player(self.session, it)
-            video.play()
+            download = DownloadManager.getInstance().findDownloadByIt(it)
+            if download is not None and download.running:
+                self.player.playDownload(download)
+            else:
+                self.player.setVideoItem(it)
+                self.player.play()
             

@@ -1,0 +1,3 @@
+<settings>
+   <setting id="kvalita" type="labelenum" label="Preferovaná kvalita" values="LQ|HQ|HD" default="HD" />
+</settings>

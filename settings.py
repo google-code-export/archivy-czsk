@@ -3,14 +3,26 @@ Created on 15.10.2012
 
 @author: marko
 '''
-from Components.config import config, ConfigSubsection, ConfigSelection, ConfigDirectory, ConfigInteger, ConfigYesNo, ConfigText, configfile, getConfigListEntry
 import os
+
+from Components.config import config, ConfigSubsection, ConfigSelection, ConfigDirectory, ConfigInteger, ConfigYesNo, ConfigText, configfile, getConfigListEntry
+from Components.Language import language
 from Plugins.Extensions.archivCZSK import _
 
+
+LANGUAGE_SETTINGS_ID = language.getLanguage()[:2]
+
+######### Plugin Paths ##############
 PLUGIN_PATH = "/usr/lib/enigma2/python/Plugins/Extensions/archivCZSK/"
 IMAGE_PATH = os.path.join(PLUGIN_PATH, 'gui/icon')
 SKIN_PATH = os.path.join(PLUGIN_PATH, 'gui/skin')
-REPOSITORY_PATH = os.path.join(PLUGIN_PATH, 'resources/archives')
+REPOSITORY_PATH = os.path.join(PLUGIN_PATH, 'resources/repositories')
+STREAM_PATH = os.path.join(PLUGIN_PATH, 'streams/streams.xml')
+
+############ Updater Paths #############
+UPDATE_REPOSITORY_PATH = 'http://archivy-czsk.googlecode.com/svn/branch/update/ver_0.7'
+UPDATE_REPOSITORY_VERSION_PATH = UPDATE_REPOSITORY_PATH + 'version.xml'
+TMP_PATH = '/tmp/archivCZSK/'
 
 
 config.plugins.archivCZSK = ConfigSubsection()

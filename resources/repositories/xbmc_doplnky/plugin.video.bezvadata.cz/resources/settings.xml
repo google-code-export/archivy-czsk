@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings>
+	<setting label="30050" id="18+content" type="bool" default="false" />
+	<setting label="30051" id="ext-filter" type="text" default="exe,rar,srt,zip" />
+</settings>

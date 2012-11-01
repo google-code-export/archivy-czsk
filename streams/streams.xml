@@ -1,16 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+	group -nazov kategorie
+	
+	 	channel - nazov streamu [povinne]
+	 	stream_url - adresa streamu [povinne]
+	 	picon - cesta k obrazku(256x256x8), ktory sa zobrazi v media playery (momentalne nepodporovane) [volitelne]
+	  	swfUrl - parameter rtmp streamu [volitelne]
+	  	pageUrl - parameter rtmp streamu [volitelne]
+	  	playpath - parameter rtmp streamu [volitelne]
+	  	advanced - dodatocne parametre k rtmp streamu [volitelne]
+	  	liveStream - stream je zive vysielanie, implicitna volba aj bez uvedeneho parametra, ak nie je zive je potrebne zadat "false"[volitelne]
+	  	player_buffer - velkost bufferu(KB) pre mipsel prehravac, pouzije sa uvedeny buffer[volitelne(default=8000)]
+	  	rtmp_buffer - velkost bufferu(KB) pre rtmp streamy [volitelne(default=3000)]
+	  	play_delay - pocet sekund do spustenia streamu po zacati stahovania pri volbe "Prehravat a stahovat"
+		
+		ostatne parametre su ignorovane...
+		
+!-->
+
 <iptvstreams_list>
 	<group> 
 		<name>SOPCAST</name>
 		<channel>
 			<name>SOPCAST1</name>
-			<stream_url>http://192.168.7.106:8902/stream</stream_url>
-			<buffer_kb>512</buffer_kb>		
+			<stream_url>http://192.168.7.106:8902/stream</stream_url>	
 		</channel>
 		<channel>
 			<name>SOPCAST2</name>
-			<stream_url>http://192.168.7.106:8902/tv.mpeg</stream_url>
-			<buffer_kb>512</buffer_kb>		
+			<stream_url>http://192.168.7.106:8902/tv.mpeg</stream_url>	
 		</channel>
 	</group>	
 	<group> 
@@ -21,18 +38,14 @@
 			<playpath>z050228.stream</playpath>	
 			<swfUrl>http://www.tvsector.com/wp-content/uploads/jw-player-plugin-for-wordpress/player/player.swf</swfUrl>
 			<pageUrl>http://www.tvsector.com</pageUrl>
-			<rtmpdumpbuff>5000</rtmpdumpbuff>
-			<timebuff>10</timebuff>
 		</channel>
 		<channel>
 			<name>RTMP_STREAM_HD2</name>
-			<piconname>dummy.png</piconname>
+			<picon>dummy.png</picon>
 			<stream_url>rtmp://s7.webport.tv/live</stream_url>
 			<playpath>z050230.stream</playpath>	
 			<swfUrl>http://www.tvsector.com/wp-content/uploads/jw-player-plugin-for-wordpress/player/player.swf</swfUrl>
 			<pageUrl>http://www.tvsector.com</pageUrl>
-			<rtmpdumpbuff>5000</rtmpdumpbuff>
-			<timebuff>10</timebuff>
 		</channel>
 	</group>
 	<group>
@@ -40,9 +53,7 @@
 		<channel>
 			<name>STV1</name>
 			<piconname>dummy.png</piconname>
-			<stream_url>http://billysk2.homeip.net:8002/1:0:1:7665:2BF:600:E080000:0:0:0</stream_url>
-			<ts_stream></ts_stream>
-			<buffer_kb>512</buffer_kb>		
+			<stream_url>http://billysk2.homeip.net:8002/1:0:1:7665:2BF:600:E080000:0:0:0</stream_url>>		
 		</channel>
 	</group>	
 </iptvstreams_list>

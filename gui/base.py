@@ -1,8 +1,6 @@
 # -*- coding: UTF-8 -*-
 
 # system imports
-import traceback
-import copy
 from urllib2 import HTTPError, URLError
 
 # enigma2 imports
@@ -15,8 +13,8 @@ from enigma import getDesktop
 # plugin imports
 from skins import archivCZSK_skins
 from common import PanelList, PanelListEntryHD, PanelListEntrySD
-from Plugins.Extensions.archivCZSK.resources.exceptions.archiveException import CustomInfoError, CustomWarningError, CustomError, ArchiveThreadException
-from Plugins.Extensions.archivCZSK.resources.tools.items import PExit, PFolder, PVideo, PDownloads
+from Plugins.Extensions.archivCZSK import _
+from Plugins.Extensions.archivCZSK.engine.exceptions.archiveException import CustomInfoError, CustomWarningError, CustomError, ArchiveThreadException
 
 def debug(data):
     if config.plugins.archivCZSK.debug.getValue():
@@ -27,8 +25,6 @@ PanelListEntry = PanelListEntryHD
 class BaseArchivCZSKScreen(Screen):
     """Base Screen for archivCZSK screens"""
     
-    ICON_PATH = "/usr/lib/enigma2/python/Plugins/Extensions/archivCZSK/gui/icon"
-    
     def __init__(self, session):
         self.HD = False
         
@@ -36,14 +32,17 @@ class BaseArchivCZSKScreen(Screen):
         if getDesktop(0).size().width() == 1280:
             self.HD = True
         if self.HD and hasattr(archivCZSK_skins, self.__class__.__name__ + '_HD'):
+            debug('setting %s skin' % (self.__class__.__name__ + '_HD'))
             self.skin = getattr(archivCZSK_skins, self.__class__.__name__ + '_HD')
             
         elif not self.HD and hasattr(archivCZSK_skins, self.__class__.__name__ + '_SD'):
+            debug('setting %s skin' % (self.__class__.__name__ + '_SD'))
             self.skin = getattr(archivCZSK_skins, self.__class__.__name__ + '_SD')
             
         else:
             if hasattr(archivCZSK_skins, self.__class__.__name__):
                 self.skin = getattr(archivCZSK_skins, self.__class__.__name__)
+                debug('setting %s skin' % self.__class__.__name__)
                 
             else:
                 debug("Cannot find skin for screen %s" % self.__class__.__name__)
@@ -94,6 +93,8 @@ class BaseArchivCZSKMenuListScreen(BaseArchivCZSKScreen):
         #called by workingFinished
         self.onStopWork = [self.stopWorking]
         
+        self.onUpdateGUI = []
+        
         # we update list when the layout of the screen is finished
         self.onLayoutFinish.append(self.updateMenuList)
         
@@ -114,19 +115,32 @@ class BaseArchivCZSKMenuListScreen(BaseArchivCZSKScreen):
     def workingStarted(self):
         for f in self.onStartWork:
             f()
+            
+    def updateGUI(self):
+        for f in self.onUpdateGUI:
+            f()
+            
+    def hideList(self):
+        debug('hiding list')
+        self["menu"].hide()
+        
+    def showList(self):
+        debug('showing list')
+        self["menu"].show()  
 
     
     # returns selected item from menu list
     def getSelectedItem(self):
-        if len(self.menu_list) > 0:
+        if len(self.lst_items) > 0:
             idx = self["menu"].getSelectedIndex()
-            self.selected_it = self.menu_list[idx]
+            self.selected_it = self.lst_items[idx]
             return self.selected_it
         self.selected_it = None
         return None
     
     def updateMenuList(self):
         pass
+        
     
     def ok(self):
         pass
@@ -138,34 +152,48 @@ class BaseArchivCZSKMenuListScreen(BaseArchivCZSKScreen):
     def up(self):
         if not self.working:
             self["menu"].up()
+            self.updateGUI()
     
     def down(self):
         if not self.working:
             self["menu"].down()
+            self.updateGUI()
+            
+    def open_screen(self, *args, **kwargs):
+        self.session.open(*args, **kwargs)
+        
+    def open_screen_with_cb(self, cb, *args, **kwargs):
+        self.session.openWithCallback(cb, *args, **kwargs)
         
         
     ### Messages ###
             
     def showError(self, error, timeout=5):
+        if isinstance(error,unicode):
+            error = error.encode('utf-8')
         self.session.openWithCallback(self.workingFinished, MessageBox, error, type=MessageBox.TYPE_ERROR, timeout=timeout)
 
     def showWarning(self, warning, timeout=5):
+        if isinstance(warning,unicode):
+            warning = warning.encode('utf-8')
         self.session.openWithCallback(self.workingFinished, MessageBox, warning, type=MessageBox.TYPE_WARNING, timeout=timeout)
         
     def showInfo(self, info, timeout=5):
+        if isinstance(info,unicode):
+            info = info.encode('utf-8')
         self.session.openWithCallback(self.workingFinished, MessageBox, info, type=MessageBox.TYPE_INFO, timeout=timeout)
 
         
     #############
     
     
-    # exception decorator to handle archive exceptions
+    # exception decorator to handle addon exceptions
     def exception_dec(self, func):
         def wrapped(*args, **kwargs):
             try:
                 func(*args, **kwargs) 
                 
-            # archive specific exceptions
+            # addon specific exceptions
             except CustomInfoError as er:
                 self.showInfo(er.value, self.timeout)
             except CustomWarningError as er:
@@ -185,13 +213,7 @@ class BaseArchivCZSKMenuListScreen(BaseArchivCZSKScreen):
             
             # unknown exception       
             except Exception, e:
-                if not config.plugins.archivCZSK.debug.value:
-                    self.showError("%s:%s" % (_("Unknown Error"), str(e)), self.timeout)
-                else:
-                    self.showError("%s:%s" % (_("Unknown Error"), str(e)), self.timeout)
-                    fh = open("/tmp/archivCZSKException.log", "w")
-                    traceback.print_exc(file=fh)
-                    fh.close()
+                self.showError("%s:%s" % (_("Unknown Error"), str(e)), self.timeout)
         return wrapped
         
             

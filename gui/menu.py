@@ -1,5 +1,7 @@
 # -*- coding: UTF-8 -*-
-from skin import parseColor
+import os
+
+
 
 from Screens.Screen import Screen
 from Screens.VirtualKeyBoard import VirtualKeyBoard
@@ -7,78 +9,26 @@ from Components.ConfigList import ConfigList, ConfigListScreen
 from Components.config import config, configfile
 from Components.ActionMap import ActionMap
 from Components.Label import Label
-from Components.ProgressBar import ProgressBar
 from Components.FileList import FileList
 from Components.Sources.StaticText import StaticText
 
 from Plugins.Extensions.archivCZSK import _
-import Plugins.Extensions.archivCZSK.settings as settings
-import Plugins.Extensions.archivCZSK.resources.archives.config as archives_config
+from Plugins.Extensions.archivCZSK import settings
+from Plugins.Extensions.archivCZSK.resources.repositories import config as addon_config
 
+from common import CategoryWidgetSD,CategoryWidgetHD
 from base import BaseArchivCZSKScreen
-from info import ChangelogScreen
+import info
 
 
-
-class CategoryWidget():
-    color_black = "#000000"
-    color_white = "#ffffff"
-    color_red = "#ff0000"
-    color_grey = "#5c5b5b"
+def openArchivCZSKMenu(session):
+    session.open(ArchiveCZSKConfigScreen)
     
-    def __init__(self, screen, name, label):
-        print 'intializing category widget %s-%s' % (name, label.encode('utf-8'))
-        self.screen = screen
-        self.name = name
-        self.label = label
-        self.x_position = 0
-        self.y_position = 0
-        self.x_size = 100
-        self.y_size = 100
-        self.active = False
-
-        self.foregroundColor_inactive = self.color_white
-        self.backgroundColor_inactive = self.color_black
-        self.foregroundColor_active = self.color_red
-        self.backgroundColor_active = self.color_black
-        
-        self.screen[self.name] = Label(label.encode('utf-8'))
-        
-    def get_skin_string(self):
-        return """<widget name="%s" size="%d,%d" position="%d,%d" zPosition="1" backgroundColor="%s" foregroundColor="%s" font="Regular;20"  halign="center" valign="center" />"""\
-             % (self.name, self.x_size, self.y_size, self.x_position, self.y_position, self.backgroundColor_inactive, self.foregroundColor_inactive)
-    
-    def setText(self, text):
-        self.screen[self.name].setText(text)
-        
-    def activate(self):
-        self.active = True
-        self.setText(self.label.encode('utf-8'))
-        self.screen[self.name].instance.setForegroundColor(parseColor(self.foregroundColor_active))
-        self.screen[self.name].instance.setBackgroundColor(parseColor(self.backgroundColor_active))
-        
-    def deactivate(self):
-        self.active = False
-        self.setText(self.label.encode('utf-8'))
-        self.screen[self.name].instance.setForegroundColor(parseColor(self.foregroundColor_inactive))
-        self.screen[self.name].instance.setBackgroundColor(parseColor(self.backgroundColor_inactive))
-        
-        
-class CategoryWidgetHD(CategoryWidget):
-    def __init__(self, screen, name, label, x_position, y_position):
-        CategoryWidget.__init__(self, screen, name, label)
-        self.x_position = x_position
-        self.y_position = y_position
-        self.x_size = 130
-        self.y_size = 30
-        
-class CategoryWidgetSD(CategoryWidget):
-    def __init__(self, screen, name, label, x_position, y_position):
-        CategoryWidget.__init__(self, screen, name, label)
-        self.x_position = x_position
-        self.y_position = y_position
-        self.x_size = 80
-        self.y_size = 30
+def openAddonMenu(session, addon,cb):
+    if cb is None:
+        session.open(AddonConfigScreen, addon)
+    else:
+        session.openWithCallback(cb,AddonConfigScreen,addon)
     
 class BaseArchivCZSKConfigScreen(BaseArchivCZSKScreen, ConfigListScreen):
 
@@ -203,7 +153,12 @@ class BaseArchivCZSKConfigScreen(BaseArchivCZSKScreen, ConfigListScreen):
         
             
     def changelog(self):
-        pass     
+        changelog_path = os.path.join(settings.PLUGIN_PATH, 'changelog.txt')
+        if os.path.isfile(changelog_path):
+            f= open(changelog_path, "r")
+            changelog_text = f.read()
+            f.close()
+            info.showChangelog(self.session, _('ArchivCZSK Changelog'), changelog_text)    
     
     def KeyOk(self):
         pass
@@ -286,12 +241,14 @@ class ArchiveCZSKConfigScreen(BaseArchivCZSKConfigScreen):
           
         
  
-class ArchiveConfigScreen(BaseArchivCZSKConfigScreen):
-    def __init__(self, session, archive):
+class AddonConfigScreen(BaseArchivCZSKConfigScreen):
+    def __init__(self, session, addon):
         self.session = session
-        self.archive = archive
-        self.setup_title = _("Settings of ") + archive.name.encode('utf-8')
-        categories = archives_config.getArchiveConfigList(self.archive)
+        self.addon = addon
+        self.setup_title = _("Settings of ") + addon.name.encode('utf-8')
+        
+        # to get addon config including global settings
+        categories = addon_config.getArchiveConfigList(self.addon)
         
         BaseArchivCZSKConfigScreen.__init__(self, session, categories=categories)
         
@@ -300,11 +257,10 @@ class ArchiveConfigScreen(BaseArchivCZSKConfigScreen):
         self.onLayoutFinish.append(self.layoutFinished)
 
     def layoutFinished(self):
-        self.setTitle(_("Settings of") + ' ' + self.archive.name.encode('utf-8'))
+        self.setTitle(_("Settings of") + ' ' + self.addon.name.encode('utf-8'))
             
-    
     def changelog(self):
-        self.session.open(ChangelogScreen, self.archive)
+        info.showChangelog(self.session, self.addon.name, self.addon.changelog)
         
     def buildMenu(self):
         self.refreshConfigList() 
