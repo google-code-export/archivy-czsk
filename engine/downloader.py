@@ -6,6 +6,7 @@ Created on 8.5.2012
 import os, time, mimetypes
 from twisted.python import failure
 from twisted.web import client
+from twisted.internet import reactor
 import urlparse, urllib2
 try:
     from enigma import eConsoleAppContainer
@@ -248,7 +249,12 @@ class RTMPDownloadE2(Download):
         print 'e2rtmpdownload finished with', str(retval)
         self.running = False
         self.finish_time = time.time()
-        if retval == 0 and not self.killed:
+        if retval == 1 and not self.killed:
+            if os.path.getsize(self.local) > (0.95*self.length):
+                self.downloaded = True
+            else:
+                self.downloaded = False
+        elif retval == 0 and not self.killed:
             self.downloaded = True
         else:
             self.downloaded = False

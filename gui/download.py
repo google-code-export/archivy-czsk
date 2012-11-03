@@ -191,7 +191,7 @@ class DownloadListScreen(BaseArchivCZSKMenuListScreen):
             
     def askPlayDownload(self):
         if len(self.lst_items) > 0:
-            self.working = True
+            self.workingStarted()
             download = self.getSelectedItem()
             if download.downloaded or not download.running:
                 self.playDownload(True)
@@ -204,6 +204,8 @@ class DownloadListScreen(BaseArchivCZSKMenuListScreen):
         if callback:
             download = self.getSelectedItem()
             self.player.playDownload(download)
+        else:
+            self.workingFinished()
 
     def updateMenuList(self):
         menu_list = []

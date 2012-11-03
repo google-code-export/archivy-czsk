@@ -12,8 +12,8 @@ def send_info_message(session, info, timeout=1):
     
     
 class Video():
-    def __init__(self,session):
-        self.session= session
+    def __init__(self, session):
+        self.session = session
         
     def __getSeekable(self):
         service = self.session.nav.getCurrentService()
@@ -159,11 +159,6 @@ class VideoPlayerController(object):
 
     
     def get_download_position(self):
-        # live stream
-        if self.download.length == 0:
-            self.video_length = 0
-            return 0
-            
         download_pts = long(float(self.download.getCurrentLength()) / float(self.download.length) * self.video_length_total)
         debug('download_time: %dh:%02dm:%02ds' % self.pts_to_hms(download_pts))
         self.video_length = download_pts

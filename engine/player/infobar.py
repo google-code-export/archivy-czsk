@@ -20,7 +20,6 @@ class CustomPlayerInfobar(object):
         self["download_label"] = Label(_("Speed"))
         self["download_speed"] = Label(_("N/A"))
         self.onFirstExecBegin.append(self.resetBufferSlider) 
-        #self.onExecBegin.append(self.resetBufferSlider)
         
     def resetBufferSlider(self):
         debug("reseting buffer slider")
@@ -46,7 +45,10 @@ class CustomPlayerInfobar(object):
             if downloading:
                 self["download_label"].setText(_("Downloading"))
                 self["download_speed"].setText("%d KB/s" % self.BtoKB(download_speed))
-                buff = int(float(buffered_length) / float(self.video_length) * 100)
+                if self.video_length == 0:
+                    buff = 0
+                else:
+                    buff = int(float(buffered_length) / float(self.video_length) * 100)
                 self["buffer_slider"].setValue(buff)
             else:
                 self["download_label"].setText("")

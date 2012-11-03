@@ -94,16 +94,16 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, CustomPlayerInfobar, InfoBarBa
 			self.video_length = 0
 				
 			self.AVswitch = AVSwitch()
-			self.defaultAVmode = self.getAspectRatioMode()
+			self.defaultAVmode = 0#self.getAspectRatioMode()
 			self.currentAVmode = self.defaultAVmode
 			
 			self.onClose.append(self._onClose)
 		
 		
 		def getAspectRatioMode(self):
-			aspects = ["", "letterbox", "panscan", "non", "bestfit"]
+			aspects={'letterbox':0,'panscan':1,'bestfit':2,'non':3,'nonlinear':3}
 			mode = open("/proc/stb/video/policy").read()[:-1]
-			return aspects.index(mode)
+			return aspects[mode]
 		
 		def _play(self):	
 			self.session.nav.playService(self.service)
@@ -196,16 +196,16 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, CustomPlayerInfobar, InfoBarBa
 		def aspectratioSelection(self):
 			debug("aspect mode %d" % self.currentAVmode)
 			if self.currentAVmode == 1: #letterbox
-				self.AVswitch.setAspectRatio(2)
+				self.AVswitch.setAspectRatio(0)
 				self.currentAVmode = 2
-			elif self.currentAVmode == 2: #nonlinear
-				self.AVswitch.setAspectRatio(3)
+			elif self.currentAVmode == 2: #panscan
+				self.AVswitch.setAspectRatio(4)
+				self.currentAVmode = 3
+			elif self.currentAVmode == 2: #bestfit
+				self.AVswitch.setAspectRatio(2)
 				self.currentAVmode = 3
 			elif self.currentAVmode == 3: #nonlinear
-				self.AVswitch.setAspectRatio(4)
-				self.currentAVmode = 4
-			elif self.currentAVmode == 4: #panscan
-				self.AVswitch.setAspectRatio(1)
+				self.AVswitch.setAspectRatio(3)
 				self.currentAVmode = 1
 				
 		
@@ -246,9 +246,10 @@ class CustomVideoPlayer(ArchivCZSKMoviePlayer, CustomPlayerInfobar):
 		self._play()
 	
 	def __serviceStarted(self):
-		self.videoPlayerController.set_video_player(self)
-		if self.playAndDownload and self.useVideoController:
-			self.videoPlayerController.start_video_check()
+		if self.useVideoController:
+			self.videoPlayerController.set_video_player(self)
+			if self.playAndDownload:
+				self.videoPlayerController.start_video_check()
 			
 ##################  default MP methods ################
 
@@ -304,10 +305,10 @@ class CustomVideoPlayer(ArchivCZSKMoviePlayer, CustomPlayerInfobar):
 			
 	def leavePlayerConfirmed(self, answer):
 		if answer == 'quit':
-			self._exitVideoPlayer()
+			self.exitVideoPlayer()
 		
 	def exitVideoPlayer(self, message=None):
-		if message is not None and self.videoPlayerController is not None:
+		if message is not None and self.useVideoController:
 			self.videoPlayerController._exit_video_player()
 		elif message is not None:
 			self._exitVideoPlayer()
@@ -581,7 +582,11 @@ class Player():
 		sref.setName(self.name.encode('utf-8'))
 		
 		videoPlayerSetting = config.plugins.archivCZSK.player.getValue()
-		videoPlayerController = VideoPlayerController(self.session, download=self.download, \
+		videoPlayerController = None
+		useVideoController = config.plugins.archivCZSK.useVideoController.getValue()
+		
+		if useVideoController:
+			videoPlayerController = VideoPlayerController(self.session, download=self.download, \
 													 seekable=self.seekable, pausable=self.pausable)
 		
 		
@@ -590,10 +595,10 @@ class Player():
 		
 		elif videoPlayerSetting == 'custom':
 			self.session.openWithCallback(self.exit, CustomVideoPlayer, sref, videoPlayerController, \
-										 self.useVideoController, playAndDownload, subtitlesURL)
+										 useVideoController, playAndDownload, subtitlesURL)
 		elif videoPlayerSetting == 'mipsel':
 			self.session.openWithCallback(self.exit, MipselVideoPlayer, sref, videoPlayerController, self.autoPlay, \
-										 self.playerBuffer, self.useVideoController, playAndDownload, subtitlesURL)
+										 self.playerBuffer, useVideoController, playAndDownload, subtitlesURL)
 		else:
 			debug("unknown videoplayer %s" % videoPlayerSetting)
 		

@@ -3,7 +3,7 @@ Created on 3.10.2012
 
 @author: marko
 '''
-import os, sys, imp
+import os
 from twisted.internet import defer
 from xml.etree.cElementTree import ElementTree
 
