@@ -112,6 +112,24 @@ class Addon(object):
         self.loader.remove_importer()
         
         
+        
+class XBMCAddon(Addon):
+    def getLocalizedString(self,id_language):
+        return self.get_localized_string(id_language)
+    
+    def getAddonInfo(self,inf):
+        return self.get_info(info)
+    
+    def getSetting(self,setting):
+            val= self.get_setting(setting)
+            if isinstance(val,bool):
+                if val:
+                    return 'false'
+                else:
+                    return 'true'
+            return val
+        
+        
                  
 class ToolsAddon(Addon):
     def __init__(self, info, repository):
@@ -473,11 +491,10 @@ class AddonImporter:
             return self.modules[fullname]
         try:
             code = self.f.read()
-        except:
-            if self.f:
-                self.f.close()
+        except Exception:
+            if self.f: self.f.close()
             return 
-
+        else: self.f.close()
         debug("%s importing modul '%s'" % (self, fullname))
         mod = self.modules[fullname] = imp.new_module(fullname)
         mod.__file__ = self.filename
