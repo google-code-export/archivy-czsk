@@ -25,8 +25,8 @@ from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
 
 __scriptid__   = 'plugin.video.bezvadata.cz'
 __scriptname__ = 'bezvadata.cz'
-__addon__ = ArchivCZSK.get_addon(__scriptid__)
-__language__ = __addon__.get_localized_string
+__addon__ = ArchivCZSK.get_xbmc_addon(__scriptid__)
+__language__ = __addon__.getLocalizedString
 
 
 import util
@@ -42,12 +42,12 @@ def can_show(ext_filter,item):
 	extension = os.path.splitext(item['title'])[1]
 	if extension in ext_filter:
 		return False
-	elif '18+' in item.keys() and not __addon__.get_setting('18+content'):
+	elif '18+' in item.keys() and not __addon__.getSetting('18+content') != 'true':
 		return False
 	return True
 
 def create_filter():
-	ext_filter = __addon__.get_setting('ext-filter').split(',')
+	ext_filter = __addon__.getSetting('ext-filter').split(',')
 	return ['.'+f.strip() for f in ext_filter]
 
 def filter(item):

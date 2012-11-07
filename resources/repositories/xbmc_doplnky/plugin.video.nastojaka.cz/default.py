@@ -25,10 +25,10 @@ import util,xbmcprovider,nastojaka
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
 __scriptid__   = 'plugin.video.nastojaka.cz'
 __scriptname__ = 'nastojaka.cz'
-__addon__ = ArchivCZSK.get_addon(__scriptid__)
-__language__ = __addon__.get_localized_string
+__addon__ = ArchivCZSK.get_xbmc_addon(__scriptid__)
+__language__ = __addon__.getLocalizedString
 
 
-settings = {'quality':__addon__.get_setting('quality')}
+settings = {'quality':__addon__.getSetting('quality')}
 xbmcprovider.XBMCMultiResolverContentProvider(nastojaka.NastojakaContentProvider(),settings,__addon__,session).run(params)
 

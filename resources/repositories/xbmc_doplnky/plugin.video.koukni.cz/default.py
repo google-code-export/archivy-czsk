@@ -26,9 +26,9 @@ import xbmcprovider,koukni
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
 __scriptid__   = 'plugin.video.koukni.cz'
 __scriptname__ = 'koukni.cz'
-__addon__ = ArchivCZSK.get_addon(__scriptid__)
-__language__ = __addon__.get_localized_string
+__addon__ = ArchivCZSK.get_xbmc_addon(__scriptid__)
+__language__ = __addon__.getLocalizedString
 
-settings = {'downloads':__addon__.get_setting('downloads')}
+settings = {}
 
 xbmcprovider.XBMContentProvider(koukni.KoukniContentProvider(),settings,__addon__,session).run(params)

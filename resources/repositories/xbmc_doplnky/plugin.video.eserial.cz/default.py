@@ -27,8 +27,8 @@ import util
 
 __scriptid__ = 'plugin.video.eserial.cz'
 __scriptname__ = 'eserial.cz'
-__addon__ = ArchivCZSK.get_addon(__scriptid__)
-__language__ = __addon__.get_localized_string
+__addon__ = ArchivCZSK.get_xbmc_addon(__scriptid__)
+__language__ = __addon__.getLocalizedString
 
 
 class XBMCEserialContentProvider(xbmcprovider.XBMCMultiResolverContentProvider):

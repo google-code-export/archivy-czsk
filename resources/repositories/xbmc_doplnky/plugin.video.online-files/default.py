@@ -25,9 +25,9 @@ from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
 
 __scriptid__   = 'plugin.video.online-files'
 __scriptname__ = 'Soubory Online'
-__addon__ = ArchivCZSK.get_addon(__scriptid__)
-__language__ = __addon__.get_localized_string
-__settings__   = __addon__.get_setting
+__addon__ = ArchivCZSK.get_xbmc_addon(__scriptid__)
+__language__ = __addon__.getLocalizedString
+__settings__   = __addon__.getSetting
 
 import util,search
 

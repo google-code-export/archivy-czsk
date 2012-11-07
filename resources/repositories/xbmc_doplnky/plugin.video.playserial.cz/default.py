@@ -27,8 +27,8 @@ import playserial
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
 __scriptid__   = 'plugin.video.playserial.cz'
 __scriptname__ = 'playserial.cz'
-__addon__ = ArchivCZSK.get_addon(__scriptid__)
-__language__ = __addon__.get_localized_string
+__addon__ = ArchivCZSK.get_xbmc_addon(__scriptid__)
+__language__ = __addon__.getLocalizedString
 
 settings = {'quality':__addon__.get_setting('quality')}
 

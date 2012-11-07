@@ -20,16 +20,15 @@
 # *
 # */
 
-import os
-import util,xbmcprovider
+import util, xbmcprovider
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
-__scriptid__   = 'plugin.video.re-play.cz'
+__scriptid__ = 'plugin.video.re-play.cz'
 __scriptname__ = 're-play.cz'
-__addon__ = ArchivCZSK.get_addon(__scriptid__)
-__language__ = __addon__.get_localized_string
+__addon__ = ArchivCZSK.get_xbmc_addon(__scriptid__)
+__language__ = __addon__.getLocalizedString
 
-sys.path.append( os.path.join ( __addon__.getAddonInfo('path'), 'resources','lib') )
+sys.path.append(os.path.join (os.path.dirname(__file__), 'resources', 'lib'))
 import replay
-settings = {'quality':__addon__.get_setting('quality')}
+settings = {'quality':__addon__.getSetting('quality')}
 
-xbmcprovider.XBMCMultiResolverContentProvider(replay.ReplayContentProvider(),settings,__addon__,session).run(params)
+xbmcprovider.XBMCMultiResolverContentProvider(replay.ReplayContentProvider(), settings, __addon__, session).run(params)

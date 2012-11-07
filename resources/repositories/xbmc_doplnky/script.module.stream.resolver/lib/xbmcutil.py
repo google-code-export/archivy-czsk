@@ -26,9 +26,8 @@ UA = 'Mozilla/6.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.5) Gecko/20080924
 from Plugins.Extensions.archivCZSK.engine import client
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
 
-
-__addon__ = ArchivCZSK.get_addon('script.module.stream.resolver')
-__lang__ = __addon__.get_localized_string
+__addon__ = ArchivCZSK.get_xbmc_addon('script.module.stream.resolver')
+__lang__ = __addon__.getLocalizedString
 ##
 # initializes urllib cookie handler
 def init_urllib():

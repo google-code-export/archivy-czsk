@@ -155,7 +155,7 @@ class DoplnkyContentProvider(object):
 		if 'img' in item.keys():
 			img = item['img']
 		if title.find('$') == 0:
-			title = self.addon.get_localized_string(int(title[1:]))
+			title = self.addon.getLocalizedString(int(title[1:]))
 		util.add_dir(title, params, img, infoLabels=self._extract_infolabels(item))
 
 	def _extract_infolabels(self, item):

@@ -1,3 +1,5 @@
+2012-11-05:
+ * opet oprava autorizace
 2012-10-30:
  * oprava autorizace
 2012-06-07:
