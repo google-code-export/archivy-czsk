@@ -4,14 +4,17 @@ Created on 21.10.2012
 @author: marko
 '''
 
+import traceback
+
 from Screens.MessageBox import MessageBox
 from Components.config import config
 
 from . import _
+
 from gui.content import VideoAddonsContentScreen
-import engine.exceptions.archiveException as archiveException
 from engine.items import PVideoAddon
-from engine.addon import VideoAddon
+from engine.addon import VideoAddon, XBMCAddon
+from engine.exceptions import archiveException
 
 nova = 'plugin.video.dmd-czech.voyo'
 btv = 'plugin.video.dmd-czech.btv'
@@ -41,25 +44,29 @@ class ArchivCZSK():
         return ArchivCZSK.__repositories[repository_id]
     
     @staticmethod
-    def add_repository(repository_id, repository):
-        ArchivCZSK.__repositories[repository_id] = repository
+    def add_repository(repository):
+        ArchivCZSK.__repositories[repository.id] = repository
     
     @staticmethod
     def get_addon(addon_id):
         return ArchivCZSK.__addons[addon_id]
     
     @staticmethod
+    def get_xbmc_addon(addon_id):
+        return XBMCAddon(ArchivCZSK.__addons[addon_id])
+    
+    @staticmethod
     def has_addon(addon_id):
         return addon_id in ArchivCZSK.__addons
     
     @staticmethod
-    def add_addon(addon_id, addon):
-        ArchivCZSK.__addons[addon_id] = addon
+    def add_addon(addon):
+        ArchivCZSK.__addons[addon.id] = addon
         
     
     def __init__(self, session):
         self.session = session
-        self.update_addons = []
+        self.toupdate_addons = []
         self.updated_addons = []
     
         update_string = ''
@@ -79,31 +86,35 @@ class ArchivCZSK():
         for repo_key in self.__repositories.keys():
             repository = self.__repositories[repo_key]
             try:
-                self.update_addons += repository.check_updates()
+                self.toupdate_addons += repository.check_updates()
             except archiveException.UpdateXMLVersionException:
-                self.show_error(_("Cannot retrieve update xml for repository") + " [%s]" % repository.name.encode('utf-8'))
+                print 'cannot retrieve update xml for repository %s' % repository
+                #self.show_error(_("Cannot retrieve update xml for repository") + " [%s]" % repository.name.encode('utf-8'))
                 continue
             except Exception:
-                self.show_error(_("Error when checking updates of repository") + " [%s]" % repository.name.encode('utf-8'))
+                traceback.print_exc()
+                print 'Error when checking updates for repository %s' % repository
+                #self.show_error(_("Error when checking updates of repository") + " [%s]" % repository.name.encode('utf-8'))
                 continue
-        return ' '.join(addon.name for addon in self.update_addons)
+        return ' '.join(addon.name for addon in self.toupdate_addons)
             
-    
-    
+
     def ask_update_addons(self, update_string):
         self.session.openWithCallback(self.update_addons,
-                                      MessageBox, _("Do you want to update") + update_string.encode('utf-8') + " " + _("addons"),
+                                      MessageBox, 
+                                      _("Do you want to update")+' '+ update_string.encode('utf-8') + " " + _("addons") + '?',
                                       type=MessageBox.TYPE_YESNO)
         
     
     def update_addons(self, callback=None):
-        if callback is not None:
+        if callback:
             updated_string = self._update_addons()
+            print updated_string.encode('utf-8')
             if updated_string != '':
                 self.session.openWithCallback(self.ask_restart_e2,
                                               MessageBox,
-                                              _("Following addons were updated") + ' ' + updated_string.encode('utf-8'),
-                                              type=MessageBox.TYPE_YESNO)
+                                              _("Following addons were updated") + ' ' + updated_string.encode('utf-8')+'.',
+                                              type=MessageBox.TYPE_INFO)
             else:
                 self.open_archive_screen()
         else:
@@ -111,19 +122,23 @@ class ArchivCZSK():
         
             
     def _update_addons(self):
-        for repo_key in self.__repositories.keys():
-            repository = self.__repositories[repo_key]
+        for addon in self.toupdate_addons:
+            updated=False
             try:
-                self.updated_addons += repository.update_addons()
+                updated = addon.update()
             except Exception:
-                self.show_error(_("Error when updating repository") + " [%s]" % repository.name)
+                traceback.print_exc()
                 continue
+            else:
+                if updated:
+                    self.updated_addons.append(addon)
+            
         return ' '.join(addon.name for addon in self.updated_addons)
             
     
     def ask_restart_e2(self):
         self.__need_restart = True
-        self.session.openWithCallback(self.restart_e2, MessageBox, _("You need to restart E2. Do you want to restart it now?"))        
+        self.session.openWithCallback(self.restart_e2, MessageBox, _("You need to restart E2. Do you want to restart it now?"),type=MessageBox.TYPE_YESNO)        
             
     
     def restart_e2(self, callback=None):
@@ -147,9 +162,9 @@ class ArchivCZSK():
                 video_addon.append(PVideoAddon(addon))
                 print '[ArchivCZSK] adding %s addon to video group' % key
                 
-            tv_video_addon.sort(cmp=None, key=None, reverse=False)
-            video_addon.sort(cmp=None, key=None, reverse=False)
-                
+       
+        tv_video_addon.sort(key=lambda addon:addon.name)
+        video_addon.sort(key=lambda addon:addon.name)         
         self.session.open(VideoAddonsContentScreen, tv_video_addon, video_addon)
         
     def show_error(self, info):

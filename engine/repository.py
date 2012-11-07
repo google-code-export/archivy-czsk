@@ -21,7 +21,7 @@ class Repository():
     
     """
         Loads installed repository and its addons, 
-        can check and retrieve updates/downloads to addons in local repository 
+        can check and retrieve updates/downloads for addons in local repository 
         from remote repository
          
     """
@@ -37,14 +37,13 @@ class Repository():
         self.author = repo_dict['author']
         self.version = repo_dict['version']
         self.description = repo_dict['description']
+        # every repository should have its update xml, to check versions and update/download addons
         self.update_xml_url = repo_dict['repo_addons_url']
+        
         self.update_datadir_url = repo_dict['repo_datadir_url']
         
-        self.path = os.path.split(config_file)[0]
+        self.path = os.path.dirname(config_file)
         self.addons_path = self.path#os.path.join(self.path, "addons")
-        
-        # every repository should have its update xml, to check versions and update/download addons
-        self.update_xml_url = settings.UPDATE_REPOSITORY_PATH + self.id + '/addon.xml'
         
         # addon.xml which describes addon
         self.addon_xml_relpath = 'addon.xml'
@@ -59,10 +58,10 @@ class Repository():
         self.addon_settings_relpath = self.addon_resources_relpath + '/settings.xml'
         self.addon_libraries_relpath = self.addon_resources_relpath + '/lib' 
 
-        self.addons = []
+        self._addons = {}
         
         #create updater for repository
-        self._updater = updater.Updater(self)
+        self._updater = updater.Updater(self, os.path.join(settings.TMP_PATH,self.id))
         
         # load installed addons in repository
         for addon_dir in os.listdir(self.addons_path):
@@ -72,7 +71,7 @@ class Repository():
             
             addon_info = AddonInfo(os.path.join(addon_path, self.addon_xml_relpath))
             if addon_info.type not in Repository.SUPPORTED_ADDONS:
-                raise Exception("%s '%s' addon not in supported type of addons %s " % (self, addon_info.type,Repository.SUPPORTED_ADDONS))
+                raise Exception("%s '%s' addon not in supported type of addons %s " % (self, addon_info.type, Repository.SUPPORTED_ADDONS))
             if addon_info.type == 'video':
                 try:
                     addon = VideoAddon(addon_info, self)
@@ -82,9 +81,8 @@ class Repository():
                     debug("skipping")
                     continue
                 else:
-                    archivczsk.ArchivCZSK.add_addon(addon.id, addon)
-
-                    self.addons.append(addon)
+                    archivczsk.ArchivCZSK.add_addon(addon)
+                    self.add_addon(addon)
             
             elif addon_info.type == 'tools':
                 # load tools addons
@@ -96,16 +94,29 @@ class Repository():
                     debug("skipping")
                     continue
                 else:
-                    archivczsk.ArchivCZSK.add_addon(tools.id, tools)
-                    self.addons.append(tools)
+                    archivczsk.ArchivCZSK.add_addon(tools)
+                    self.add_addon(tools)
         debug("%s successfully loaded" % self)
-                
+        
      
     def __repr__(self):
         return "%s" % self.name
-            
+    
+    def get_addon(self, addon_id):
+        return self._addons[addon_id]
+    
+    def add_addon(self, addon):
+        if self.is_supported_addon(addon):
+            self._addons[addon.id] = addon
+        else:
+            debug("%s cannot add %s" % str(addon))
+                
+    def is_supported_addon(self, addon):
+        if isinstance(addon, VideoAddon):
+            return True
+        if isinstance(addon, ToolsAddon):
+            return True
+        return False
+         
     def check_updates(self):
-        self._updater.check_updates()
-        
-    def update(self):
-        self._updater.update()
+        return self._updater.check_addons()

@@ -41,7 +41,7 @@ class Addon(object):
         debug("initializing %s" % self)
 
         self._updater = repository._updater
-        self._update_needed = False
+        self.__need_update = False
         
         # load languages
         self.language = AddonLanguage(self, os.path.join(self.path, self.repository.addon_languages_relpath))
@@ -65,17 +65,16 @@ class Addon(object):
     def __repr__(self):
         return "%s(%s %s)" % (self.__class__.__name__, self.name, self.version)
         
-    def update_needed(self):
-        return self._update_needed
-        
-    def check_update(self):
-        self._update_needed = self._updater.check_version(self)
-        
     def update(self):
-        if self._update_needed:
-            self._updater.update(self)
-        else:
-            debug("%s is up to date" % self)
+        if self.__need_update:
+            return self._updater.update_addon(self)
+        
+    def check_update(self,load_xml=True):
+        self.__need_update = self._updater.check_addon(self,load_xml)
+        return self.__need_update
+    
+    def need_update(self):
+        return self.__need_update
             
     
     def get_localized_string(self, id_language):
@@ -85,7 +84,7 @@ class Addon(object):
         try:
             setting = getattr(self.settings.main, '%s' % setting)
         except Exception, e:
-            debug('%s cannot retrieve setting %s\nreason %s' % (self,setting, str(e)))
+            debug('%s cannot retrieve setting %s\nreason %s' % (self, setting, str(e)))
         else:
             return getattr(setting, 'value', setting)
     
@@ -93,6 +92,7 @@ class Addon(object):
         try:
             atr = getattr(self.info, '%s' % info)
         except Exception:
+            print traceback.print_exc()
             debug("get_info cannot retrieve info")
             return None
         else:
@@ -113,20 +113,26 @@ class Addon(object):
         
         
         
-class XBMCAddon(Addon):
-    def getLocalizedString(self,id_language):
-        return self.get_localized_string(id_language)
+class XBMCAddon(object):
+    def __init__(self, addon):
+        self._addon = addon
+        
+    def __getattr__(self, attr):
+        return getattr(self._addon, attr)
+        
+    def getLocalizedString(self, id_language):
+        return self._addon.get_localized_string(id_language)
     
-    def getAddonInfo(self,inf):
-        return self.get_info(info)
+    def getAddonInfo(self, inf):
+        return self._addon.get_info(info)
     
-    def getSetting(self,setting):
-            val= self.get_setting(setting)
-            if isinstance(val,bool):
+    def getSetting(self, setting):
+            val = self._addon.get_setting(setting)
+            if isinstance(val, bool):
                 if val:
-                    return 'false'
-                else:
                     return 'true'
+                else:
+                    return 'false'
             return val
         
         
@@ -150,8 +156,8 @@ class VideoAddon(Addon):
             raise Exception("'%s entry point missing in addon.xml' % self")
         # content provider
         downloads_path = os.path.join(config.plugins.archivCZSK.downloadsPath.value, self.id)
-        shortcuts_path = os.path.join(config.plugins.archivCZSK.dataPath.value,self.id)
-        self.provider = AddonContentProvider(self, downloads_path,shortcuts_path)
+        shortcuts_path = os.path.join(config.plugins.archivCZSK.dataPath.value, self.id)
+        self.provider = AddonContentProvider(self, downloads_path, shortcuts_path)
             
         debug('%s successfully loaded' % self)
     
@@ -268,8 +274,8 @@ class AddonSettings(object):
         try:
             el = util.load_xml(settings_file)
         except Exception:
-            debug("cannot load %s"%self)
-            el=None
+            debug("cannot load %s" % self)
+            el = None
         if el is not None:
             settings = el.getroot()
             main_category = {'label':'general', 'subentries':[]}
@@ -380,7 +386,7 @@ class AddonInfo(object):
         self.author = addon_dict['author']
         self.type = addon_dict['type']
         self.broken = addon_dict['broken']
-        self.path = os.path.split(info_file)[0]
+        self.path = os.path.dirname(info_file)
         self.description = u''
         self.library = addon_dict['library']
         self.script = addon_dict['script']
@@ -504,7 +510,7 @@ class AddonImporter:
         del self.f
         try:
             exec code in mod.__dict__
-            debug("%s imported modul '%s'"  % (self,fullname))
+            debug("%s imported modul '%s'" % (self, fullname))
         except Exception:
             del self.modules[fullname]
             raise

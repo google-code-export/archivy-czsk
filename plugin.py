@@ -35,7 +35,7 @@ for repo in os.listdir(settings.REPOSITORY_PATH):
 		print "[ArchivCZSK] skipping"
 		continue
 	else:
-		ArchivCZSK.add_repository(repo, repo_xml)
+		ArchivCZSK.add_repository(repository)
 	
 
 def sessionstart(reason, session):
