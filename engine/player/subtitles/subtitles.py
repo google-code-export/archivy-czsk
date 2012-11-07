@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 #################################################################################
 #
-#    Subtitles library 0.2 for Dreambox-Enigma2
+#    Subtitles library 0.3 for Dreambox-Enigma2
 #    Coded by mx3L (c)2012
 #
 #    This program is free software; you can redistribute it and/or
@@ -20,7 +20,6 @@ import re
 import urllib2
 import os
 from string import split
-from time import sleep
 from copy import copy
 from re import compile as re_compile
 from os import path as os_path, listdir
@@ -29,21 +28,23 @@ from os import path as os_path, listdir
 from enigma import  RT_HALIGN_RIGHT, RT_VALIGN_TOP, eSize, ePoint, RT_HALIGN_LEFT, RT_HALIGN_RIGHT, RT_HALIGN_CENTER, RT_VALIGN_CENTER, eListboxPythonMultiContent, gFont, getDesktop, eServiceCenter, iServiceInformation, eServiceReference, iSeekableService, iPlayableService, iPlayableServicePtr, eTimer, addFont, gFont
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
-from Components.Language import language
 from Components.ConfigList import ConfigList, ConfigListScreen
 from Components.config import ConfigSubsection, ConfigSelection, ConfigYesNo, configfile, getConfigListEntry
 from Components.Harddisk import harddiskmanager
-from Components.Label import Label, MultiColorLabel
-from Components.ActionMap import ActionMap, NumberActionMap
+from Components.Label import Label
+from Components.ActionMap import ActionMap, NumberActionMap, HelpableActionMap
 from Components.FileList import FileList
 from Components.MenuList import MenuList
 from Components.MultiContent import MultiContentEntryText
 from Components.config import config
+from Components.ServiceEventTracker import ServiceEventTracker
 from Tools.Directories import SCOPE_SKIN_IMAGE, SCOPE_PLUGINS, resolveFilename, SCOPE_LANGUAGE
 from Tools.LoadPixmap import LoadPixmap
+from skin import parseColor
 
-# import localization function if you want
-from Plugins.Extensions.archivCZSK import _
+
+# localization function
+from . import _
 
 # set the name of plugin in which this library belongs 
 PLUGIN_NAME = 'archivCZSK'
@@ -51,21 +52,33 @@ PLUGIN_NAME = 'archivCZSK'
 # set supported encodings, you have to make sure, that you have corresponding python
 # libraries in %PYTHON_PATH%/encodings/ (ie. iso-8859-2 requires iso_8859_2.py library)
 
-# to choose encodings for region you want visit:
+# to choose encodings for region you want, visit:
 # http://docs.python.org/release/2.4.4/lib/standard-encodings.html
 
+#Common encodings for all languages
+ALL_LANGUAGES_ENCODINGS = ['utf-8']
+
 #Common central European encodings
-CENTRAL_EUROPE_ENCODINGS = ['utf-8', 'iso-8859-2', 'windows-1250', 'maclatin2', 'IBM852']
+CENTRAL_EASTERN_EUROPE_ENCODINGS = ['windows-1250', 'iso-8859-2', 'maclatin2', 'IBM852']
+WESTERN_EUROPE_ENCODINGS = ['windows-1252', 'iso-8859-15', 'macroman', 'ibm1140', 'IBM850']
+RUSSIAN_ENCODING = ['windows-1251', 'cyrillic', 'maccyrillic', 'koi8_r', 'IBM866']
 
 
-ENCODINGS = {_("Central Europe"):CENTRAL_EUROPE_ENCODINGS}
+ENCODINGS = {_("Central and Eastern Europe") : CENTRAL_EASTERN_EUROPE_ENCODINGS,
+             _("Western Europe"):WESTERN_EUROPE_ENCODINGS,
+             _("Russia"):RUSSIAN_ENCODING }
 
-FONT_PATH = "/usr/lib/enigma2/python/Plugins/Extensions/archivCZSK/player/subtitles/fonts/"
+#E2_FONT_PATH = '/usr/share/fonts/'
+FONT_PATH = os.path.join(os.path.dirname(__file__), "fonts")
 
-# set your fonts
+# fontname-R: regular font
+# fontname-B: bold font
+# fontname-I: italic font
+
+# set your fonts - fonts has to be in directory fonts(fontname-R,fontname-I,fontname-B)
 FONT = {
-        "Ubuntu":({"regular":"Ubuntu-M.ttf",
-                    "italic":"Ubuntu-MI.ttf",
+        "Ubuntu":({"regular":"Ubuntu-R.ttf",
+                    "italic":"Ubuntu-I.ttf",
                     "bold":"Ubuntu-B.ttf"}),
         
         
@@ -73,21 +86,22 @@ FONT = {
                      "italic":"Regular",
                      "bold":"Regular"})
         }
-
 #initializing fonts
-FONT_CP= FONT.copy()
-for f in FONT_CP.iterkeys():
+print "[Subtitles] initializing fonts in %s" % FONT_PATH
+FONT_CP = FONT.copy()
+
+for f in FONT_CP.keys():
     if f == 'Default':
         continue
     
     regular = FONT[f]['regular']
     italic = FONT[f]['italic']
     bold = FONT[f]['bold']
-    
-    if os.path.isfile(FONT_PATH + regular) and os.path.isfile(FONT_PATH + italic) and os.path.isfile(FONT_PATH + bold):
-        addFont(FONT_PATH + regular, regular, 100, False)
-        addFont(FONT_PATH + italic, italic, 100, False)
-        addFont(FONT_PATH + bold, bold, 100, False)
+    # only add font with all styles[italic,bold,regular]
+    if os.path.isfile(os.path.join(FONT_PATH, regular)) and os.path.isfile(os.path.join(FONT_PATH, italic)) and os.path.isfile(os.path.join(FONT_PATH, bold)):
+        addFont(os.path.join(FONT_PATH, regular), regular, 100, False)
+        addFont(os.path.join(FONT_PATH, italic), italic, 100, False)
+        addFont(os.path.join(FONT_PATH, bold), bold, 100, False)
     else:
         del FONT[f]
 
@@ -100,12 +114,12 @@ subtitles_settings.showSubtitles = ConfigYesNo(default=True)
 subtitles_settings.autoLoad = ConfigYesNo(default=True)
 
 choicelist = []
-for e in ENCODINGS.iterkeys():
+for e in ENCODINGS.keys():
     choicelist.append(e)
-subtitles_settings.encodingsGroup = ConfigSelection(default=_("Central Europe"), choices=choicelist)
+subtitles_settings.encodingsGroup = ConfigSelection(default=_("Central and Eastern Europe"), choices=choicelist)
 
 choicelist = []
-for f in FONT.iterkeys():
+for f in FONT_CP.keys():
     choicelist.append(f)
 subtitles_settings.fontType = ConfigSelection(default="Default", choices=choicelist)
 
@@ -114,10 +128,10 @@ for i in range(10, 60, 1):
     choicelist.append(("%d" % i, "%d" % i))
     
 # set default font size of subtitles
-subtitles_settings.fontSize = ConfigSelection(default="35", choices=choicelist)
+subtitles_settings.fontSize = ConfigSelection(default="43", choices=choicelist)
 
 choicelist = []
-for i in range(0, 101, 2):
+for i in range(0, 101, 1):
     choicelist.append(("%d" % i, "%d" % i))
 # set default position of subtitles (0-100) 0-top ,100-bottom
 subtitles_settings.position = ConfigSelection(default="94", choices=choicelist)
@@ -134,14 +148,299 @@ choicelist.append(("#00ffff", _("blue")))
 
 subtitles_settings.color = ConfigSelection(default="white", choices=choicelist) 
 
+                      
+class SubsSupport(object):
+    """User class for subtitles
+    
+    @param session: set active session
+    @param subPath: set path for subtitles to load
+    @param defaultPath: set default path when loading external subtitles
+    @param forceDefaultPath: always use default path when loading external subtitles
+    @param autoLoad: tries to load automatically subtitles according to name of file
+    @param subclasOfScreen: if set to True this class should be subclass of E2 Screen class.
+                            if set to False you have to use public function of this class to
+                            to connect your media player (resume,pause,exit,after seeking, subtitles setup)
+                            functions with subtitles
+    @param alreadyPlaying: flag indicates that service already started
+    """
+    
+    def __init__(self, session=None, subPath=None, defaultPath=None, forceDefaultPath=False, autoLoad=True, subclassOfScreen=True, alreadyPlaying=False):
+        if session is not None:
+            self.session = session
+        self.__subsScreen = self.session.instantiateDialog(SubsScreen)
+        self.__subsEngine = None
+        self.__subsDict = None
+        self.__loaded = False
+        self.__playing = False
+        self.__working = False
+        self.__autoLoad = autoLoad
+        self.__subsPath = None
+        self.__subsDir = None
+        self.__subsEnc = None
+        self.__defaultPath = None
+        self.__forceDefaultPath = forceDefaultPath
+        self.__encodings = ALL_LANGUAGES_ENCODINGS + ENCODINGS[subtitles_settings.encodingsGroup.getValue()]
+        self.__start_timer = None
+        
+        if subclassOfScreen:
+            self.__start_timer = eTimer()
+            self.__start_timer.callback.append(self.__updateSubs)
+            self.__event_tracker = ServiceEventTracker(screen=self, eventmap=
+            {
+                iPlayableService.evEnd: self.__serviceEnd,
+                iPlayableService.evStart: self.__serviceStarted,
+                iPlayableService.evSeekableStatusChanged: self.__seekableStatusChanged,
+            })
+            self["SubtitlesActions"] = HelpableActionMap(self, "MediaPlayerActions",
+                {
+                "subtitles": (self.subsMenu, _("show subtitles menu")),
+                } , -5)
+        
+            self.onClose.append(self.exitSubs)
+            
+            #override infobarseek's methods if available
+            if hasattr(self, 'doSeekRelative'):
+                self.doSeekRelative = self.__doSeekRelative
+            if hasattr(self, 'doSeek'):
+                self.doSeek = self.__doSeek
+    
+        
+        if defaultPath is not None and os.path.isdir(defaultPath):
+            self.__defaultPath = defaultPath
+            self.__subsDir = defaultPath 
+            
+        if subPath is not None and self.__autoLoad:
+            self.loadSubs(subPath)
+            if alreadyPlaying and subclassOfScreen:
+                self.resumeSubs()
+     
+     
+     
+    
+    def __serviceStarted(self):
+        print 'servicestarted'
+        
+        # subtitles are loading or already loaded 
+        if self.__working or self.isSubsLoaded():
+            while self.__working:
+                pass
+            self.__start_timer.start(300, True) 
+            return
+        
+        self.resetSubs(True)    
+        if self.__subsPath is None and self.__autoLoad:
+            self.__working = True
+            self.__start_timer.start(500, True) 
+    
+    def __doSeekRelative(self, pts):
+        print 'doseekrelative'
+        super(SubsSupport, self).doSeekRelative(pts)
+        self.playAfterSeek()
+                
+    def __doSeek(self, pts):
+        print 'doseek'
+        super(SubsSupport, self).doSeek(pts)
+        self.playAfterSeek()        
+        
+    
+    def __seekableStatusChanged(self):
+        if not hasattr(self, 'seekstate'):
+            return
+        if self.seekstate == self.SEEK_STATE_PLAY:
+            self.pauseSubs()
+        elif self.seekstate == self.SEEK_STATE_PAUSE:
+            self.resumeSubs()
+        elif self.seekstate == self.SEEK_STATE_EOF:
+            self.resetSubs(True)
+    
+    def __serviceEnd(self):
+        print "serviceEnd"
+        self.resetSubs(True)
+        
+        
+        
+    def __updateSubs(self):
+        if self.isSubsLoaded():
+            self.resumeSubs()
+            return
+        
+        ref = self.session.nav.getCurrentlyPlayingServiceReference()
+        if os.path.isdir(os.path.dirname(ref.getPath())):
+            self.__subsDir = os.path.dirname(ref.getPath())
+            subPath = os.path.splitext(ref.getPath())[0] + '.srt'
+            if os.path.isfile(subPath):
+                self.loadSubs(subPath)
+            else:
+                self.__working = False
+        self.__working = False
+        self.resumeSubs()
+            
+    def resetSubs(self, enc=True):
+        self.__encodings = ALL_LANGUAGES_ENCODINGS + ENCODINGS[subtitles_settings.encodingsGroup.getValue()]
+        if self.__subsEngine is not None:
+            self.__subsEngine.pause()
+            self.__subsEngine._exit()
+        self.__subsEngine = None
+        self.__subsScreen.reloadSettings()
+        if enc:
+            self.__subsEnc = None
+        self.__subsPath = None
+        self.__subsDict = None
+        self.__loaded = False
+    
+    def reloadSubsScreen(self):
+        self.pauseSubs()
+        self.hideSubsDialog()
+        self.__subsScreen.reloadSettings()
+        self.resumeSubs()
+        
+        
+    def isSubsLoaded(self):
+        return self.__loaded
+    
+    def loadSubs(self, filePath):
+        self.__working = True
+        self.__subsPath = None
+        if self.__defaultPath is not None:
+            self.__subsDir = self.__defaultPath
+        else:
+            self.__subsDir = None
+
+        if filePath is not None:
+            if filePath.startswith('http'):
+                self.__subsPath = filePath
+            else:
+                if self.__defaultPath is not None and self.__forceDefaultPath:
+                        self.__subsDir = self.__defaultPath
+                else:
+                    if os.path.isdir(os.path.dirname(filePath)):
+                        self.__subsDir = os.path.dirname(filePath)
+                    else:
+                        self.__subsDir = self.__defaultPath
+                if os.path.isfile(filePath):
+                    self.__subsPath = filePath
+            
+            if self.__subsPath is not None:
+
+                #loading subtitles from file/url and decoding text to unicode
+                spp = SubProcessPath(self.__subsPath, self.__encodings, self.__subsEnc)
+                subText, self.__subsEnc = spp.text, spp.encoding
+                if self.__subsEnc is None:
+                    self.session.open(MessageBox, text=_("Cannot decode subtitles. Try another encoding group"), type=MessageBox.TYPE_WARNING, timeout=5)
+                    self.resetSubs(True)
+                    self.__working = False
+                    return False
+                
+                # parsing subtitles to dict
+                srt = srtParser(subText)
+                subDict = srt.parse()
+                if subDict is None:
+                    self.session.open(MessageBox, text=_("Cannot parse subtitles"), type=MessageBox.TYPE_WARNING, timeout=5)
+                    self.resetSubs(True)
+                    self.__working = False
+                    return False
+                
+                ## removing style tags and adding style accordingly
+                ss = SubStyler(subDict)
+                self.__subsDict = ss.subDict 
+                
+            if self.__subsDict is not None:
+                self.__subsEngine = SubsEngine(self.session, self.__subsScreen, self.__subsDict)
+                self.__loaded = True
+                self.__working = False
+                return True
+            else:
+                self.__working = False
+                return False
+        self.__working = False
+        return False
+           
+    def pauseSubs(self):
+        if self.__loaded:
+            print '[Subtitles] pausing subtitles'
+            self.__subsEngine.pause()
+    
+    def resumeSubs(self):
+        if self.__loaded:
+            print '[Subtitles] resuming subtitles'
+            if subtitles_settings.showSubtitles.value:
+                self.showSubsDialog() 
+            else:
+                self.hideSubsDialog()
+            self.__subsEngine.resume()
+            
+    def playAfterSeek(self):
+        if self.__loaded:
+            if subtitles_settings.showSubtitles.value:
+                self.showSubsDialog() 
+            else:
+                self.hideSubsDialog()
+            self.__subsEngine.playAfterSeek()
+        
+    def showSubsDialog(self):
+        if self.__loaded:
+            print '[Subtitles] show dialog'   
+            self.__subsScreen.show()
+    
+    def hideSubsDialog(self):
+        if self.__loaded:
+            print '[Subtitles] hide dialog' 
+            self.__subsScreen.hide()
+        
+    def subsMenu(self):
+        if not self.__working:
+            self.session.openWithCallback(self.__subsMenuCB, SubsMenu, self.__subsPath, self.__subsDir, self.__subsEnc)
+    
+    def __subsMenuCB(self, subfile, settings_changed, changed_encoding=False, changed_encoding_group=False):
+        # subtitles loaded and changed settings
+        if self.__loaded and (self.__subsPath == subfile) and settings_changed and not (changed_encoding or changed_encoding_group):
+            print 'resetsubscreen' 
+            self.reloadSubsScreen()
+                
+        elif changed_encoding or changed_encoding_group:
+            print 'changed encoding or encoding_group'
+            if changed_encoding_group:
+                self.resetSubs(True)
+            else:
+                self.resetSubs(False)
+                    
+            self.loadSubs(subfile)
+            self.resumeSubs()   
+        
+        elif subfile != self.__subsPath:
+            print 'changed file'
+            if self.__loaded:
+                self.resetSubs(True)
+            self.loadSubs(subfile)
+            self.resumeSubs()
+                
+    def exitSubs(self):
+            
+        self.hideSubsDialog()
+        
+        if self.__subsEngine:
+            self.__subsEngine._exit()
+            self.__subsEngine = None
+        
+        if self.__subsScreen:
+            self.session.deleteDialog(self.__subsScreen)
+            self.__subsScreen = None
+        
+        self.__subsDict = None
+        self.__start_timer = None
+        
+        subtitles_settings.showSubtitles.setValue(True)
+        subtitles_settings.showSubtitles.save()
+        print '[Subtitles] closing subtitleDisplay'
+    
 
 class SubsScreen(Screen):
         
     def __init__(self, session):
         desktop = getDesktop(0)
         size = desktop.size()
-        sc_width = size.width()
-        sc_height = size.height()
+        self.sc_width = size.width()
+        self.sc_height = size.height()
         fontSize = int(subtitles_settings.fontSize.getValue())
         fontType = subtitles_settings.fontType.getValue()
         
@@ -152,199 +451,54 @@ class SubsScreen(Screen):
         self.selected_font = "regular"
         
         position = int(subtitles_settings.position.getValue())
-        vSize = fontSize * 3 + 10 # 3 rows + reserve
+        vSize = fontSize * 3 + 5# 3 rows + reserve
         color = subtitles_settings.color.getValue()
-        position = int(position * (float(sc_height - vSize) / 100)) 
+        position = int(position * (float(self.sc_height - vSize) / 100)) 
         
         self.skin = """
             <screen name="SubtitleDisplay" position="0,0" size="%s,%s" zPosition="-1" backgroundColor="transparent" flags="wfNoBorder">
                     <widget name="subtitles" position="0,%s" size="%s,%s" valign="center" halign="center" font="%s;%s" transparent="1" foregroundColor="%s" shadowColor="#40101010" shadowOffset="3,3" />
-            </screen>""" % (str(sc_width), str(sc_height), str(position), str(sc_width), str(vSize), str(FONT[fontType]['regular']), str(fontSize), color)
+            </screen>""" % (str(self.sc_width), str(self.sc_height), str(position), str(self.sc_width), str(vSize), str(FONT[fontType]['regular']), str(fontSize), color)
             
         Screen.__init__(self, session)
         self.stand_alone = True
         print 'initializing subtitle display'
+        
         self["subtitles"] = Label("")
+        
+    def setColor(self, color):
+        self["subtitles"].instance.setForegroundColor(parseColor(color))
+        
+    def setPosition(self, position):
+        self["subtitles"].instance.move(ePoint(0, position))
+        
+    def setFonts(self, font):
+        self.font = font
+        self['subtitles'].instance.setFont(self.font['regular'])
+        
+    def reloadSettings(self):
+        self.setColor(subtitles_settings.color.getValue())
+        
+        fontSize = int(subtitles_settings.fontSize.getValue())
+        vSize = fontSize * 3
+        position = int(subtitles_settings.position.getValue())
+        position = int(position * (float(self.sc_height - vSize) / 100))
+        
+        self.setPosition(position)
+        self.setFonts({"regular":gFont(FONT[subtitles_settings.fontType.getValue()]['regular'], fontSize),
+                     "italic":gFont(FONT[subtitles_settings.fontType.getValue()]['italic'], fontSize),
+                     "bold":gFont(FONT[subtitles_settings.fontType.getValue()]['bold'], fontSize)}) 
         
     def setSubtitle(self, sub):
         if sub['style'] != self.selected_font:
             self.selected_font = sub['style']
             self['subtitles'].instance.setFont(self.font[sub['style']])
-            
         self["subtitles"].setText(sub['text'].encode('utf-8'))
     
     def hideSubtitle(self):
-        self["subtitles"].setText("")
-         
+        self["subtitles"].setText("")    
+    
 
-              
-class Subtitles(object):
-    def __init__(self, session, subPath=None, defaultPath=None, forceDefaultPath=False):
-        self.session = session
-        self.subsScreen = None
-        self.subsEngine = None
-        self.subDict = None
-        self.loaded = False
-        self.subPath = None
-        self.subDir = None
-        self.subEnc = None
-        self.defaultPath = None
-        self.forceDefaultPath = forceDefaultPath
-        self.encodings = ENCODINGS[subtitles_settings.encodingsGroup.getValue()][:]
-        
-        if defaultPath is not None and os.path.isdir(defaultPath):
-            self.defaultPath = defaultPath
-            self.subDir = defaultPath
-        if subPath is not None:
-            self.load(subPath)
-            
-    def reset(self, enc=True):
-        self.encodings = ENCODINGS[subtitles_settings.encodingsGroup.getValue()][:]
-        self.subsEngine.pause()
-        self.subsEngine.exit()
-        self.subsEngine = None
-        self.session.deleteDialog(self.subsScreen)
-        if enc:
-            self.subEnc = None
-        self.subsScreen = None
-        self.subPath = None
-        self.subDict = None
-        self.loaded = False
-    
-    def resetSubsScreen(self):
-        self.pause()
-        self.hideDialog()
-        self.session.deleteDialog(self.subsScreen)
-        self.subsScreen = self.session.instantiateDialog(SubsScreen)
-        self.subsEngine.subsScreen = self.subsScreen
-        self.resume()  
-    
-    def load(self, filePath):
-        self.subPath = None
-        if self.defaultPath is not None:
-            self.subDir = self.defaultPath
-        else:
-            self.subDir = None
-
-        if filePath is not None:
-            if filePath.startswith('http'):
-                self.subPath = filePath
-            else:
-                if self.defaultPath is not None and self.forceDefaultPath:
-                        self.subDir = self.defaultPath
-                else:
-                    if os.path.isdir(os.path.split(filePath)[0]):
-                        self.subDir = os.path.split(filePath)[0]
-                    else:
-                        self.subDir = self.defaultPath
-                if os.path.isfile(filePath):
-                    self.subPath = filePath
-            
-            if self.subPath is not None:
-
-                # decoding text to unicode
-                spp = SubProcessPath(self.subPath, self.encodings, self.subEnc)
-                subText, self.subEnc = spp.text, spp.encoding
-                # parsing subtitles to dict
-                srt = srtParser(subText)
-                subDict = srt.parse()
-                if subDict is None:
-                    return
-                
-                ## removing tags and adding style
-                ss = SubStyler(subDict)
-                self.subDict = ss.subDict 
-                
-            if self.subDict is not None:
-                self.loaded = True
-                self.subsScreen = self.session.instantiateDialog(SubsScreen)
-                self.subsEngine = SubsEngine(self.session, self.subsScreen, self.subDict)
-                return True
-            else:
-                return False
-        return False
-           
-    def pause(self):
-        if self.loaded:
-            print '[Subtitles] pausing subtitles'
-            self.subsEngine.pause()
-    
-    def play(self):
-        if self.loaded:
-            if subtitles_settings.showSubtitles.value:
-                self.showDialog() 
-            else:
-                self.hideDialog()
-            self.subsEngine.play()
-            
-    def playAfterSeek(self):
-        if self.loaded:
-            if subtitles_settings.showSubtitles.value:
-                self.showDialog() 
-            else:
-                self.hideDialog()
-            self.subsEngine.playAfterSeek()
-       
-    def resume(self):
-        if self.loaded:
-            print '[Subtitles] resuming subtitles'
-            self.play()   
-        
-    def showDialog(self):
-        if self.loaded:
-            print '[Subtitles] show dialog'   
-            self.subsScreen.show()
-    
-    def hideDialog(self):
-        if self.loaded:
-            print '[Subtitles] hide dialog' 
-            self.subsScreen.hide()
-        
-    def setup(self):
-        self.session.openWithCallback(self.subsMenuCB, SubsMenu, self.subPath, self.subDir, self.subEnc)
-    
-    def subsMenuCB(self, subfile, settings_changed, change_encoding=False):
-        # subtitles loaded and changed settings
-        if self.loaded and (self.subPath == subfile) and settings_changed and not change_encoding:
-            print 'resetsubscreen' 
-            self.resetSubsScreen()
-                
-        elif change_encoding:
-            print 'changed encoding'
-            if self.loaded:
-                self.reset(False)
-            self.load(subfile)
-            self.resume()   
-        
-        elif subfile != self.subPath:
-            print 'changed file'
-            if self.loaded:
-                self.reset(True)
-            self.load(subfile)
-            self.resume()
-                
-    def exit(self):
-            
-        self.hideDialog()
-        
-        if self.subsEngine:
-            self.subsEngine.exit()
-            del self.subsEngine
-            self.subsEngine = None
-        
-        if self.subsScreen:
-            self.session.deleteDialog(self.subsScreen)
-            del self.subsScreen
-            self.subsScreen = None
-        
-        del self.subDict
-        self.subDict = None
-        
-        subtitles_settings.showSubtitles.setValue(True)
-        subtitles_settings.showSubtitles.save()
-        print '[Subtitles] closing subtitleDisplay'
-    
-    
     
 class SubsEngine(object):
 
@@ -358,108 +512,138 @@ class SubsEngine(object):
         self.oldPlayPts = None
         self.actsub = None
         self.showSubs = False
-        self.timer1 = eTimer()
-        self.timer1.callback.append(self.wait)
+        self.timer1 = None
         self.timer1_running = False
-        self.timer2 = eTimer()
-        self.timer2.callback.append(self.hide)
+        self.timer2 = None
         self.timer2_running = False
-        self.seek_timer = eTimer()
-        self.seek_timer.callback.append(self.setPlayPts)
-        self.seek_timer.callback.append(self.doPlayAfterSeek)
+        self.seek_timer = None
+        self.seek_timer_delay = 1300 # to read correct pts after seeking
         self.seek_timer_running = False
+        self.paused = True
         
         
     def reset(self):
-        self.timer1.stop()
-        self.timer1_running = False
-        self.timer2.stop()
-        self.timer2_running = False
         self.actsub = None
         self.loaded = False
         self.srtsub = None
         self.playPts = None
         self.pos = 0
         
-    def wait(self):
-        self.timer1.stop()
-        self.timer1_running = False      
+        
+    def wait(self):   
         self.playPts = self.getPlayPts()
-        while self.playPts is None:
-            self.playPts = self.getPlayPts()
-              
-        if self.playPts < self.actsub['start']:
+        
+        #unknown position so we pause
+        if self.playPts is None:
+            self.pause()
+            
+        elif self.playPts < self.actsub['start']:
             diff = self.actsub['start'] - self.playPts
             diff = diff / 90
-            if diff > 1:
-                if not self.timer1_running and not self.timer2_running:                   
-                    self.timer1.start(diff)
-                    self.timer1_running = True
-                else:
-                    self.wait()
+            # if difference is more then 100ms then wait
+            if diff > 100:              
+                self.timer1.start(diff, True)
+                self.timer1_running = True
             else:
                 self.show()
         else:
-            if self.actsub['start'] - self.playPts < -90000:
+            # if subtitle should be showed 2 seconds or more ago then skip subtitle
+            if self.actsub['start'] - self.playPts < -180000:
                 self.pos = self.pos + 1
                 self.play()
             else:
-                self.delay = (self.actsub['start'] - self.playPts) / 90
                 self.show()
                                                     
+    def resume(self):
+        if not self.paused:
+            return
+        else:
+            self.play()
+              
         
-    def play(self):   
+    def play(self):
+        self.paused = False   
         if self.pos == 0:
+            if self.timer1 is None:
+                self.timer1 = eTimer()
+                self.timer1.callback.append(self.wait)
+            if self.timer2 is None:
+                self.timer2 = eTimer()
+                self.timer2.callback.append(self.hide)
+            if self.seek_timer is None:
+                self.seek_timer = eTimer()
+                self.seek_timer.callback.append(self.setPlayPts)
+                self.seek_timer.callback.append(self.doPlayAfterSeek)
+            
             while self.service is None:
                 self.service = self.session.nav.getCurrentService()
-            self.seek = self.service.seek()   
-            sub = self.srtsub[0]
-            self.actsub = sub
-            self.wait()
+            self.seek = self.service.seek()
+            
+            if len(self.srtsub) > 0:   
+                sub = self.srtsub[0]
+                self.actsub = sub
+                self.wait()
+            #subtitles didnt load correctly
+            else:
+                self.pause()
                    
-        if self.pos > 0 and self.pos < len(self.srtsub):
+        elif self.pos > 0 and self.pos < len(self.srtsub):
             sub = self.srtsub[self.pos]
             self.actsub = sub
             self.wait()
+            
+        else:
+            self.pause()
                 
     def pause(self):
+        if self.paused:
+            return
+        self.paused = True
         self.subsScreen.hideSubtitle()
-        self.timer1.stop()
-        self.timer1_running = False
-        self.timer2.stop()
-        self.timer2_running = False
+        if self.timer1 is not None and self.timer1_running:
+            self.timer1.stop()
+            self.timer1_running = False
+        if self.timer2 is not None and self.timer2_running:
+            self.timer2.stop()
+            self.timer2_running = False
         
-    
     def playAfterSeek(self):
-        self.seek_timer.start(1000)
+        if self.seek_timer is None:
+            return
+        self.seek_timer.start(self.seek_timer_delay, True)
+        self.seek_timer_running = True
                     
     def doPlayAfterSeek(self):
-        self.seek_timer.stop()
+        self.seek_timer_running = False
         self.pause()
-        ptsBefore = self.oldPlayPts        
-        if self.playPts < ptsBefore: #seek backward
+        ptsBefore = self.oldPlayPts
+        
+        if self.playPts is None:
+            return
+                        
+        elif self.playPts < ptsBefore: #seek backward
             while self.srtsub[self.pos]['start'] > self.playPts and self.pos > 0:
                 self.pos = self.pos - 1
         else: #seek forward
             while self.srtsub[self.pos]['start'] < self.playPts and self.pos < len(self.srtsub) - 1:
                 self.pos = self.pos + 1
-        self.play()
+        self.resume()
                       
     def show(self):
+        self.timer1_running = False
         self.showSubs = True
         duration = int(self.actsub['duration'])#+self.delay
         self.subsScreen.setSubtitle(self.actsub)
-        if not self.timer1_running and not self.timer2_running:
-            self.timer2.start(duration)
-            self.timer2_running = True
+        self.timer2.start(duration, True)
+        self.timer2_running = True
             
             
     def hide(self):
-        self.timer2.stop()
         self.timer2_running = False
         self.showSubs = False
         self.subsScreen.hideSubtitle()
-        if len(self.srtsub) <= self.pos + 1:
+        
+        if self.pos + 1 >= len(self.srtsub):
             self.pause()
         else:
             self.pos = self.pos + 1
@@ -469,7 +653,7 @@ class SubsEngine(object):
         #print '[SubsEngine] show dialog'   
         self.subsScreen.show()
     
-    def hideDialog(self): 
+    def hideSubtitlesDialog(self): 
         #print '[SubsEngine] hide dialog' 
         self.subsScreen.hide()            
                              
@@ -483,11 +667,13 @@ class SubsEngine(object):
         self.oldPlayPts = copy(self.playPts)
         self.playPts = self.getPlayPts()
     
-    def exit(self):
+    def _exit(self):
         self.pause()
-        del self.timer1
-        del self.timer2
-        del self.seek_timer
+        self.timer1 = None
+        self.timer2 = None
+        if self.seek_timer is not None and self.seek_timer_running:
+            self.seek_timer.stop()
+        self.seek_timer = None
         
 class PanelList(MenuList):
     def __init__(self, list):
@@ -506,8 +692,8 @@ class SubsMenu(Screen):
         <screen position="center,center" size="500,400" title="Main Menu" >
             <widget name="info_sub" position="0,5" size="500,40" valign="center" halign="center" font="Regular;25" transparent="1" foregroundColor="white" />
             <widget name="info_subfile" position="0,55" size="500,40" valign="center" halign="center" font="Regular;22" transparent="1" foregroundColor="#DAA520" />
-            <widget name="enc_sub" position="0,90" size="80,25" valign="center" halign="left" font="Regular;16" transparent="1" foregroundColor="white" />
-            <widget name="enc_subfile" position="100,90" size="200,25" valign="center" halign="left" font="Regular;16" transparent="1" foregroundColor="#DAA520" />
+            <widget name="enc_sub" position="0,90" size="100,25" valign="center" halign="left" font="Regular;16" transparent="1" foregroundColor="white" />
+            <widget name="enc_subfile" position="110,90" size="200,25" valign="center" halign="left" font="Regular;16" transparent="1" foregroundColor="#DAA520" />
             <widget name="menu" position="0,125" size="500,275" transparent="1" scrollbarMode="showOnDemand" />
         </screen>"""
 
@@ -523,7 +709,10 @@ class SubsMenu(Screen):
         if subfile is not None:
             self["info_subfile"].setText(os.path.split(subfile)[1].encode('utf-8'))
             self["enc_sub"].setText(_("encoding"))
-            self["enc_subfile"].setText(encoding.encode('utf-8'))
+            if encoding:
+                self["enc_subfile"].setText(encoding.encode('utf-8'))
+            else:
+                self["enc_subfile"].setText(_("cannot decode"))
         else:
             self["info_subfile"].setText(_("None"))
         
@@ -531,19 +720,21 @@ class SubsMenu(Screen):
         self.lst = [unicode(_('Choose subtitles'), 'utf-8'),
                     unicode(_('Subtitles settings'), 'utf-8')]
         if subfile is not None:
-            self.lst.append(_('Change encoding'))
+            self.lst.append(unicode(_('Change encoding'), 'utf-8'))
+            
         self.subfile = subfile
         self.subdir = subdir
         self.change_encoding = False
+        self.change_encoding_group = False
         self.changed_settings = False
-        self.working = False
+        self.__working = False
         
         self.onShown.append(self.setWindowTitle)
 
         self["actions"] = NumberActionMap(["SetupActions", "DirectionActions"],
             {
                 "ok": self.okClicked,
-                "cancel": self.exit,
+                "cancel": self.cancel,
                 "up": self.up,
                 "down": self.down,
             }, -2)          
@@ -552,26 +743,16 @@ class SubsMenu(Screen):
     def setWindowTitle(self):
         self.setTitle(self.title)
         
-    def createMenu(self):
-        lst = self.lst
-        self.working = True
-            
-        self.menu_main = []
-        for x in self.menu_main:
-            del self.menu_main[0]
-            
+    def createMenu(self): 
         list = []
-        idx = 0
-        for x in lst:
-            list.append(PanelListEntry(x.encode('utf-8'), idx))
-            self.menu_main.append(x)
-            idx += 1        
+        for idx, x in enumerate(self.lst):
+            list.append(PanelListEntry(x.encode('utf-8'), idx))      
         self["menu"].setList(list)
-        self.working = False
+        self.__working = False
         
     def okClicked(self):
-        if not self.working:
-            self.working = True
+        if not self.__working:
+            self.__working = True
             if self["menu"].getSelectedIndex() == 0:
                 self.session.openWithCallback(self.fileChooserCB, SubsFileChooser, self.subdir)
                 
@@ -579,15 +760,15 @@ class SubsMenu(Screen):
                 self.session.openWithCallback(self.subsSetupCB, SubsSetup)
             elif self["menu"].getSelectedIndex() == 2:
                 self.change_encoding = True
-                self.working = False
-                self.exit()
+                self.__working = False
+                self.cancel()
             
     def up(self):
-        if not self.working:
+        if not self.__working:
             self["menu"].up()
 
     def down(self):
-        if not self.working:
+        if not self.__working:
             self["menu"].down()
             
     def fileChooserCB(self, file=None):
@@ -600,18 +781,18 @@ class SubsMenu(Screen):
                 self["info_subfile"].setText(os.path.split(self.subfile)[1].encode('utf-8'))
                 self["enc_sub"].setText("")
                 self["enc_subfile"].setText("")
-        self.working = False
+        self.__working = False
             
     def subsSetupCB(self, changed=False, changedEncodingGroup=False):
         if changed:
             self.changed_settings = True
         if changedEncodingGroup:
-            self.change_encoding = True
-        self.working = False
+            self.change_encoding_group = True
+        self.__working = False
         
-    def exit(self):
-        if not self.working:
-            self.close(self.subfile, self.changed_settings, self.change_encoding)     
+    def cancel(self):
+        if not self.__working:
+            self.close(self.subfile, self.changed_settings, self.change_encoding, self.change_encoding_group)     
 
 
 class SubsSetup(Screen, ConfigListScreen):
@@ -700,7 +881,7 @@ def FileEntryComponent(name, absolute=None, isDir=False):
         if isDir:
             png = LoadPixmap(resolveFilename(SCOPE_SKIN_IMAGE, "extensions/directory.png"))
         else:
-            png = LoadPixmap(resolveFilename(SCOPE_PLUGINS, 'Extensions/MediaPlayer2/subtitles.png'))
+            png = LoadPixmap(os.path.join(os.path.dirname(__file__), 'subtitles.png'))
         if png is not None:
             res.append((eListboxPythonMultiContent.TYPE_PIXMAP_ALPHATEST, 10, 2, 20, 20, png))
         return res
@@ -810,7 +991,9 @@ class SubsFileChooser(Screen):
     def __init__(self, session, subdir=None):
         Screen.__init__(self, session)
         self.session = session
-        defaultDir = subdir + '/'
+        defaultDir = subdir
+        if subdir is not None and not subdir.endswith('/'):
+            defaultDir = subdir + '/'
         print '[SubsFileChooser] defaultdir', defaultDir
         self.filelist = SubFileList(defaultDir)
         self["filelist"] = self.filelist
@@ -874,26 +1057,31 @@ class SubProcessPath(object):
     def decode(self, text):
         utext = None
         used_encoding = None
-        idx = 0
+        current_encoding_idx = -1
+        current_idx = 0
+        
         if self.current_encoding is not None:
-            idx = self.encodings.index(self.current_encoding)
-        for enc in self.encodings[idx:]:
-            #trying another encodings
-            if self.current_encoding is not None and enc == self.current_encoding:
-                continue
+            current_encoding_idx = self.encodings.index(self.current_encoding)
+            current_idx = current_encoding_idx + 1
+            
+        while current_idx != current_encoding_idx:
+            enc = self.encodings[current_idx]
             try:
+                print 'trying enc', enc
                 utext = text.decode(enc)
                 used_encoding = enc
-                break
+                return utext, used_encoding
             except Exception:
-                if enc == self.encodings[-1]:
-                    if self.current_encoding is not None:
-                        utext = text.decode(self.current_encoding)
-                        used_encoding = self.current_encoding
-                    else:    
-                        print '[Subtitles] cannot decode file'
-                continue
-        return utext, used_encoding
+                if enc == self.encodings[-1] and current_encoding_idx == -1:   
+                    print '[Subtitles] cannot decode file'
+                    return None, None
+                elif enc == self.encodings[-1] and current_encoding_idx != -1:
+                    current_idx = 0
+                    continue
+                else:
+                    current_idx += 1
+                    continue
+        return text.decode(self.current_encoding), self.current_encoding
     
     
     def request(self, url):
@@ -960,7 +1148,7 @@ class srtParser(Parser):
             self.subdict = self.srt_to_dict(self.text)
         except Exception:
             print '[srtParser] cannot load srt subtitles'
-            self.subdict = None
+            return
         return self.subdict
         
         
@@ -984,5 +1172,3 @@ class srtParser(Parser):
                              'text': '\n'.join(j for j in st[2:len(st)])
                             })
         return subs
-
-
