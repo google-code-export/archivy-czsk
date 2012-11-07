@@ -102,6 +102,8 @@ class VideoPlayerController(object):
         self.buffering_timer_running = False
         
         self.buffered_percent = 0
+        self.buffered_time = 0
+        
         self.download_position = 0
         self.player_position = 0
         self.video_length = 0 
@@ -206,14 +208,16 @@ class VideoPlayerController(object):
         
         buffering = not self._buffered
         buffered_percent = self.buffered_percent
+        buffered_time = self.buffered_time
         buffered_video_length = self.video_length
         downloading = self.download.running
         download_speed = self.download.status.speed       
-        self.video_player.updateInfobar(downloading=downloading, \
-                                        download_speed=download_speed, \
-                                        buffering=buffering, \
-                                        buffered_length=buffered_video_length, \
-                                        buffer_percent=buffered_percent\
+        self.video_player.updateInfobar(downloading=downloading,
+                                        download_speed=download_speed,
+                                        buffering=buffering,
+                                        buffered_length=buffered_video_length,
+                                        buffer_percent=buffered_percent,
+                                        buffered_time=buffered_time
                                         )
         
     # not sure why but original MP doSeek method does nothing, so I use on seeking only doSeekRelative
@@ -340,11 +344,14 @@ class VideoPlayerController(object):
             buffered_time = download_position - player_position - self.time_limit
             
             if buffered_time < 0:
-                self.buffered_percent = 0 
+                self.buffered_percent = 0
+                self.buffered_time = 0 
             elif buffered_time >= self.buffer_time:
                 self.buffered_percent = 100
+                self.buffered_time = buffered_time
             else:
                 self.buffered_percent = int(float(buffered_time) / float(self.buffer_time) * 100)
+                self.buffered_time = buffered_time
             
             # We have to wait, so pause video
             if self.buffered_percent < 5:

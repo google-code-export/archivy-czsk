@@ -38,7 +38,7 @@ class CustomPlayerInfobar(object):
     def BtoMB(self, byte):
         return int(float(byte) / float(1024 * 1024))
         
-    def updateInfobar(self, downloading=False, download_speed=0, buffering=False, buffered_length=0, buffer_percent=0):
+    def updateInfobar(self, downloading=False, download_speed=0, buffering=False, buffered_length=0, buffer_percent=0, buffer_seconds=0):
             print self["buffer_slider"].getRange(), self["buffer_slider"].getValue()
             debug("buffering: %s buffered %d buffered_video_length %lu downloading %s download_speed %lu" % \
                (str(buffering), buffer_percent, buffered_length, str(downloading), download_speed))
@@ -53,5 +53,8 @@ class CustomPlayerInfobar(object):
             else:
                 self["download_label"].setText("")
                 self["download_speed"].setText("")
-    
-            self["buffer_percent"].setText("%s %%" % buffer_percent)
+            if buffer_seconds > 50:
+                self["buffer_percent"].setText(">50s")
+            else:
+                self["buffer_percent"].setText("%ss" % buffer_seconds)
+            #self["buffer_percent"].setText("%s %%" % buffer_percent)

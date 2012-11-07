@@ -29,7 +29,7 @@ from Components.config import config, ConfigInteger, ConfigSubsection
 from Components.AVSwitch import AVSwitch
 
 
-from subtitles.subtitles import Subtitles
+from subtitles.subtitles import SubsSupport
 from controller import VideoPlayerController
 from infobar import CustomPlayerInfobar
 
@@ -45,7 +45,7 @@ def debug(data):
 RTMPGW_PATH = '/usr/bin/rtmpgw'
 NETSTAT_PATH = 'netstat'
 
-class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, CustomPlayerInfobar, InfoBarBase, InfoBarShowHide, \
+class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, CustomPlayerInfobar, InfoBarBase, InfoBarShowHide, \
 		InfoBarSeek, InfoBarAudioSelection, HelpableScreen, InfoBarNotifications, \
 		InfoBarServiceNotifications, InfoBarPVRState, InfoBarCueSheetSupport, InfoBarSimpleEventView, \
 		InfoBarMoviePlayerSummarySupport, \
@@ -56,19 +56,22 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, CustomPlayerInfobar, InfoBarBa
 	
 		def __init__(self, session, service, subtitles, useCustomInfobar=False):
 			BaseArchivCZSKScreen.__init__(self, session)
-			if self.HD:
-				self.setSkin("ArchivCZSKMoviePlayer_HD")
+			if config.plugins.archivCZSK.player.useDefaultSkin.value:
+				self.setSkinName("MoviePlayer")
 			else:
-				self.setSkin("ArchivCZSKMoviePlayer_SD")
+				if self.HD:
+					self.setSkin("ArchivCZSKMoviePlayer_HD")
+				else:
+					self.setSkin("ArchivCZSKMoviePlayer_SD")
 			
 			CustomPlayerInfobar.__init__(self)
-			self.__subtitles = Subtitles(session, subtitles, defaultPath=config.plugins.archivCZSK.subtitlesPath.value, forceDefaultPath=True)
+			SubsSupport.__init__(self, subPath=subtitles, defaultPath=config.plugins.archivCZSK.subtitlesPath.value, forceDefaultPath=True)
+			
 			self["actions"] = HelpableActionMap(self, "ArchivCZSKMoviePlayerActions",
             {
                 "aspectChange": (self.aspectratioSelection, _("changing aspect Ratio")),
-                "subtitles": (self.subtitlesSetup, _("show/hide subtitles")),
                 "leavePlayer": (self.leavePlayer, _("leave player?"))
-            }, 0) 
+            }, -3) 
 			
 			self.__event_tracker = ServiceEventTracker(screen=self, eventmap=
 			{
@@ -87,21 +90,20 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, CustomPlayerInfobar, InfoBarBa
 				InfoBarServiceErrorPopupSupport:
 				x.__init__(self)
 			
-			self.session = session
 			self.service = service
 				
 			self.returning = False
 			self.video_length = 0
 				
 			self.AVswitch = AVSwitch()
-			self.defaultAVmode = 0#self.getAspectRatioMode()
+			self.defaultAVmode = 1#self.getAspectRatioMode()
 			self.currentAVmode = self.defaultAVmode
 			
 			self.onClose.append(self._onClose)
 		
 		
 		def getAspectRatioMode(self):
-			aspects={'letterbox':0,'panscan':1,'bestfit':2,'non':3,'nonlinear':3}
+			aspects = {'letterbox':0, 'panscan':1, 'bestfit':2, 'non':3, 'nonlinear':3}
 			mode = open("/proc/stb/video/policy").read()[:-1]
 			return aspects[mode]
 		
@@ -135,24 +137,6 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, CustomPlayerInfobar, InfoBarBa
 		def __serviceStarted(self):
 			if self.getCurrentLength() is not None:
 				self.video_length = self.getCurrentLength()
-			#not working
-			#self.setBufferSliderRange(self.video_length)
-			self.__subtitles.play()
-		
-		def doSeekRelative(self, pts):
-			super(ArchivCZSKMoviePlayer, self).doSeekRelative(pts)
-			self.__subtitles.playAfterSeek()
-		
-		def unPauseService(self):
-			super(ArchivCZSKMoviePlayer, self).unPauseService()
-			self.__subtitles.resume()
-		
-		def pauseService(self):
-			super(ArchivCZSKMoviePlayer, self).pauseService()
-			self.__subtitles.pause()
-			
-		def subtitlesSetup(self):
-			self.__subtitles.setup() 
 
 		def getCurrentPosition(self):
 			seek = self.__getSeekable()
@@ -201,10 +185,10 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, CustomPlayerInfobar, InfoBarBa
 			elif self.currentAVmode == 2: #panscan
 				self.AVswitch.setAspectRatio(4)
 				self.currentAVmode = 3
-			elif self.currentAVmode == 2: #bestfit
+			elif self.currentAVmode == 3: #bestfit
 				self.AVswitch.setAspectRatio(2)
-				self.currentAVmode = 3
-			elif self.currentAVmode == 3: #nonlinear
+				self.currentAVmode = 4
+			elif self.currentAVmode == 4: #nonlinear
 				self.AVswitch.setAspectRatio(3)
 				self.currentAVmode = 1
 				
@@ -214,20 +198,19 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, CustomPlayerInfobar, InfoBarBa
 				self.exitVideoPlayer()
 				
 		def exitVideoPlayer(self):
-			if hasattr(self, '_ArchivCZSKMoviePlayer__subtitles'):
-				self.__subtitles.exit()
-				del self.__subtitles
 			self.setSeekState(self.SEEK_STATE_PLAY) 
 			self.close()
 		
 		def _onClose(self):
-			self.AVswitch.setAspectRatio(self.defaultAVmode)
+			pass
+			#self.AVswitch.setAspectRatio(self.defaultAVmode)
 
 
-class StandardVideoPlayer(MoviePlayer):
+class StandardVideoPlayer(SubsSupport, MoviePlayer):
 	"""Standard MoviePlayer without any modifications"""
-	def __init__(self, session, sref, controller):
+	def __init__(self, session, sref, controller, subtitles):
 		MoviePlayer.__init__(self, session, sref)
+		SubsSupport.__init__(self, subPath=subtitles, alreadyPlaying=True)
 		self.skinName = "MoviePlayer"   
 			
 		
@@ -339,7 +322,7 @@ class MipselVideoPlayer(CustomVideoPlayer):
                 
             })
 			self.updateTimer.start(1000)
-				 
+			
 		self.videoPlayerController.set_video_player(self)
 		if self.playAndDownload and self.useVideoController:
 			self.videoPlayerController.start_video_check()
@@ -363,10 +346,11 @@ class MipselVideoPlayer(CustomVideoPlayer):
 	def updateInfo(self):
 		downloading = False
 		buffering = self.buffering
+		buffer_time = self.bufferSecondsLeft
 		buffer_percent = self.bufferPercent
-		video_length = self.getCurrentLength()
-		buffer_length = video_length + (self.bufferSeconds * 90000)
-		self.updateInfobar(downloading=downloading, buffering=buffering, buffered_length=buffer_length, buffer_percent=buffer_percent)
+		#video_length = self.getCurrentLength()
+		#buffer_length = video_length + (self.bufferSeconds * 90000)
+		self.updateInfobar(downloading=downloading, buffering=buffering, buffer_percent=buffer_time)
 		
 	
 	def bufferFull(self):
@@ -383,7 +367,7 @@ class MipselVideoPlayer(CustomVideoPlayer):
 		
 	def _onClose(self):
 		self.updateTimer.stop()
-		del self.updateTimer
+		self.updateTimer = None
 		super(MipselVideoPlayer, self)._onClose()
 
 ##TO DO				
@@ -418,7 +402,7 @@ class BaseStreamVideoPlayer(ArchivCZSKMoviePlayer):
 			
 			
 class StreamVideoPlayer():
-	def __init__(self,player):
+	def __init__(self, player):
 		self.player._play()
 		
 		
@@ -441,9 +425,9 @@ class Player():
 		self.seekable = True 
 		self.pausable = True
 		
-		self.playDelay = int(config.plugins.archivCZSK.playDelay.getValue())
-		self.autoPlay = config.plugins.archivCZSK.mipselPlayer.autoPlay.getValue()
-		self.playerBuffer = int(config.plugins.archivCZSK.mipselPlayer.buffer.getValue())
+		self.playDelay = int(config.plugins.archivCZSK.player.playDelay.getValue())
+		self.autoPlay = config.plugins.archivCZSK.player.mipselPlayer.autoPlay.getValue()
+		self.playerBuffer = int(config.plugins.archivCZSK.player.mipselPlayer.buffer.getValue())
 		self.useVideoController = useVideoController 
 			
 		self.it = None
@@ -478,10 +462,10 @@ class Player():
 			self.stream = it.stream
 			
 		if self.stream is None and self.live:
-			self.rtmpBuffer = int(config.plugins.archivCZSK.liveBuffer.getValue())
+			self.rtmpBuffer = int(config.plugins.archivCZSK.player.liveBuffer.getValue())
 			
 		elif self.stream is None and not self.live:
-			self.rtmpBuffer = int(config.plugins.archivCZSK.archiveBuffer.getValue())
+			self.rtmpBuffer = int(config.plugins.archivCZSK.player.archiveBuffer.getValue())
 	
 		elif self.stream is not None:
 			self.playDelay = int(self.stream.playDelay)
@@ -499,7 +483,7 @@ class Player():
 			if self.playUrl.startswith('rtmp'):
 				
 				# internal player has rtmp support
-				if config.plugins.archivCZSK.seeking.getValue():
+				if config.plugins.archivCZSK.player.seeking.getValue():
 					if self.stream is not None:
 						self._playStream(self.stream.getUrl(), self.subtitles)
 					else:
@@ -581,9 +565,9 @@ class Player():
 		sref = eServiceReference(4097, 0, streamURL)
 		sref.setName(self.name.encode('utf-8'))
 		
-		videoPlayerSetting = config.plugins.archivCZSK.player.getValue()
+		videoPlayerSetting = config.plugins.archivCZSK.player.type.getValue()
 		videoPlayerController = None
-		useVideoController = config.plugins.archivCZSK.useVideoController.getValue()
+		useVideoController = config.plugins.archivCZSK.player.useVideoController.getValue()
 		
 		if useVideoController:
 			videoPlayerController = VideoPlayerController(self.session, download=self.download, \
@@ -591,7 +575,7 @@ class Player():
 		
 		
 		if videoPlayerSetting == 'standard':
-			self.session.openWithCallback(self.exit, StandardVideoPlayer, sref, videoPlayerController)
+			self.session.openWithCallback(self.exit, StandardVideoPlayer, sref, videoPlayerController, subtitlesURL)
 		
 		elif videoPlayerSetting == 'custom':
 			self.session.openWithCallback(self.exit, CustomVideoPlayer, sref, videoPlayerController, \
