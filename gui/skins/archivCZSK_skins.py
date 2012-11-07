@@ -79,30 +79,30 @@ ContentScreen_HD = """
              """
 
 StreamContentScreen_HD = """
-        <screen name="StreamContentScreen" position="center,90" size="900,575" title="StreamContentScreen" backgroundColor="#25080808">
+        <screen backgroundColor="background" name="StreamContentScreen_HD" position="center,90" size="900,575" title="StreamContentScreen">
   <widget backgroundColor="#9f1313" font="Regular;20" halign="center" name="key_red" position="8,520" shadowColor="black" shadowOffset="-2,-2" size="215,45" valign="center" zPosition="1" />
   <widget backgroundColor="#1f771f" font="Regular;20" halign="center" name="key_green" position="231,520" shadowColor="black" shadowOffset="-2,-2" size="215,45" valign="center" zPosition="1" />
   <widget backgroundColor="#a08500" font="Regular;20" halign="center" name="key_yellow" position="454,520" shadowColor="black" shadowOffset="-2,-2" size="215,45" valign="center" zPosition="1" />
   <widget backgroundColor="#18188b" font="Regular;20" halign="center" name="key_blue" position="677,520" shadowColor="black" shadowOffset="-2,-2" size="215,45" valign="center" zPosition="1" />
-  <widget name="menu" position="13,102" scrollbarMode="showOnDemand" size="530,330" transparent="1"  />
+  <widget name="menu" position="13,102" scrollbarMode="showOnDemand" size="530,330" transparent="1" />
   <widget alphatest="on" name="tip_pixmap" position="8,442" size="35,25" zPosition="2" />
   <widget font="Regular;18" foregroundColor="white" halign="left" name="tip_label" position="55,442" size="535,25" transparent="1" valign="center" zPosition="2" />
-  <widget name="streaminfo_label" position="604,120" size="226,34" font="Regular; 24" backgroundColor="#25080808"/>
-  <widget name="protocol_label" position="579,170" size="167,25" foregroundColor="#e5b243" font="Regular; 20" backgroundColor="#25080808"/>
-  <widget name="protocol" position="771,169" size="85,25" font="Regular; 20" backgroundColor="#25080808"/>
-  <widget name="playdelay_label" position="580,207" size="167,25" foregroundColor="#e5b243" font="Regular; 20" backgroundColor="#25080808" />
-  <widget name="path_label" position="29,60" size="838,28" font="Regular; 24" backgroundColor="#25080808"/>
-  <widget name="archive_label" position="32,6" size="835,34" halign="center" font="Regular; 34" foregroundColor="yellow1" backgroundColor="#25080808" />
-  <widget name="playdelay" position="770,207" size="85,25" font="Regular; 20" backgroundColor="#25080808" />
-  <widget name="rtmpbuffer" position="769,244" size="85,25" font="Regular; 20" backgroundColor="#25080808"/>
-  <widget name="rtmpbuffer_label" position="580,244" size="167,25" foregroundColor="#e5b243" font="Regular; 20" backgroundColor="#25080808"/>
-  <widget source="global.CurrentTime" render="Label" position="757,437" size="85,25" font="Regular;23" halign="right" backgroundColor="#25080808" transparent="1">
+  <widget backgroundColor="background" font="Regular; 24" name="streaminfo_label" position="604,120" size="226,34" />
+  <widget backgroundColor="background" font="Regular; 20" foregroundColor="#e5b243" name="protocol_label" position="579,170" size="167,25" />
+  <widget backgroundColor="background" font="Regular; 20" name="protocol" position="771,169" size="85,25" />
+  <widget backgroundColor="background" font="Regular; 20" foregroundColor="#e5b243" name="playdelay_label" position="580,207" size="167,25" />
+  <widget backgroundColor="background" font="Regular; 24" name="path_label" position="29,60" size="838,28" />
+  <widget backgroundColor="background" font="Regular; 34" foregroundColor="#e5b243" halign="center" name="archive_label" position="32,6" size="835,34" />
+  <widget backgroundColor="background" font="Regular; 20" name="playdelay" position="770,207" size="85,25" />
+  <widget backgroundColor="background" font="Regular; 20" name="rtmpbuffer" position="769,244" size="85,25" />
+  <widget backgroundColor="background" font="Regular; 20" foregroundColor="#e5b243" name="rtmpbuffer_label" position="580,244" size="167,25" />
+  <widget backgroundColor="background" font="Regular;23" halign="right" position="757,437" render="Label" size="85,25" source="global.CurrentTime" transparent="1">
     <convert type="ClockToText">Default</convert>
   </widget>
-  <widget name="playerbuffer_label" position="581,284" size="167,25" foregroundColor="#e5b243" font="Regular; 20" backgroundColor="#25080808" />
-  <widget name="playerbuffer" position="769,284" size="85,25" font="Regular; 20" backgroundColor="#25080808" />
-  <widget alphatest="on" name="livestream_pixmap" position="8,442" size="35,25" zPosition="2" backgroundColor="#25080808" />
-</screen> """ 
+  <widget backgroundColor="background" font="Regular; 20" foregroundColor="#e5b243" name="playerbuffer_label" position="581,284" size="167,25" />
+  <widget backgroundColor="background" font="Regular; 20" name="playerbuffer" position="769,284" size="85,25" />
+  <widget alphatest="on" backgroundColor="background" name="livestream_pixmap" position="8,442" size="35,25" zPosition="2" />
+</screen>"""
 
         
 ContentMenuScreen_HD = """
