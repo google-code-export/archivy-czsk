@@ -231,12 +231,12 @@ class ArchiveCZSKConfigScreen(BaseArchivCZSKConfigScreen):
 
     def keyLeft(self):
         ConfigListScreen.keyLeft(self) 
-        if self["config"].getCurrent()[1] == config.plugins.archivCZSK.player:
+        if self["config"].getCurrent()[1] == config.plugins.archivCZSK.player.type:
             self.buildMenu()
 
     def keyRight(self):
         ConfigListScreen.keyRight(self)
-        if self["config"].getCurrent()[1] == config.plugins.archivCZSK.player:
+        if self["config"].getCurrent()[1] == config.plugins.archivCZSK.player.type:
             self.buildMenu()
           
         
@@ -248,7 +248,7 @@ class AddonConfigScreen(BaseArchivCZSKConfigScreen):
         self.setup_title = _("Settings of ") + addon.name.encode('utf-8')
         
         # to get addon config including global settings
-        categories = addon_config.getArchiveConfigList(self.addon)
+        categories = addon_config.getArchiveConfigList(addon)
         
         BaseArchivCZSKConfigScreen.__init__(self, session, categories=categories)
         

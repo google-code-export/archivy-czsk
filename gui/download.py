@@ -19,8 +19,6 @@ from base import  BaseArchivCZSKMenuListScreen
 from common import PanelListEntryHD, PanelListDownloadEntry
 PanelListEntry = PanelListEntryHD
 
-global_session = None
-
 
 def openDownloads(session, name, content_provider, cb):
     session.openWithCallback(cb, DownloadsScreen, name, content_provider)
@@ -30,14 +28,15 @@ def openAddonDownloads(session, addon, cb):
 
 
 def setGlobalSession(session):
-    global global_session
-    global_session = session
+    DownloadManagerMessages.session = session
+    
 
 class DownloadManagerMessages(object):
+    session = None
 
     @staticmethod
     def finishDownloadCB(download):
-        session = global_session
+        session = DownloadManagerMessages.session
         def updateDownloadList(callback=None):
             if DownloadListScreen.instance is not None:
                 DownloadListScreen.instance.updateGUI()
@@ -51,14 +50,14 @@ class DownloadManagerMessages(object):
                                       type=MessageBox.TYPE_ERROR, timeout=5)  
     @staticmethod
     def startDownloadCB(download):
-        session = global_session
+        session = DownloadManagerMessages.session
         session.open(MessageBox, _("ArchivCZSK - Download:") + ' ' + \
                      download.name.encode('utf-8') + ' ' + _("started."), \
                      type=MessageBox.TYPE_INFO, timeout=5)
         
     @staticmethod
     def askOverrideDownloadCB(download):
-        session = global_session
+        session = DownloadManagerMessages.session
         def overrideDownload(callback=None):
             if callback:
                 download.remove()

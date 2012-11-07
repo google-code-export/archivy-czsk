@@ -364,9 +364,6 @@ class StreamContentItemHandler(ContentItemHandler):
             
         
             
-                   
-        
-
 class BaseContentScreen(BaseArchivCZSKMenuListScreen):
     """Base Content Screen"""
     def __init__(self, session, item_handler, lst_items):
@@ -480,7 +477,7 @@ class BaseContentScreen(BaseArchivCZSKMenuListScreen):
             
 class VideoAddonsContentScreen(BaseContentScreen, DownloadList, TipBar):
     
-    CONTEXT_TIP = (KEY_MENU_IMG, _("show menu of current item"))
+    CONTEXT_TIP = (KEY_MENU_IMG, _("show menu of current addon"))
        
     def __init__(self, session, tv_video_addon, video_addon):
         item_handler = VideoAddonItemHandler(session, self)
@@ -584,7 +581,9 @@ class VideoAddonsContentScreen(BaseContentScreen, DownloadList, TipBar):
             self.session.openWithCallback(self.closePlugin, MessageBox, _('Do you want to exit ArchivCZSK?'), type=MessageBox.TYPE_YESNO)
 
     def closePlugin(self, callback=None):
-        if callback:  
+        if callback:
+            if config.plugins.archivCZSK.clearMemory.value:
+                os.system("echo 1 > /proc/sys/vm/drop_caches")  
             #We dont need worker thread anymore so we stop it  
             Task.stopWorkerThread()
             
@@ -599,7 +598,7 @@ class ContentScreen(BaseContentScreen, DownloadList, TipBar):
        
     def __init__(self, session, addon, lst_items):
         self.addon = addon
-        player = Player(session, self.workingFinished, config.plugins.archivCZSK.useVideoController.value)
+        player = Player(session, self.workingFinished, config.plugins.archivCZSK.player.useVideoController.value)
         item_handler = ContentItemHandler(session, self, addon.provider, player)
         BaseContentScreen.__init__(self, session, item_handler, lst_items)
         
@@ -688,7 +687,7 @@ class StreamContentScreen(BaseContentScreen, DownloadList, TipBar):
     LIVE_PIXMAP = None   
     
     def __init__(self, session, content_provider, lst_items):
-        player = StreamPlayer(session, self.workingFinished, config.plugins.archivCZSK.useVideoController.value, settings.STREAM_PATH)
+        player = StreamPlayer(session, self.workingFinished, config.plugins.archivCZSK.player.useVideoController.value, settings.STREAM_PATH)
         item_handler = StreamContentItemHandler(session, self, content_provider, player)
         BaseContentScreen.__init__(self, session, item_handler, lst_items)
         self.content_provider = content_provider
@@ -762,7 +761,7 @@ class StreamContentScreen(BaseContentScreen, DownloadList, TipBar):
     
     def isMipselPlayerSelected(self):
         it = self.getSelectedItem()
-        return isinstance(it, PVideo) and config.plugins.archivCZSK.player.value == 'mipsel'
+        return isinstance(it, PVideo) and config.plugins.archivCZSK.player.type.value == 'mipsel'
     
     def updateStreamInfo(self):
         it = self.getSelectedItem()

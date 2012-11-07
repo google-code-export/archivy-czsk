@@ -56,6 +56,9 @@ class BaseArchivCZSKScreen(Screen):
             self.skin = getattr(archivCZSK_skins, skinName)
         else:
             debug("cannot find skinName '%s'" % skinName)
+            
+    def setSkinName(self, skinName):
+        self.skinName = skinName
         
         
 
@@ -169,17 +172,17 @@ class BaseArchivCZSKMenuListScreen(BaseArchivCZSKScreen):
     ### Messages ###
             
     def showError(self, error, timeout=5):
-        if isinstance(error,unicode):
+        if isinstance(error, unicode):
             error = error.encode('utf-8')
         self.session.openWithCallback(self.workingFinished, MessageBox, error, type=MessageBox.TYPE_ERROR, timeout=timeout)
 
     def showWarning(self, warning, timeout=5):
-        if isinstance(warning,unicode):
+        if isinstance(warning, unicode):
             warning = warning.encode('utf-8')
         self.session.openWithCallback(self.workingFinished, MessageBox, warning, type=MessageBox.TYPE_WARNING, timeout=timeout)
         
     def showInfo(self, info, timeout=5):
-        if isinstance(info,unicode):
+        if isinstance(info, unicode):
             info = info.encode('utf-8')
         self.session.openWithCallback(self.workingFinished, MessageBox, info, type=MessageBox.TYPE_INFO, timeout=timeout)
 

@@ -7,7 +7,7 @@ Created on 28.4.2012
 from Components.ActionMap import ActionMap, NumberActionMap
 
 from base import  BaseArchivCZSKMenuListScreen
-from common import PanelList, PanelListEntryHD
+from common import PanelListEntryHD
 
 PanelListEntry = PanelListEntryHD    
 
@@ -17,10 +17,7 @@ def showContextMenu(session, context_items, cb):
 class ContextMenuScreen(BaseArchivCZSKMenuListScreen):  
         def __init__(self, session, context_items):
             BaseArchivCZSKMenuListScreen.__init__(self, session)
-            
             self.context_items = context_items
-        
-            self["menu"] = PanelList([])
             self["actions"] = NumberActionMap(["archivCZSKActions"],
                 {
                 "ok": self.ok,
