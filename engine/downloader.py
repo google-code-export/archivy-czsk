@@ -252,8 +252,7 @@ class RTMPDownloadE2(Download):
         if retval == 1 and not self.killed:
             if os.path.getsize(self.local) > (0.95*self.length):
                 self.downloaded = True
-            else:
-                self.downloaded = False
+            self.downloaded = False
         elif retval == 0 and not self.killed:
             self.downloaded = True
         else:

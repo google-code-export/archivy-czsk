@@ -4,7 +4,7 @@ Created on 20.3.2012
 
 @author: marko
 '''
-from  xml.etree.cElementTree import ElementTree, Element, SubElement, Comment, tostring
+from  xml.etree.cElementTree import ElementTree, Element, SubElement
 import os
 import items
 from Components.config import config
