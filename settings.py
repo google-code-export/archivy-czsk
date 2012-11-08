@@ -32,7 +32,7 @@ config.plugins.archivCZSK.archives = ConfigSubsection()
 config.plugins.archivCZSK.player = ConfigSubsection()
 choicelist = [('standard', _('standard player')), ('custom', _('custom player (subtitle support)')), ('mipsel', _('mipsel player'))]   
 config.plugins.archivCZSK.player.type = ConfigSelection(default="custom", choices=choicelist)
-config.plugins.archivCZSK.player.useVideoController = ConfigYesNo(default=False)             
+config.plugins.archivCZSK.player.useVideoController = ConfigYesNo(default=True)             
 config.plugins.archivCZSK.player.seeking = ConfigYesNo(default=False)
 config.plugins.archivCZSK.player.useDefaultSkin = ConfigYesNo(default=True)
 config.plugins.archivCZSK.player.mipselPlayer = ConfigSubsection()
@@ -74,9 +74,11 @@ config.plugins.archivCZSK.subtitlesPath = ConfigDirectory(default="/tmp")
 
 def get_player_settings():
     list = []
+    player = config.plugins.archivCZSK.player.type.getValue()
     list.append(getConfigListEntry(_("Video player"), config.plugins.archivCZSK.player.type))
-    list.append(getConfigListEntry(_("Use video controller"), config.plugins.archivCZSK.player.useVideoController))
-    if config.plugins.archivCZSK.player.type.getValue() == 'mipsel':
+    if player == 'mipsel' or player == 'custom':
+        list.append(getConfigListEntry(_("Use video controller"), config.plugins.archivCZSK.player.useVideoController))
+    if player == 'mipsel':
         list.append(getConfigListEntry(_("Video player Buffer"), config.plugins.archivCZSK.player.mipselPlayer.buffer))
         list.append(getConfigListEntry(_("AutoPlay"), config.plugins.archivCZSK.player.mipselPlayer.autoPlay))
     list.append(getConfigListEntry(_("Video player with RTMP support"), config.plugins.archivCZSK.player.seeking))

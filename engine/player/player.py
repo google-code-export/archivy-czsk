@@ -214,7 +214,7 @@ class StandardVideoPlayer(SubsSupport, MoviePlayer):
 		self.skinName = "MoviePlayer"   
 			
 		
-class CustomVideoPlayer(ArchivCZSKMoviePlayer, CustomPlayerInfobar):
+class CustomVideoPlayer(ArchivCZSKMoviePlayer):
 	def __init__(self, session, sref, videoPlayerController, useVideoController=False, playAndDownload=False, subtitles=None):
 		ArchivCZSKMoviePlayer.__init__(self, session, sref, subtitles)
 		
@@ -227,6 +227,8 @@ class CustomVideoPlayer(ArchivCZSKMoviePlayer, CustomPlayerInfobar):
 				iPlayableService.evStart: self.__serviceStarted,
 			})
 		self._play()
+		
+		self.doSeekRelative=self.__doSeekRelative
 	
 	def __serviceStarted(self):
 		if self.useVideoController:
@@ -262,7 +264,7 @@ class CustomVideoPlayer(ArchivCZSKMoviePlayer, CustomPlayerInfobar):
 		else:
 			self._play()
 		
-	def doSeekRelative(self, pts):
+	def __doSeekRelative(self, pts):
 		if self.useVideoController:
 			self.videoPlayerController.do_seek_relative(pts)
 		else:
@@ -350,7 +352,7 @@ class MipselVideoPlayer(CustomVideoPlayer):
 		buffer_percent = self.bufferPercent
 		#video_length = self.getCurrentLength()
 		#buffer_length = video_length + (self.bufferSeconds * 90000)
-		self.updateInfobar(downloading=downloading, buffering=buffering, buffer_percent=buffer_time)
+		self.updateInfobar(downloading=downloading, buffering=buffering, buffer_seconds=buffer_time)
 		
 	
 	def bufferFull(self):

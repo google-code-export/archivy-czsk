@@ -1,11 +1,12 @@
 from enigma import  eTimer
 from Screens.MessageBox import MessageBox
 from Components.config import config
+from Plugins.Extensions.archivCZSK import _
 
 
 def debug(text):
-    if config.plugins.archivCZSK.debug.getValue():
-        print '[ArchivCZSK] PlayerController', text
+    if config.plugins.archivCZSK.debug.value:
+        print '[ArchivCZSK] PlayerController', text.encode('utf-8')
     
 def send_info_message(session, info, timeout=1):
     session.open(MessageBox, info, timeout=timeout, type=MessageBox.TYPE_INFO)
@@ -52,7 +53,6 @@ class VideoPlayerController(object):
     
     instance = None
     def __init__(self, session, download=None, video_check_interval=5, buffer_time=10, seekable=True, pausable=True, autoplay=True):
-        debug('initializing')
         self.video_player = None
         self.session = session
         self.download = download
@@ -107,7 +107,13 @@ class VideoPlayerController(object):
         self.download_position = 0
         self.player_position = 0
         self.video_length = 0 
-        self.video_length_total = 0 
+        self.video_length_total = 0
+        
+        debug('initializing %s'% self)
+        
+    def __repr__(self):
+        return "downloading: %s, video_check_interval:%ss buffer_time: %s seekable: %s pausable: %s autoplay: %s" % \
+                (self.download is not None, self.video_check_interval, self.buffer_time, self.seekable, self.pausable, self.autoplay)
         
     
     def set_video_player(self, video_player):
@@ -217,7 +223,7 @@ class VideoPlayerController(object):
                                         buffering=buffering,
                                         buffered_length=buffered_video_length,
                                         buffer_percent=buffered_percent,
-                                        buffered_time=buffered_time
+                                        buffer_seconds=buffered_time
                                         )
         
     # not sure why but original MP doSeek method does nothing, so I use on seeking only doSeekRelative
