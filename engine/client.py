@@ -100,7 +100,7 @@ def add_dir(name, params={}, image=None, infoLabels={}, menuItems={}, search_fol
         @param params: dictationary of parameters for next resolving
         @param image: image to show in directories info
         @param infoLabels: dictationary of informations{'title':title,'plot':plot,'rating':rating,''}"
-        @param menuItems: dictationary with menu items 
+        @param menuItems: dictationary with menu items
     
     """
     #controlling if task shouldnt be _aborted(ie. we pushed exit button when loading)
@@ -205,7 +205,10 @@ def add_video(name, url, subs=None, image=None, infoLabels={}, menuItems={}, fil
         it.add_context_menu_item(item_name, thumb=thumb, params=params)
         
     if filename is not None:
-        it.filename = unicode(filename, 'utf-8')
+        if isinstance(filename, unicode):
+            it.filename = filename
+        else:
+            it.filename = unicode(filename, 'utf-8')
     
     it.live = live    
         
