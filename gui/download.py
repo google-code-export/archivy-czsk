@@ -264,7 +264,7 @@ class DownloadsScreen(BaseArchivCZSKMenuListScreen, DownloadList):
     
     def removeDownload(self, callback=None):
         if callback:
-            self.addon.provider.remove_download(self.getSelectedItem())
+            self.content_provider.remove_download(self.getSelectedItem())
             self.updateGUI()
 
     def updateMenuList(self):

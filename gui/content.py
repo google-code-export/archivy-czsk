@@ -110,7 +110,7 @@ class VideoAddonItemHandler(ItemHandler):
     
     def menu_item(self, item):
         self.item = item
-        item.add_context_menu_item(_("Update"), action=item.addon.update)
+        #item.add_context_menu_item(_("Update"), action=item.addon.update)
         item.add_context_menu_item(_("Settings"), action=item.addon.open_settings, params={'session':self.session})
         item.add_context_menu_item(_("Changelog"), action=item.addon.open_changelog, params={'session':self.session})
         item.add_context_menu_item(_("Downloads"), action=item.addon.open_downloads, params={'session':self.session,'cb':self.content_screen.workingFinished})
@@ -224,10 +224,13 @@ class ContentItemHandler(ItemHandler):
         self.content_screen.workingStarted()
         seekable = self.content_provider.video_addon.get_setting('seekable')
         pausable = self.content_provider.video_addon.get_setting('pausable')
-        self.player.setVideoItem(item,seekable,pausable)
+        self.player.setVideoItem(item,seekable=seekable,pausable=pausable)
         self.player.setContentProvider(self.content_provider)
         if mode == 'play_and_download':
-            self.player.playAndDownload()
+            if item.url.startswith('rtmp'):
+                self.content_screen.showInfo(_('Not implemented yet'))
+            else:
+                self.player.playAndDownload()
         else:
             self.player.play()
         
