@@ -79,7 +79,6 @@ class Updater(object):
             unzipper = unzip.unzip()
             unzipper.extract(zip_file, self.local_path)
             
-            addon._update_needed = False
             debug("%s was successfully updated to version %s" % (addon.name, self.remote_addons_dict[addon.id]['version']))
             return True
         debug("%s failed to update to version %s" % (addon.name, addon.version))
@@ -174,11 +173,12 @@ class DummyAddon(object):
         self.relative_path = self.id
         self.version = version
         self.path = os.path.normpath(os.path.join(repository.path, self.relative_path))
-        self._needed_update = True
+        self.__need_update = True
         
     def need_update(self):
         return True
     
     def update(self):
-        self.repository._updater.update_addon(self)
+        return self.repository._updater.update_addon(self)
+
 

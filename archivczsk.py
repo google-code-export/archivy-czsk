@@ -70,7 +70,7 @@ class ArchivCZSK():
         self.updated_addons = []
     
         update_string = ''
-        if self.__need_restart:
+        if ArchivCZSK.__need_restart:
             self.ask_restart_e2()
         
         elif config.plugins.archivCZSK.autoUpdate.value:
@@ -96,13 +96,13 @@ class ArchivCZSK():
                 print 'Error when checking updates for repository %s' % repository
                 #self.show_error(_("Error when checking updates of repository") + " [%s]" % repository.name.encode('utf-8'))
                 continue
-        return ' '.join(addon.name for addon in self.toupdate_addons)
+        return '\n'.join(addon.name for addon in self.toupdate_addons)
             
 
     def ask_update_addons(self, update_string):
         self.session.openWithCallback(self.update_addons,
-                                      MessageBox, 
-                                      _("Do you want to update")+' '+ update_string.encode('utf-8') + " " + _("addons") + '?',
+                                      MessageBox,
+                                      _("Do you want to update") + ': ' + update_string.encode('utf-8') + " " + _("addons") + '?',
                                       type=MessageBox.TYPE_YESNO)
         
     
@@ -113,7 +113,7 @@ class ArchivCZSK():
             if updated_string != '':
                 self.session.openWithCallback(self.ask_restart_e2,
                                               MessageBox,
-                                              _("Following addons were updated") + ' ' + updated_string.encode('utf-8')+'.',
+                                              _("Following addons were updated") + ': ' + updated_string.encode('utf-8') + '.',
                                               type=MessageBox.TYPE_INFO)
             else:
                 self.open_archive_screen()
@@ -133,12 +133,12 @@ class ArchivCZSK():
                 if updated:
                     self.updated_addons.append(addon)
             
-        return ' '.join(addon.name for addon in self.updated_addons)
+        return '\n'.join(addon_u.name for addon_u in self.updated_addons)
             
     
-    def ask_restart_e2(self):
-        self.__need_restart = True
-        self.session.openWithCallback(self.restart_e2, MessageBox, _("You need to restart E2. Do you want to restart it now?"),type=MessageBox.TYPE_YESNO)        
+    def ask_restart_e2(self, callback=None):
+        ArchivCZSK.__need_restart = True
+        self.session.openWithCallback(self.restart_e2, MessageBox, _("You need to restart E2. Do you want to restart it now?"), type=MessageBox.TYPE_YESNO)        
             
     
     def restart_e2(self, callback=None):

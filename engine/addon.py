@@ -67,7 +67,12 @@ class Addon(object):
         
     def update(self):
         if self.__need_update:
-            return self._updater.update_addon(self)
+            ret= self._updater.update_addon(self)
+            if ret:
+                self.__need_update = False
+            return ret
+        else:
+            return False
         
     def check_update(self,load_xml=True):
         self.__need_update = self._updater.check_addon(self,load_xml)
