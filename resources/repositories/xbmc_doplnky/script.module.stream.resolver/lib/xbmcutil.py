@@ -143,11 +143,11 @@ def add_dir(name, params, logo=None, infoLabels={}, menuItems={}):
 def add_video(name, params={}, logo=None, infoLabels={}, menuItems={}):
     add_dir(name, params, logo=logo, infoLabels=infoLabels, menuItems=menuItems)
     
-def add_play(name, url, subs, filename=None, image=None, infoLabels={}, menuItems={}):
+def add_play(name, url, subs=None, filename=None, image=None, infoLabels={}, menuItems={}):
     name = decode_html(name)
     if not 'title' in infoLabels:
         infoLabels['title'] = name
-    client.add_video(name, url, subs, filename=filename, image=image, infoLabels=infoLabels, menuItems=menuItems)
+    client.add_video(name, url, subs=subs, filename=filename, image=image, infoLabels=infoLabels, menuItems=menuItems)
 
 _diacritic_replace = {u'\u00f3':'o',
 u'\u0213':'-',

@@ -1,5 +1,5 @@
 # *      Copyright (C) 2012 Libor Zoubek
-# *
+# *				modified by mx3L
 # *
 # *  This Program is free software; you can redistribute it and/or modify
 # *  it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 # *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 # *  http://www.gnu.org/copyleft/gpl.html
 # *
-# */
+# */ 
 
 import sys,os,re,traceback,util,xbmcutil,resolver,time
 from Plugins.Extensions.archivCZSK.engine import client
@@ -106,10 +106,10 @@ class XBMContentProvider(object):
 		if streams is not None:
 			if type(streams) == type([]):
 				for stream in streams:
-					xbmcutil.add_play('%s - %s[%s]' % (params['title'], stream['title'], stream['quality']), stream['url'], subs=stream['subs'])
+					xbmcutil.add_play('%s - %s[%s]' % (params['title'], stream['title'], stream['quality']), stream['url'], subs=stream['subs'],filename=params['title'])
 			else:
 				#ulozto,bezvadata..
-				xbmcutil.add_play("%s" % params['title'], streams['url'], subs=streams['subs'])
+				xbmcutil.add_play('%s - %s[%s]' % (params['title'], streams['title'], streams['quality']), streams['url'], subs=streams['subs'],filename=params['title'])
 
 	def resolve(self,url):
 		item = self.provider.video_item()

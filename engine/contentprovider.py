@@ -15,7 +15,7 @@ from Plugins.Extensions.archivCZSK import settings
 import xmlshortcuts 
 from tools import task, util
 from downloader import DownloadManager
-from items import PVideo, PFolder, PDownload, Stream, RtmpStream,PExit
+from items import PVideo, PFolder, PDownload, Stream, RtmpStream, PExit
 
 
 
@@ -39,13 +39,16 @@ class ContentProvider(object):
         video_lst = []
         if not os.path.exists(self.downloads_path):
             return []
+        
         downloads = os.listdir(self.downloads_path)
         for download in downloads:
             download_path = os.path.join(self.downloads_path, download)
+            
             if os.path.isdir(download_path):
                 continue
+            
             if os.path.splitext(download_path)[1] in VIDEO_EXTENSIONS:
-                filename = os.path.splitext(download_path)[0]
+                filename = os.path.basename(os.path.splitext(download_path)[0])
                 url = download_path
                 subs = None
                 if filename in [os.path.splitext(x)[0] for x in downloads if os.path.splitext(x)[1] in SUBTITLES_EXTENSIONS]:
@@ -60,7 +63,7 @@ class ContentProvider(object):
         return video_lst
     
     def remove_download(self, item):
-        if item is not None and isinstance(PDownload):
+        if item is not None and isinstance(item, PDownload):
             debug('removing item %s from disk' % item.name)
             os.remove(item.path.encode('utf-8'))
         else:
@@ -210,7 +213,7 @@ class AddonContentProvider(ContentProvider):
             debug("successfully loaded %d items" % len(self.gui_item_list[0]))
             lst_itemscp = [[], None, {}]
             lst_itemscp[0] = self.gui_item_list[0][:]
-            lst_itemscp[0].insert(0,PExit())
+            lst_itemscp[0].insert(0, PExit())
             lst_itemscp[1] = self.gui_item_list[1]
             lst_itemscp[2] = self.gui_item_list[2].copy()
             self.content_deferred.callback(lst_itemscp)
