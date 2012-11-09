@@ -18,7 +18,7 @@
 # *
 # */ 
 
-import sys,os,re,traceback,util,xbmcutil,resolver,time
+import sys, os, re, traceback, util, xbmcutil, resolver, time
 from Plugins.Extensions.archivCZSK.engine import client
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
 
@@ -28,7 +28,7 @@ class XBMContentProvider(object):
 	and must be testable without XBMC runtime. This is a basic/dummy implementation.
 	'''	
 	
-	def __init__(self,provider,settings,addon,session):
+	def __init__(self, provider, settings, addon, session):
 		'''
 		XBMContentProvider constructor
 		Args:
@@ -40,10 +40,10 @@ class XBMContentProvider(object):
 		self.addon_id = addon.get_info('id')
 		self.session = session
 
-	def check_setting_keys(self,keys):
+	def check_setting_keys(self, keys):
 		for key in keys:
 			if not key in self.settings.keys():
-				raise Exception('Invalid settings passed - ['+key+'] setting is required');
+				raise Exception('Invalid settings passed - [' + key + '] setting is required');
 
 
 	def params(self):
@@ -69,21 +69,21 @@ class XBMContentProvider(object):
 		params = self.params()
 		params.update({'search':''})
 		menuItems = self.params()
-		xbmcutil.add_search_item(xbmcutil.__lang__(30004),params,xbmcutil.icon('search.png'))
-		for what in xbmcutil.get_searches(self.addon,self.provider.name):
+		xbmcutil.add_search_item(xbmcutil.__lang__(30004), params, xbmcutil.icon('search.png'))
+		for what in xbmcutil.get_searches(self.addon, self.provider.name):
 			params = self.params()
-			menuItems={}
+			menuItems = self.params()
 			params['search'] = what
 			menuItems['search-remove'] = what
-			xbmcutil.add_dir(what,params,menuItems={'remove':menuItems})
+			xbmcutil.add_dir(what, params, menuItems={u'Remove':menuItems})
 
-	def search_remove(self,what):
-		xbmcutil.remove_search(self.addon,self.provider.name,what)
+	def search_remove(self, what):
+		xbmcutil.remove_search(self.addon, self.provider.name, what)
 		client.refresh_screen()
 
-	def do_search(self,what):
+	def do_search(self, what):
 		if what == '':
-			what = client.getTextInput(self.session,xbmcutil.__lang__(30003))
+			what = client.getTextInput(self.session, xbmcutil.__lang__(30003))
 		if not what == '':
 			maximum = 20
 			try:
@@ -91,60 +91,60 @@ class XBMContentProvider(object):
 			except:
 				util.error('Unable to parse convert addon setting to number')
 				pass
-			xbmcutil.add_search(self.addon,self.provider.name,what,maximum)
+			xbmcutil.add_search(self.addon, self.provider.name, what, maximum)
 			self.search(what)
 
 	def root(self):
 		if 'search' in self.provider.capabilities():
 			params = self.params()
 			params.update({'search-list':''})
-			xbmcutil.add_search_folder(xbmcutil.__lang__(30003),params,xbmcutil.icon('search.png'))
+			xbmcutil.add_search_folder(xbmcutil.__lang__(30003), params, xbmcutil.icon('search.png'))
 		self.list(self.provider.categories())
 	
-	def play(self,params):
+	def play(self, params):
 		streams = self.resolve(params['play'])
 		if streams is not None:
 			if type(streams) == type([]):
 				for stream in streams:
-					xbmcutil.add_play('%s - %s[%s]' % (params['title'], stream['title'], stream['quality']), stream['url'], subs=stream['subs'],filename=params['title'])
+					xbmcutil.add_play('%s - %s[%s]' % (params['title'], stream['title'], stream['quality']), stream['url'], subs=stream['subs'], filename=params['title'])
 			else:
 				#ulozto,bezvadata..
-				xbmcutil.add_play('%s - %s[%s]' % (params['title'], streams['title'], streams['quality']), streams['url'], subs=streams['subs'],filename=params['title'])
+				xbmcutil.add_play('%s - %s[%s]' % (params['title'], streams['title'], streams['quality']), streams['url'], subs=streams['subs'], filename=params['title'])
 
-	def resolve(self,url):
+	def resolve(self, url):
 		item = self.provider.video_item()
 		item.update({'url':url})
 		return self.provider.resolve(item)
 
-	def search(self,keyword):
+	def search(self, keyword):
 		self.list(self.provider.search(keyword))
 	
-	def list(self,items):
+	def list(self, items):
 		params = self.params()
 		for item in items:
 			if item['type'] == 'dir':
 				self.render_dir(item)
 			elif item['type'] == 'next':
 				params.update({'list':item['url']})
-				xbmcutil.add_dir(xbmcutil.__lang__(30007),params,xbmcutil.icon('next.png'))
+				xbmcutil.add_dir(xbmcutil.__lang__(30007), params, xbmcutil.icon('next.png'))
 			elif item['type'] == 'prev':
 				params.update({'list':item['url']})
-				xbmcutil.add_dir(xbmcutil.__lang__(30008),params,xbmcutil.icon('prev.png'))
+				xbmcutil.add_dir(xbmcutil.__lang__(30008), params, xbmcutil.icon('prev.png'))
 			elif item['type'] == 'new':
 				params.update({'list':item['url']})
-				xbmcutil.add_dir(xbmcutil.__lang__(30012),params,xbmcutil.icon('new.png'))
+				xbmcutil.add_dir(xbmcutil.__lang__(30012), params, xbmcutil.icon('new.png'))
 			elif item['type'] == 'top':
 				params.update({'list':item['url']})
-				xbmcutil.add_dir(xbmcutil.__lang__(30013),params,xbmcutil.icon('top.png'))
+				xbmcutil.add_dir(xbmcutil.__lang__(30013), params, xbmcutil.icon('top.png'))
 			elif item['type'] == 'video':
 				self.render_video(item)
 			else:
 				self.render_default(item)
 
-	def render_default(self,item):
-		raise Exception("Unable to render item "+item)
+	def render_default(self, item):
+		raise Exception("Unable to render item " + item)
 
-	def render_dir(self,item):
+	def render_dir(self, item):
 		params = self.params()
 		params.update({'list':item['url']})
 		title = item['title']
@@ -153,25 +153,25 @@ class XBMContentProvider(object):
 			img = item['img']
 		if title.find('$') == 0:
 			title = self.addon.getLocalizedString(int(title[1:]))
-		xbmcutil.add_dir(title,params,img,infoLabels=self._extract_infolabels(item))
+		xbmcutil.add_dir(title, params, img, infoLabels=self._extract_infolabels(item))
 
-	def _extract_infolabels(self,item):
+	def _extract_infolabels(self, item):
 		infoLabels = {}
 		if 'plot' in item.keys():
 			infoLabels['plot'] = item['plot']
 		return infoLabels
 
-	def render_video(self,item):
+	def render_video(self, item):
 		params = self.params()
 		params.update({'play':item['url'], 'title':item['title']})
 		downparams = self.params()
-		downparams.update({'name':item['title'],'down':item['url']})
+		downparams.update({'name':item['title'], 'down':item['url']})
 		def_item = self.provider.video_item()
 		if item['size'] == def_item['size']:
 			item['size'] = ''
 		else:
 			item['size'] = ' (%s)' % item['size']
-		title = '%s%s' % (item['title'],item['size'])
+		title = '%s%s' % (item['title'], item['size'])
 		menuItems = {}
 		if 'menu' in item.keys():
 			menuItems.update(item['menu'])
@@ -187,20 +187,20 @@ class XBMContentProvider(object):
 
 class XBMCMultiResolverContentProvider(XBMContentProvider):
 
-	def __init__(self,provider,settings,addon,session):
-		XBMContentProvider.__init__(self,provider,settings,addon,session)
+	def __init__(self, provider, settings, addon, session):
+		XBMContentProvider.__init__(self, provider, settings, addon, session)
 		self.check_setting_keys(['quality'])
 
-	def resolve(self,url):
+	def resolve(self, url):
 		def select_cb(resolved):
-			resolved = resolver.filter_by_quality(resolved,self.settings['quality'] or '0')
+			resolved = resolver.filter_by_quality(resolved, self.settings['quality'] or '0')
 			if len(resolved) == 1:
 				return resolved[0]
 			return resolved
 
 		item = self.provider.video_item()
 		item.update({'url':url})
-		return self.provider.resolve(item,select_cb=select_cb)
+		return self.provider.resolve(item, select_cb=select_cb)
 	
 
 class XBMCLoginRequiredContentProvider(XBMContentProvider):
@@ -213,23 +213,23 @@ class XBMCLoginRequiredContentProvider(XBMContentProvider):
 		
 class XBMCLoginOptionalContentProvider(XBMContentProvider):
 	
-	def __init__(self,provider,settings,addon,session):
-		XBMContentProvider.__init__(self,provider,settings,addon,session)
+	def __init__(self, provider, settings, addon, session):
+		XBMContentProvider.__init__(self, provider, settings, addon, session)
 		self.check_setting_keys(['vip'])
 
-	def ask_for_captcha(self,params):
-		print 'captcha',params['img']
+	def ask_for_captcha(self, params):
+		print 'captcha', params['img']
 		return client.getCaptcha(self.session, params['img'])
 
 	def ask_for_account_type(self):
 		if len(self.provider.username) == 0:
 			return False
 		if self.settings['vip'] == '0':
-			ret = client.getYesNoInput(self.session,xbmcutil.__lang__(30010))
+			ret = client.getYesNoInput(self.session, xbmcutil.__lang__(30010))
 			return ret
 		return self.settings['vip'] == '1'
 
-	def resolve(self,url):
+	def resolve(self, url):
 		item = self.provider.video_item()
 		item.update({'url':url})
 		if not self.ask_for_account_type():
@@ -240,21 +240,21 @@ class XBMCLoginOptionalContentProvider(XBMContentProvider):
 			if not self.provider.login():
 				client.showInfo(xbmcutil.__lang__(30011))
 				return
-		return self.provider.resolve(item,captcha_cb=self.ask_for_captcha)
+		return self.provider.resolve(item, captcha_cb=self.ask_for_captcha)
 	
 	
 
 class XBMCLoginOptionalDelayedContentProvider(XBMCLoginOptionalContentProvider):
 
-    def wait_cb(self,wait):
+    def wait_cb(self, wait):
         left = wait
         msg = xbmcutil.__lang__(30014).encode('utf-8') 
         while left > 0:
             #xbmc.executebuiltin("XBMC.Notification(%s,%s,1000,%s)" %(self.provider.name,msg % str(left),''))
-            left-=1
+            left -= 1
             time.sleep(1)
 
-    def resolve(self,url):
+    def resolve(self, url):
         item = self.provider.video_item()
         item.update({'url':url})
         if not self.ask_for_account_type():
@@ -265,4 +265,4 @@ class XBMCLoginOptionalDelayedContentProvider(XBMCLoginOptionalContentProvider):
             if not self.provider.login():
                 client.showInfo(xbmcutil.__lang__(30011))
                 return
-        return self.provider.resolve(item,captcha_cb=self.ask_for_captcha,wait_cb=self.wait_cb)
+        return self.provider.resolve(item, captcha_cb=self.ask_for_captcha, wait_cb=self.wait_cb)

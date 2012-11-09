@@ -18,6 +18,14 @@ from Plugins.Extensions.archivCZSK.engine.items import PFolder, PVideo, PNotSupp
 
 GItem_lst = AddonContentProvider.gui_item_list
 
+def decode_string(string):
+    if isinstance(string,unicode):
+        return _(string)
+    elif isinstance(string,str):
+        string = unicode(string, 'utf-8', 'ignore')
+        return _(string)
+
+
 def debug(info):
     if config.plugins.archivCZSK.debug.value:
         print '[archivCZSK]', info
@@ -128,12 +136,7 @@ def add_dir(name, params={}, image=None, infoLabels={}, menuItems={}, search_fol
             infolabel_uni[key] = unicode(str(value), 'utf-8', 'ignore')
 
     for key, value in menuItems.iteritems():
-        if isinstance(key, str):    
-            item_name = unicode(key, 'utf-8', 'ignore')
-        elif isinstance(key, unicode):
-            item_name = key
-        else:
-            item_name = str(key)
+        item_name = decode_string(key)
         thumb = None
         if isinstance(value, dict):
             params = value
@@ -189,11 +192,7 @@ def add_video(name, url, subs=None, image=None, infoLabels={}, menuItems={}, fil
     it.info = infolabel_uni
     
     for key, value in menuItems.iteritems():
-        if isinstance(key, str):    
-            item_name = unicode(key, 'utf-8', 'ignore')
-        elif isinstance(key, unicode):
-            item_name = key
-            
+        item_name = decode_string(key) 
         thumb = None
         if isinstance(value, dict):
             params = value

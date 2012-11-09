@@ -120,7 +120,7 @@ def get_searches(addon,server):
                 return []
         f = open(local,'r')
         data = f.read()
-        searches = json.loads(unicode(data.decode('utf-8','ignore')))
+        searches = json.loads(data.decode('utf-8','ignore'))
         f.close()
         return searches
 
@@ -133,7 +133,7 @@ def add_search(addon,server,search,maximum):
         if os.path.exists(local):
                 f = open(local,'r')
                 data = f.read()
-                searches = json.loads(unicode(data.decode('utf-8','ignore')))
+                searches = json.loads(data.decode('utf-8','ignore'))
                 f.close()
         if search in searches:
                 searches.remove(search)
@@ -154,7 +154,7 @@ def remove_search(addon,server,search):
         if os.path.exists(local):
                 f = open(local,'r')
                 data = f.read()
-                searches = json.loads(unicode(data.decode('utf-8','ignore')))
+                searches = json.loads(data.decode('utf-8','ignore'))
                 f.close()
                 searches.remove(search)
                 f = open(local,'w')

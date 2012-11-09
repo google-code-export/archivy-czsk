@@ -40,7 +40,7 @@ def _list(addon,history,key,value):
 			menuItems[key] = value
 		params['search'] = what
 		menuItems['search-remove'] = what
-		xbmcutil.add_dir(what,params,menuItems={u"remove":menuItems})
+		xbmcutil.add_dir(what,params,menuItems={u"Remove":menuItems})
 
 def _remove(addon,history,search):
 	xbmcutil.remove_search(addon,history,search)
