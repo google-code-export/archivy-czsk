@@ -67,15 +67,15 @@ class Addon(object):
         
     def update(self):
         if self.__need_update:
-            ret= self._updater.update_addon(self)
+            ret = self._updater.update_addon(self)
             if ret:
                 self.__need_update = False
             return ret
         else:
             return False
         
-    def check_update(self,load_xml=True):
-        self.__need_update = self._updater.check_addon(self,load_xml)
+    def check_update(self, load_xml=True):
+        self.__need_update = self._updater.check_addon(self, load_xml)
         return self.__need_update
     
     def need_update(self):
@@ -158,7 +158,7 @@ class VideoAddon(Addon):
         self.script = info.script
         self.requires = info.requires
         if self.script == '':
-            raise Exception("'%s entry point missing in addon.xml' % self")
+            raise Exception("%s entry point missing in addon.xml" % self)
         # content provider
         downloads_path = os.path.join(config.plugins.archivCZSK.downloadsPath.value, self.id)
         shortcuts_path = os.path.join(config.plugins.archivCZSK.dataPath.value, self.id)
@@ -392,9 +392,11 @@ class AddonInfo(object):
         self.type = addon_dict['type']
         self.broken = addon_dict['broken']
         self.path = os.path.dirname(info_file)
-        self.description = u''
         self.library = addon_dict['library']
         self.script = addon_dict['script']
+        self.tmp_path = settings.TMP_PATH
+        self.data_path = os.path.join(config.plugins.archivCZSK.dataPath.value, self.id)
+        self.profile = self.data_path
         
         if settings.LANGUAGE_SETTINGS_ID in addon_dict['description']:
             self.description = addon_dict['description'][settings.LANGUAGE_SETTINGS_ID]

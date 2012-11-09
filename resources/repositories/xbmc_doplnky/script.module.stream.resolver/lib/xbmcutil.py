@@ -111,16 +111,56 @@ def error(text):
         client.debug(text)
 
 
-def get_searches(addon, server):
-    return client.get_searches(addon, server)
-        
+def get_searches(addon,server):
+        local = addon.get_info('profile')
+        if not os.path.exists(local):
+                os.makedirs(local)
+        local = os.path.join(local,server)
+        if not os.path.exists(local):
+                return []
+        f = open(local,'r')
+        data = f.read()
+        searches = json.loads(unicode(data.decode('utf-8','ignore')))
+        f.close()
+        return searches
 
-def add_search(addon, server, search, maximum):
-    client.add_search(addon, server, search, maximum)
-        
+def add_search(addon,server,search,maximum):
+        searches = []
+        local = addon.get_info('profile')
+        if not os.path.exists(local):
+                os.makedirs(local)
+        local = os.path.join(local,server)
+        if os.path.exists(local):
+                f = open(local,'r')
+                data = f.read()
+                searches = json.loads(unicode(data.decode('utf-8','ignore')))
+                f.close()
+        if search in searches:
+                searches.remove(search)
+        searches.insert(0,search)
+        remove = len(searches)-maximum
+        if remove>0:
+                for i in range(remove):
+                        searches.pop()
+        f = open(local,'w')
+        f.write(json.dumps(searches,ensure_ascii=True))
+        f.close()
 
-def remove_search(addon, server, search):
-    client.remove_search(addon, server, search)
+def remove_search(addon,server,search):
+        local = addon.get_info('profile')
+        if not os.path.exists(local):
+                return
+        local = os.path.join(local,server)
+        if os.path.exists(local):
+                f = open(local,'r')
+                data = f.read()
+                searches = json.loads(unicode(data.decode('utf-8','ignore')))
+                f.close()
+                searches.remove(search)
+                f = open(local,'w')
+                f.write(json.dumps(searches,ensure_ascii=True))
+                f.close()
+
    
 def add_search_item(name, params, logo=None, infoLabels={}, menuItems={}):
     name = decode_html(name)

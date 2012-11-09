@@ -31,4 +31,4 @@ sys.path.append( os.path.join ( __addon__.get_info('path'), 'resources','lib') )
 import serialy
 settings = {'quality':__addon__.get_setting('quality')}
 
-xbmcprovider.XBMCMultiResolverContentProvider(serialy.SerialyczContentProvider(tmp_dir='\tmp'),settings,__addon__,session).run(params)
+xbmcprovider.XBMCMultiResolverContentProvider(serialy.SerialyczContentProvider(tmp_dir='/tmp/'),settings,__addon__,session).run(params)

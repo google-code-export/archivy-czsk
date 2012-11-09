@@ -33,8 +33,11 @@ def _list(addon,history,key,value):
 	params['search'] = ''
 	xbmcutil.add_search_item(xbmcutil.__lang__(30004),params,xbmcutil.icon('search.png'))
 	for what in xbmcutil.get_searches(addon,history):
-		params={}
+		params = {}
 		menuItems={}
+		if key:
+			params[key] = value
+			menuItems[key] = value
 		params['search'] = what
 		menuItems['search-remove'] = what
 		xbmcutil.add_dir(what,params,menuItems={u"remove":menuItems})

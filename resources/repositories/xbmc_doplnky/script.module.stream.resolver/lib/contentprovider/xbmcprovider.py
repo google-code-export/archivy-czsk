@@ -71,7 +71,7 @@ class XBMContentProvider(object):
 		menuItems = self.params()
 		xbmcutil.add_search_item(xbmcutil.__lang__(30004),params,xbmcutil.icon('search.png'))
 		for what in xbmcutil.get_searches(self.addon,self.provider.name):
-			params={}
+			params = self.params()
 			menuItems={}
 			params['search'] = what
 			menuItems['search-remove'] = what
