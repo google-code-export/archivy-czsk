@@ -285,9 +285,9 @@ class StreamContentProvider(ContentProvider):
                 if advanced is None: advanced = u''
                 if live_stream is None: live_stream = True
                 else: live_stream = not live_stream == 'False'
-                if rtmp_buffer is None: rtmp_buffer = int(config.plugins.archivCZSK.player.liveBuffer.getValue())
-                if player_buffer is None: player_buffer = int(config.plugins.archivCZSK.player.mipselPlayer.buffer.getValue())
-                if play_delay is None: play_delay = int(config.plugins.archivCZSK.player.playDelay.getValue())
+                if rtmp_buffer is None: rtmp_buffer = int(config.plugins.archivCZSK.videoPlayer.liveBuffer.getValue())
+                if player_buffer is None: player_buffer = int(config.plugins.archivCZSK.videoPlayer.mipselPlayer.buffer.getValue())
+                if play_delay is None: play_delay = int(config.plugins.archivCZSK.videoPlayer.playDelay.getValue())
             
                 if stream_url.startswith('rtmp'):
                     stream = RtmpStream(stream_url, playpath, page_url, swf_url, advanced)

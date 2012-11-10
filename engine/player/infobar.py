@@ -55,6 +55,8 @@ class CustomPlayerInfobar(object):
                 self["download_speed"].setText("")
             if buffer_seconds > 50:
                 self["buffer_percent"].setText(">50s")
+            elif buffer_seconds < 0:
+                self["buffer_percent"].setText("%ss" % 0)
             else:
                 self["buffer_percent"].setText("%ss" % buffer_seconds)
             #self["buffer_percent"].setText("%s %%" % buffer_percent)

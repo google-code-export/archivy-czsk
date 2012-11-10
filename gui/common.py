@@ -6,7 +6,7 @@ Created on 22.5.2012
 
 from skin import parseColor
 from Screens.Screen import Screen
-from Components.Label import Label, LabelConditional
+from Components.Label import Label, LabelConditional, MultiColorLabel
 from Components.Pixmap import Pixmap
 from Components.MenuList import MenuList
 from Components.MultiContent import MultiContentEntryText, MultiContentEntryPixmapAlphaTest
@@ -84,7 +84,6 @@ class TipBar():
         self.tip_list = tip_list
         
     def changeTip(self):
-        print "[ArchivCZSK] tip_timer tick"
         if len(self.tip_list) > 0:
             if self.tip_selection + 1 >= len(self.tip_list):
                 self.tip_selection = 0
@@ -223,5 +222,21 @@ class CategoryWidgetSD(CategoryWidget):
         self.y_position = y_position
         self.x_size = 80
         self.y_size = 30
-
+    
+class ButtonLabel(MultiColorLabel):
+    TYPE_NORMAL = 0
+    TYPE_PRESSED = 1
+    TYPE_DISABLED = 2
+    
+    def __init__(self,text,state=0):
+        MultiColorLabel.__init__(self,text)
+        self.changeLabel(state)
+        
+    def changeLabel(self,idx):
+        self.setForegroundColorNum(idx)
+        self.setBackgroundColorNum(idx)
+        
+        
+        
+    
    

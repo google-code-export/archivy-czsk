@@ -27,7 +27,7 @@ from Plugins.Extensions.archivCZSK.engine.player.player import Player, StreamPla
 import info
 import context
 
-from common import MyConditionalLabel, PanelList, PanelListEntryHD, LoadingScreen , TipBar
+from common import MyConditionalLabel,ButtonLabel, PanelList, PanelListEntryHD, LoadingScreen , TipBar
 from download import DownloadManagerMessages, DownloadList
 from menu import ArchiveCZSKConfigScreen
 from base import  BaseArchivCZSKMenuListScreen
@@ -378,7 +378,8 @@ class BaseContentScreen(BaseArchivCZSKMenuListScreen):
         self.refresh = False #to refresh screen
         self.refreshing = False
         self.parent_it = None
-            
+        
+        self.path = '/'
         # stack to save loaded content of screens
         self.stack = []
         self["status_label"] = Label("")
@@ -386,10 +387,18 @@ class BaseContentScreen(BaseArchivCZSKMenuListScreen):
     def startLoading(self):
         self.loadingScreen.start()
         self["status_label"].setText(_("Loading"))
+        #self["key_red"].changeLabel(ButtonLabel.TYPE_DISABLED)
+        #self["key_green"].changeLabel(ButtonLabel.TYPE_DISABLED)
+        #self["key_yellow"].changeLabel(ButtonLabel.TYPE_DISABLED)
+        #self["key_blue"].changeLabel(ButtonLabel.TYPE_DISABLED)
         
     def stopLoading(self):
         self.loadingScreen.stop()
         self["status_label"].setText("")
+        #self["key_red"].changeLabel(ButtonLabel.TYPE_NORMAL)
+        #self["key_green"].changeLabel(ButtonLabel.TYPE_NORMAL)
+        #self["key_yellow"].changeLabel(ButtonLabel.TYPE_NORMAL)
+        #self["key_blue"].changeLabel(ButtonLabel.TYPE_NORMAL)
           
     
     def updateMenuList(self, newlist=True):
@@ -508,10 +517,10 @@ class VideoAddonsContentScreen(BaseContentScreen, DownloadList, TipBar):
         self["about"] = Label("")
         self["menu"] = PanelList([])
         
-        self["key_red"] = Button(_("TV archives"))
-        self["key_green"] = Button(_("Video archives"))
-        self["key_yellow"] = Button(_("Live streams"))
-        self["key_blue"] = Button(_("Settings"))
+        self["key_red"] = Label(_("TV archives"))
+        self["key_green"] = Label(_("Video archives"))
+        self["key_yellow"] = Label(_("Live streams"))
+        self["key_blue"] = Label(_("Settings"))
         
         self["actions"] = NumberActionMap(["archivCZSKActions"],
             {
@@ -532,11 +541,15 @@ class VideoAddonsContentScreen(BaseContentScreen, DownloadList, TipBar):
 
     def showTVVideoAddons(self):
         if not self.working:
+            #self["key_red"].changeLabel(ButtonLabel.TYPE_PRESSED)
+            #self["key_green"].changeLabel(ButtonLabel.TYPE_NORMAL)
             self.lst_items = self.tv_video_addon
             self.updateMenuList()
     
     def showVideoAddons(self):
         if not self.working:
+            #self["key_red"].changeLabel(ButtonLabel.TYPE_NORMAL)
+            #self["key_green"].changeLabel(ButtonLabel.TYPE_PRESSED)
             self.lst_items = self.video_addon
             self.updateMenuList()
 
@@ -601,7 +614,7 @@ class ContentScreen(BaseContentScreen, DownloadList, TipBar):
        
     def __init__(self, session, addon, lst_items):
         self.addon = addon
-        player = Player(session, self.workingFinished, config.plugins.archivCZSK.player.useVideoController.value)
+        player = Player(session, self.workingFinished, config.plugins.archivCZSK.videoPlayer.useVideoController.value)
         item_handler = ContentItemHandler(session, self, addon.provider, player)
         BaseContentScreen.__init__(self, session, item_handler, lst_items)
         
@@ -613,10 +626,10 @@ class ContentScreen(BaseContentScreen, DownloadList, TipBar):
         
         debug('initializing')
          
-        self["key_red"] = Button("")
-        self["key_green"] = Button(_("Downloads"))
-        self["key_yellow"] = Button(_("Shortcuts"))
-        self["key_blue"] = Button(_("Settings"))
+        self["key_red"] = Label("")
+        self["key_green"] = Label(_("Downloads"))
+        self["key_yellow"] = Label(_("Shortcuts"))
+        self["key_blue"] = Label(_("Settings"))
         self["actions"] = NumberActionMap(["archivCZSKActions"],
             {
                 "ok": self.ok,
@@ -690,7 +703,7 @@ class StreamContentScreen(BaseContentScreen, DownloadList, TipBar):
     LIVE_PIXMAP = None   
     
     def __init__(self, session, content_provider, lst_items):
-        player = StreamPlayer(session, self.workingFinished, config.plugins.archivCZSK.player.useVideoController.value, settings.STREAM_PATH)
+        player = StreamPlayer(session, self.workingFinished, config.plugins.archivCZSK.videoPlayer.useVideoController.value, settings.STREAM_PATH)
         item_handler = StreamContentItemHandler(session, self, content_provider, player)
         BaseContentScreen.__init__(self, session, item_handler, lst_items)
         self.content_provider = content_provider
@@ -701,10 +714,10 @@ class StreamContentScreen(BaseContentScreen, DownloadList, TipBar):
         #include TipList
         TipBar.__init__(self, [self.CONTEXT_TIP], startOnShown=True)
          
-        self["key_red"] = Button(_("Remove"))
-        self["key_green"] = Button(_("Downloads"))
-        self["key_yellow"] = Button("")
-        self["key_blue"] = Button("")
+        self["key_red"] = Label(_("Remove"))
+        self["key_green"] = Label(_("Downloads"))
+        self["key_yellow"] = Label("")
+        self["key_blue"] = Label("")
 
         self['archive_label'] = Label(_("Stream player"))
         self['path_label'] = Label(_("Path Label"))
@@ -764,7 +777,7 @@ class StreamContentScreen(BaseContentScreen, DownloadList, TipBar):
     
     def isMipselPlayerSelected(self):
         it = self.getSelectedItem()
-        return isinstance(it, PVideo) and config.plugins.archivCZSK.player.type.value == 'mipsel'
+        return isinstance(it, PVideo) and config.plugins.archivCZSK.videoPlayer.type.value == 'mipsel'
     
     def updateStreamInfo(self):
         it = self.getSelectedItem()

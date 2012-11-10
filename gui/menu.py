@@ -231,12 +231,12 @@ class ArchiveCZSKConfigScreen(BaseArchivCZSKConfigScreen):
 
     def keyLeft(self):
         ConfigListScreen.keyLeft(self) 
-        if self["config"].getCurrent()[1] == config.plugins.archivCZSK.player.type:
+        if self["config"].getCurrent()[1] == config.plugins.archivCZSK.videoPlayer.type:
             self.buildMenu()
 
     def keyRight(self):
         ConfigListScreen.keyRight(self)
-        if self["config"].getCurrent()[1] == config.plugins.archivCZSK.player.type:
+        if self["config"].getCurrent()[1] == config.plugins.archivCZSK.videoPlayer.type:
             self.buildMenu()
           
         

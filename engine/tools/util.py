@@ -82,7 +82,9 @@ def decode_html(data):
         print [data]
         return data
     
-def decode_string(string):    
+def decode_string(string):
+    if isinstance(string,unicode):
+        return string    
     encodings = ['utf-8', 'windows-1250', 'iso-8859-2']
     for encoding in encodings:
         try:
@@ -117,6 +119,21 @@ def make_path(p):
     except OSError:
         pass
     
+def which(program):
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
             
 
 def download_to_file(remote, local, mode='wb', debugfnc=None):

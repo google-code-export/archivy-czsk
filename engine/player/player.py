@@ -56,7 +56,7 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, CustomPlayerInfob
 	
 		def __init__(self, session, service, subtitles, useCustomInfobar=False):
 			BaseArchivCZSKScreen.__init__(self, session)
-			if config.plugins.archivCZSK.player.useDefaultSkin.value:
+			if config.plugins.archivCZSK.videoPlayer.useDefaultSkin.value:
 				self.setSkinName("MoviePlayer")
 			else:
 				if self.HD:
@@ -265,12 +265,16 @@ class CustomVideoPlayer(ArchivCZSKMoviePlayer):
 			self._play()
 		
 	def __doSeekRelative(self, pts):
+		print 'dosee krelat ive'
 		if self.useVideoController:
+			print 'using video controller'
 			self.videoPlayerController.do_seek_relative(pts)
 		else:
+			print 'not using video controller'
 			self._doSeekRelative(pts)
 
 	def pauseService(self):
+		print 'pau sing'
 		if self.useVideoController:
 			self.videoPlayerController.pause_service()
 		else:
@@ -427,9 +431,9 @@ class Player():
 		self.seekable = True 
 		self.pausable = True
 		
-		self.playDelay = int(config.plugins.archivCZSK.player.playDelay.getValue())
-		self.autoPlay = config.plugins.archivCZSK.player.mipselPlayer.autoPlay.getValue()
-		self.playerBuffer = int(config.plugins.archivCZSK.player.mipselPlayer.buffer.getValue())
+		self.playDelay = int(config.plugins.archivCZSK.videoPlayer.playDelay.getValue())
+		self.autoPlay = config.plugins.archivCZSK.videoPlayer.mipselPlayer.autoPlay.getValue()
+		self.playerBuffer = int(config.plugins.archivCZSK.videoPlayer.mipselPlayer.buffer.getValue())
 		self.useVideoController = useVideoController 
 			
 		self.it = None
@@ -464,10 +468,10 @@ class Player():
 			self.stream = it.stream
 			
 		if self.stream is None and self.live:
-			self.rtmpBuffer = int(config.plugins.archivCZSK.player.liveBuffer.getValue())
+			self.rtmpBuffer = int(config.plugins.archivCZSK.videoPlayer.liveBuffer.getValue())
 			
 		elif self.stream is None and not self.live:
-			self.rtmpBuffer = int(config.plugins.archivCZSK.player.archiveBuffer.getValue())
+			self.rtmpBuffer = int(config.plugins.archivCZSK.videoPlayer.archiveBuffer.getValue())
 	
 		elif self.stream is not None:
 			self.playDelay = int(self.stream.playDelay)
@@ -485,7 +489,7 @@ class Player():
 			if self.playUrl.startswith('rtmp'):
 				
 				# internal player has rtmp support
-				if config.plugins.archivCZSK.player.seeking.getValue():
+				if config.plugins.archivCZSK.videoPlayer.seeking.getValue():
 					if self.stream is not None:
 						self._playStream(self.stream.getUrl(), self.subtitles)
 					else:
@@ -556,7 +560,7 @@ class Player():
 		self.rtmpgwProcess.appClosed.append(self._exitRTMPGWProcess)
 		self.rtmpgwProcess.execute(cmd)
 		
-		
+
 	def _exitRTMPGWProcess(self, status):
 		debug('rtmpgw process exited with status %d' % status)
 		self.rtmpgwProcess = None	
@@ -567,9 +571,9 @@ class Player():
 		sref = eServiceReference(4097, 0, streamURL)
 		sref.setName(self.name.encode('utf-8'))
 		
-		videoPlayerSetting = config.plugins.archivCZSK.player.type.getValue()
+		videoPlayerSetting = config.plugins.archivCZSK.videoPlayer.type.getValue()
 		videoPlayerController = None
-		useVideoController = config.plugins.archivCZSK.player.useVideoController.getValue()
+		useVideoController = config.plugins.archivCZSK.videoPlayer.useVideoController.getValue()
 		
 		if useVideoController:
 			videoPlayerController = VideoPlayerController(self.session, download=self.download, \
