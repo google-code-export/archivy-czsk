@@ -31,11 +31,12 @@ def url(url):
 		if len(data) > 0:
 			host = re.search('host=([^\&]+)',data,re.IGNORECASE | re.DOTALL).group(1)
 			oid = re.search('oid=([^\&]+)',data,re.IGNORECASE | re.DOTALL).group(1)
+			uid = re.search('uid=([^\&]+)',data,re.IGNORECASE | re.DOTALL).group(1)
 			vtag = re.search('vtag=([^\&]+)',data,re.IGNORECASE | re.DOTALL).group(1)
 			hd = re.search('hd_def=([^\&]+)',data,re.IGNORECASE | re.DOTALL).group(1)
 			max_hd = re.search('hd=([^\&]+)',data,re.IGNORECASE | re.DOTALL).group(1)
 			no_flv = re.search('no_flv=([^\&]+)',data,re.IGNORECASE | re.DOTALL).group(1)
-			url = '%su%s/videos/%s' % (host,oid,vtag)
+			url = '%su%s/videos/%s' % (host,uid,vtag)
 			if no_flv != '1':
 				return [url+'.flv']
 			if no_flv == '1':
@@ -54,11 +55,12 @@ def resolve(link):
 		if len(data) > 0:
 			host = re.search('host=([^\&]+)',data,re.IGNORECASE | re.DOTALL).group(1)
 			oid = re.search('oid=([^\&]+)',data,re.IGNORECASE | re.DOTALL).group(1)
+			uid = re.search('uid=([^\&]+)',data,re.IGNORECASE | re.DOTALL).group(1)
 			vtag = re.search('vtag=([^\&]+)',data,re.IGNORECASE | re.DOTALL).group(1)
 			hd = re.search('hd_def=([^\&]+)',data,re.IGNORECASE | re.DOTALL).group(1)
 			max_hd = re.search('hd=([^\&]+)',data,re.IGNORECASE | re.DOTALL).group(1)
 			no_flv = re.search('no_flv=([^\&]+)',data,re.IGNORECASE | re.DOTALL).group(1)
-			url = '%su%s/videos/%s' % (host,oid,vtag)
+			url = '%su%s/videos/%s' % (host,uid,vtag)
 			if no_flv != '1':
 				return [{'name':__name__,'quality':'???','url':url+'.flv','surl':link,'subs':''}]
 			if no_flv == '1':
