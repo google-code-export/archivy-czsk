@@ -29,31 +29,31 @@ config.plugins.archivCZSK = ConfigSubsection()
 config.plugins.archivCZSK.archives = ConfigSubsection()
 
 ################## Player config #####################################
-config.plugins.archivCZSK.player = ConfigSubsection()
+config.plugins.archivCZSK.videoPlayer = ConfigSubsection()
 choicelist = [('standard', _('standard player')), ('custom', _('custom player (subtitle support)')), ('mipsel', _('mipsel player'))]   
-config.plugins.archivCZSK.player.type = ConfigSelection(default="custom", choices=choicelist)
-config.plugins.archivCZSK.player.useVideoController = ConfigYesNo(default=True)             
-config.plugins.archivCZSK.player.seeking = ConfigYesNo(default=False)
-config.plugins.archivCZSK.player.useDefaultSkin = ConfigYesNo(default=True)
-config.plugins.archivCZSK.player.mipselPlayer = ConfigSubsection()
-config.plugins.archivCZSK.player.mipselPlayer.autoPlay = ConfigYesNo(default=True)
-config.plugins.archivCZSK.player.mipselPlayer.buffer = ConfigInteger(default=8 * 1024 * 1024)
+config.plugins.archivCZSK.videoPlayer.type = ConfigSelection(default="custom", choices=choicelist)
+config.plugins.archivCZSK.videoPlayer.useVideoController = ConfigYesNo(default=True)             
+config.plugins.archivCZSK.videoPlayer.seeking = ConfigYesNo(default=False)
+config.plugins.archivCZSK.videoPlayer.useDefaultSkin = ConfigYesNo(default=False)
+config.plugins.archivCZSK.videoPlayer.mipselPlayer = ConfigSubsection()
+config.plugins.archivCZSK.videoPlayer.mipselPlayer.autoPlay = ConfigYesNo(default=True)
+config.plugins.archivCZSK.videoPlayer.mipselPlayer.buffer = ConfigInteger(default=8 * 1024 * 1024)
 
 
 choicelist = []
 for i in range(5, 250, 1):
     choicelist.append(("%d" % i, "%d s" % i))
-config.plugins.archivCZSK.player.playDelay = Config = ConfigSelection(default="10", choices=choicelist)
+config.plugins.archivCZSK.videoPlayer.playDelay = Config = ConfigSelection(default="10", choices=choicelist)
 
 choicelist = []
 for i in range(1000, 50000, 1000):
     choicelist.append(("%d" % i, "%d ms" % i))
-config.plugins.archivCZSK.player.archiveBuffer = ConfigSelection(default="14000", choices=choicelist)
+config.plugins.archivCZSK.videoPlayer.archiveBuffer = ConfigSelection(default="14000", choices=choicelist)
 
 choicelist = []
 for i in range(1000, 50000, 1000):
     choicelist.append(("%d" % i, "%d ms" % i))
-config.plugins.archivCZSK.player.liveBuffer = ConfigSelection(default="14000", choices=choicelist)
+config.plugins.archivCZSK.videoPlayer.liveBuffer = ConfigSelection(default="14000", choices=choicelist)
 
 
 ############ Main config #################
@@ -74,18 +74,18 @@ config.plugins.archivCZSK.subtitlesPath = ConfigDirectory(default="/tmp")
 
 def get_player_settings():
     list = []
-    player = config.plugins.archivCZSK.player.type.getValue()
-    list.append(getConfigListEntry(_("Video player"), config.plugins.archivCZSK.player.type))
+    player = config.plugins.archivCZSK.videoPlayer.type.getValue()
+    list.append(getConfigListEntry(_("Video player"), config.plugins.archivCZSK.videoPlayer.type))
     if player == 'mipsel' or player == 'custom':
-        list.append(getConfigListEntry(_("Use video controller"), config.plugins.archivCZSK.player.useVideoController))
+        list.append(getConfigListEntry(_("Use video controller"), config.plugins.archivCZSK.videoPlayer.useVideoController))
     if player == 'mipsel':
-        list.append(getConfigListEntry(_("Video player Buffer"), config.plugins.archivCZSK.player.mipselPlayer.buffer))
-        list.append(getConfigListEntry(_("AutoPlay"), config.plugins.archivCZSK.player.mipselPlayer.autoPlay))
-    list.append(getConfigListEntry(_("Video player with RTMP support"), config.plugins.archivCZSK.player.seeking))
-    list.append(getConfigListEntry(_("TV archive rtmp buffer"), config.plugins.archivCZSK.player.archiveBuffer))                                                 
-    list.append(getConfigListEntry(_("Default live rtmp streams buffer"), config.plugins.archivCZSK.player.liveBuffer))                                
-    list.append(getConfigListEntry(_("Play after"), config.plugins.archivCZSK.player.playDelay))
-    list.append(getConfigListEntry(_("Use default skin"), config.plugins.archivCZSK.player.useDefaultSkin))
+        list.append(getConfigListEntry(_("Video player Buffer"), config.plugins.archivCZSK.videoPlayer.mipselPlayer.buffer))
+        list.append(getConfigListEntry(_("AutoPlay"), config.plugins.archivCZSK.videoPlayer.mipselPlayer.autoPlay))
+    list.append(getConfigListEntry(_("Video player with RTMP support"), config.plugins.archivCZSK.videoPlayer.seeking))
+    list.append(getConfigListEntry(_("TV archive rtmp buffer"), config.plugins.archivCZSK.videoPlayer.archiveBuffer))                                                 
+    list.append(getConfigListEntry(_("Default live rtmp streams buffer"), config.plugins.archivCZSK.videoPlayer.liveBuffer))                                
+    list.append(getConfigListEntry(_("Play after"), config.plugins.archivCZSK.videoPlayer.playDelay))
+    list.append(getConfigListEntry(_("Use default skin"), config.plugins.archivCZSK.videoPlayer.useDefaultSkin))
     return list
     
 def get_main_settings():

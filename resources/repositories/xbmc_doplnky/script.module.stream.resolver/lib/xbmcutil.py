@@ -164,24 +164,37 @@ def remove_search(addon,server,search):
    
 def add_search_item(name, params, logo=None, infoLabels={}, menuItems={}):
     name = decode_html(name)
+    for key in params.keys():
+		value = decode_html(params[key])
+		params[key] = value
     if not 'title' in infoLabels:
         infoLabels['title'] = name
     client.add_dir(name, params, image=logo, infoLabels=infoLabels, menuItems=menuItems, search_item=True)
     
 def add_search_folder(name, params, logo=None, infoLabels={}, menuItems={}):
     name = decode_html(name)
+    for key in params.keys():
+		value = decode_html(params[key])
+		params[key] = value
     if not 'title' in infoLabels:
         infoLabels['title'] = name
     client.add_dir(name, params, image=logo, infoLabels=infoLabels, menuItems=menuItems, search_folder=True)
     
 def add_dir(name, params, logo=None, infoLabels={}, menuItems={}):
     name = decode_html(name)
+    for key in params.keys():
+		value = decode_html(params[key])
+		params[key] = value
     if not 'title' in infoLabels:
         infoLabels['title'] = name
     client.add_dir(name, params, image=logo, infoLabels=infoLabels, menuItems=menuItems)
 
 def add_video(name, params={}, logo=None, infoLabels={}, menuItems={}):
-    add_dir(name, params, logo=logo, infoLabels=infoLabels, menuItems=menuItems)
+	name = decode_html(name)
+	for key in params.keys():
+		value = decode_html(params[key])
+		params[key] = value
+	add_dir(name, params, logo=logo, infoLabels=infoLabels, menuItems=menuItems)
     
 def add_play(name, url, subs=None, filename=None, image=None, infoLabels={}, menuItems={}):
     name = decode_html(name)
