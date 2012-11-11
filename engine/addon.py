@@ -269,8 +269,11 @@ class AddonSettings(object):
     
     def __init__(self, addon, settings_file):
         debug("initializing settings of addon %s" % addon.name)
-        setattr(config.plugins.archivCZSK.archives, addon.id, ConfigSubsection())
-        self.main = getattr(config.plugins.archivCZSK.archives, addon.id)
+        # remove dots from addon.id to resolve issue with load/save config of addon
+        addon_id = addon.id.replace('.','_')
+        
+        setattr(config.plugins.archivCZSK.archives, addon_id, ConfigSubsection())
+        self.main = getattr(config.plugins.archivCZSK.archives, addon_id)
         addon_config.add_global_addon_settings(self.main)
         
         self.addon = addon
