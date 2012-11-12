@@ -43,7 +43,7 @@ config.plugins.archivCZSK.videoPlayer.mipselPlayer.buffer = ConfigInteger(defaul
 choicelist = []
 for i in range(5, 250, 1):
     choicelist.append(("%d" % i, "%d s" % i))
-config.plugins.archivCZSK.videoPlayer.playDelay = Config = ConfigSelection(default="10", choices=choicelist)
+config.plugins.archivCZSK.videoPlayer.playDelay = Config = ConfigSelection(default="20", choices=choicelist)
 
 choicelist = []
 for i in range(1000, 50000, 1000):
