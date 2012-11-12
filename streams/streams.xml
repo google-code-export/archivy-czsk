@@ -12,7 +12,7 @@
 	  	liveStream - stream je zive vysielanie, implicitna volba aj bez uvedeneho parametra, ak nie je zive je potrebne zadat "false"[volitelne]
 	  	player_buffer - velkost bufferu(KB) pre mipsel prehravac, pouzije sa uvedeny buffer[volitelne(default=8000)]
 	  	rtmp_buffer - velkost bufferu(KB) pre rtmp streamy [volitelne(default=3000)]
-	  	play_delay - pocet sekund do spustenia streamu po zacati stahovania pri volbe "Prehravat a stahovat"
+	  	play_delay - pocet sekund do spustenia streamu po zacati stahovania pri volbe "Prehravat a stahovat"[volitelne]
 		
 		ostatne parametre su ignorovane...
 		
@@ -23,11 +23,11 @@
 		<name>SOPCAST</name>
 		<channel>
 			<name>SOPCAST1</name>
-			<stream_url>http://192.168.7.106:8902/stream</stream_url>	
+			<stream_url>http://192.168.7.107:8902/stream</stream_url>	
 		</channel>
 		<channel>
 			<name>SOPCAST2</name>
-			<stream_url>http://192.168.7.106:8902/tv.mpeg</stream_url>	
+			<stream_url>http://192.168.7.107:8902/tv.mpeg</stream_url>	
 		</channel>
 	</group>	
 	<group> 
@@ -48,12 +48,4 @@
 			<pageUrl>http://www.tvsector.com</pageUrl>
 		</channel>
 	</group>
-	<group>
-		<name>SD</name>
-		<channel>
-			<name>STV1</name>
-			<piconname>dummy.png</piconname>
-			<stream_url>http://billysk2.homeip.net:8002/1:0:1:7665:2BF:600:E080000:0:0:0</stream_url>>		
-		</channel>
-	</group>	
 </iptvstreams_list>
