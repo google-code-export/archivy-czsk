@@ -270,7 +270,7 @@ class AddonSettings(object):
     def __init__(self, addon, settings_file):
         debug("initializing settings of addon %s" % addon.name)
         # remove dots from addon.id to resolve issue with load/save config of addon
-        addon_id = addon.id.replace('.','_')
+        addon_id = addon.id.replace('.', '_')
         
         setattr(config.plugins.archivCZSK.archives, addon_id, ConfigSubsection())
         self.main = getattr(config.plugins.archivCZSK.archives, addon_id)
@@ -358,6 +358,9 @@ class AddonSettings(object):
             
     
     def initialize_entry(self, setting, entry):
+        # fix dotted id
+        entry['id'] = entry['id'].replace('.', '_')
+        
         if entry['type'] == 'bool':
             setattr(setting, entry['id'], ConfigYesNo(default=(entry['default'] == 'true')))
             entry['setting_id'] = getattr(setting, entry['id'])
@@ -429,7 +432,6 @@ class AddonInfo(object):
         if changelog_path is not None:
             with open(changelog_path, 'r') as f:
                 text = f.read()
-                f.close()
             try:
                 self.changelog = text.decode('windows-1250')
             except Exception:
@@ -468,12 +470,17 @@ class AddonImporter:
     """Used to avoid name collisions in sys.modules"""
     def __init__(self, name, lib_path=''):
         self.name = name
-        self.path = [lib_path]
-        self.modules = {}
+        self.__path = [lib_path]
+        self.__modules = {}
+        self.__filehandle = None
         
     def add_path(self, path):
-        if not path in self.path:
-            self.path.append(path)
+        if not path in self.__path:
+            self.__path.append(path)
+            
+    def release_modules(self):
+        """ lose reference to evaluated modules, so python GC can collect them and free memory"""
+        self.__modules.clear()
       
     def __repr__(self):
         return "[%s-importer] " % self.name               
@@ -485,44 +492,48 @@ class AddonImporter:
             debug("%s found '%s' in sys.modules\nUsing python standard importer" % self, fullname)
             return None
         
-        if fullname in self.modules:
+        if fullname in self.__modules:
             debug("%s found '%s' in modules" % (self, fullname))
             return self
         try:
-            path = self.path
+            path = self.__path
             debug("%s finding modul '%s' in %s" % (self, fullname, path))
-            self.f, self.filename, self.description = imp.find_module(fullname, path)
+            self.__filehandle, self.filename, self.description = imp.find_module(fullname, path)
             debug("%s found modul '%s' <filename:%s description:%s>" % (self, fullname, self.filename, self.description))
         except ImportError:
             debug("%s cannot found modul %s" % (self, fullname))
+            if self.__filehandle: 
+                self.__filehandle.close()
+                self.__filehandle = None
             return None
-        if self.f is None:
+        if self.__filehandle is None:
             debug("%s cannot import package '%s', try to append it to sys.path" % (self, fullname))
             raise ImportError
         debug("%s trying to load module '%s'" % (self, fullname))
         return self
     
     def load_module(self, fullname):
-        if fullname in self.modules:
-            return self.modules[fullname]
+        if fullname in self.__modules:
+            return self.__modules[fullname]
         try:
-            code = self.f.read()
+            code = self.__filehandle.read()
         except Exception:
-            if self.f: self.f.close()
             return 
-        else: self.f.close()
+        finally:
+            if self.__filehandle:
+                self.__filehandle.close()
+                self.__filehandle = None
         debug("%s importing modul '%s'" % (self, fullname))
-        mod = self.modules[fullname] = imp.new_module(fullname)
+        mod = self.__modules[fullname] = imp.new_module(fullname)
         mod.__file__ = self.filename
         mod.__loader__ = self
         del self.filename
         del self.description
-        del self.f
         try:
             exec code in mod.__dict__
             debug("%s imported modul '%s'" % (self, fullname))
         except Exception:
-            del self.modules[fullname]
+            del self.__modules[fullname]
             raise
         return mod
         

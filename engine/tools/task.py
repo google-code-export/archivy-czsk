@@ -20,13 +20,13 @@ def debug(info):
 WorkerStop = object()
 
 # queue for function to be executed in workerThread
-fnc_queue = Queue.Queue()
+fnc_queue = Queue.Queue(1)
 
 # input queue to send results from reactor thread to running function in workerThread
-fnc_in_queue = Queue.Queue()
+fnc_in_queue = Queue.Queue(1)
 
 #output queue to send function decorated by callFromThread from workerThread to reactor thread and run it there
-fnc_out_queue = Queue.Queue()
+fnc_out_queue = Queue.Queue(1)
 
 
 def callFromThread(func):
@@ -87,8 +87,7 @@ class WorkerThread(threading.Thread):
             
     def stop(self):
         debug("stopping working thread")
-        self.q.put(WorkerStop)
-        self.join()        
+        self.q.put(WorkerStop)  
         
         
         
@@ -114,6 +113,7 @@ class Task():
     def stopWorkerThread():
         debug("stopping workerThread")
         Task.worker_thread.stop()
+        Task.worker_thread.join()
         Task.worker_thread = None
         
     @staticmethod     
