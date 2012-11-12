@@ -20,14 +20,14 @@ from Plugins.Extensions.archivCZSK import settings
 from Plugins.Extensions.archivCZSK.engine.items import PItem, PFolder, PExit, PVideo, PContextMenuItem, PSearch, \
                                                         PSearchItem, PDownload, PVideoAddon, Stream, RtmpStream
 from Plugins.Extensions.archivCZSK.engine.tools.task import Task
-from Plugins.Extensions.archivCZSK.engine.contentprovider import StreamContentProvider,AddonContentProvider
+from Plugins.Extensions.archivCZSK.engine.contentprovider import StreamContentProvider, AddonContentProvider
 from Plugins.Extensions.archivCZSK.engine.player.player import Player, StreamPlayer
 
 
 import info
 import context
 
-from common import MyConditionalLabel,ButtonLabel, PanelList, PanelListEntryHD, LoadingScreen , TipBar
+from common import MyConditionalLabel, ButtonLabel, PanelList, PanelListEntryHD, LoadingScreen , TipBar
 from download import DownloadManagerMessages, DownloadList
 from menu import ArchiveCZSKConfigScreen
 from base import  BaseArchivCZSKMenuListScreen
@@ -62,6 +62,8 @@ class ItemHandler():
     def info_item(self, item):
         """opens info about item"""
         pass
+    
+    
     
      
 class VideoAddonItemHandler(ItemHandler):
@@ -98,7 +100,7 @@ class VideoAddonItemHandler(ItemHandler):
         self.session.openWithCallback(self.open_video_addon_cb, ContentScreen, addon, list_items)
         
     def open_video_addon_cb(self, content_provider):
-        if isinstance(content_provider,AddonContentProvider):
+        if isinstance(content_provider, AddonContentProvider):
             content_provider.release_dependencies()
         self.content_screen.workingFinished()
         
@@ -113,7 +115,7 @@ class VideoAddonItemHandler(ItemHandler):
         #item.add_context_menu_item(_("Update"), action=item.addon.update)
         item.add_context_menu_item(_("Settings"), action=item.addon.open_settings, params={'session':self.session})
         item.add_context_menu_item(_("Changelog"), action=item.addon.open_changelog, params={'session':self.session})
-        item.add_context_menu_item(_("Downloads"), action=item.addon.open_downloads, params={'session':self.session,'cb':self.content_screen.workingFinished})
+        item.add_context_menu_item(_("Downloads"), action=item.addon.open_downloads, params={'session':self.session, 'cb':self.content_screen.workingFinished})
         context.showContextMenu(self.session, item.context, self.menu_item_cb)
         
     def menu_item_cb(self, idx):
@@ -221,18 +223,22 @@ class ContentItemHandler(ItemHandler):
         
 
     def play_item(self, item, mode='play'):
-        self.content_screen.workingStarted()
-        seekable = self.content_provider.video_addon.get_setting('seekable')
-        pausable = self.content_provider.video_addon.get_setting('pausable')
-        self.player.setVideoItem(item,seekable=seekable,pausable=pausable)
-        self.player.setContentProvider(self.content_provider)
-        if mode == 'play_and_download':
-            if item.url.startswith('rtmp'):
-                self.content_screen.showInfo(_('Not implemented yet'))
+        @self.content_screen.exception_dec
+        def play(mode):
+            if mode == 'play_and_download':
+                if item.url.startswith('rtmp'):
+                    self.content_screen.showInfo(_('Not implemented yet'))
+                else:
+                    self.player.playAndDownload()
             else:
-                self.player.playAndDownload()
-        else:
-            self.player.play()
+                self.player.play()
+
+        self.content_screen.workingStarted()
+        seekable = self.content_provider.is_seekable()
+        pausable = self.content_provider.is_pausable()
+        self.player.setVideoItem(item, seekable=seekable, pausable=pausable)
+        self.player.setContentProvider(self.content_provider)
+        play(mode)
         
                         
     def info_item(self, item, mode="archive"):
@@ -255,7 +261,7 @@ class ContentItemHandler(ItemHandler):
         if self.is_video(item):
             item.add_context_menu_item(_("Play"), action=self.play_item, params={'item':item})
             item.add_context_menu_item(_("Play and Download"), action=self.play_item, params={'item':item, 'mode':'play_and_download'})
-            item.add_context_menu_item(_("Download"), action=self.download_item,params={'item':item})
+            item.add_context_menu_item(_("Download"), action=self.download_item, params={'item':item})
     
         context.showContextMenu(self.session, item.context, self.menu_item_cb)
         
@@ -282,10 +288,10 @@ class ContentItemHandler(ItemHandler):
         self.content_provider.get_content(self.session, item.get_params(), run_item_success_cb, run_item_error_cb)
         
     
-    def download_item(self,item):
+    def download_item(self, item):
         startCB = DownloadManagerMessages.startDownloadCB
         finishCB = DownloadManagerMessages.finishDownloadCB
-        self.content_provider.download(item,startCB=startCB,finishCB=finishCB)
+        self.content_provider.download(item, startCB=startCB, finishCB=finishCB)
         
     
     def menu_item_cb(self, idx=None):
@@ -338,21 +344,9 @@ class StreamContentItemHandler(ContentItemHandler):
         if self.is_video(item):
             item.add_context_menu_item(_("Play"), action=self.play_item, params={'item':item})
             item.add_context_menu_item(_("Play and Download"), action=self.play_item, params={'item':item, 'mode':'play_and_download'})
-            item.add_context_menu_item(_("Download"), action=self.download_item,params={'item':item})
+            item.add_context_menu_item(_("Download"), action=self.download_item, params={'item':item})
             item.add_context_menu_item(_("Remove"), action=self.ask_remove_stream, params={'item':item})
-        context.showContextMenu(self.session, item.context, self.menu_item_cb)
-    
-    
-    
-    def play_item(self, item, mode='play'):
-        self.content_screen.workingStarted()
-        self.player.setVideoItem(item)
-        self.player.setContentProvider(self.content_provider)
-        if mode == 'play_and_download':
-            self.player.playAndDownload()
-        else:
-            self.player.play()
-        
+        context.showContextMenu(self.session, item.context, self.menu_item_cb)    
         
     def ask_remove_stream(self, item):
         self.content_screen.showInfo(_('Not implemented yet'))
@@ -556,7 +550,7 @@ class VideoAddonsContentScreen(BaseContentScreen, DownloadList, TipBar):
     def showStreams(self):
         if not self.working:
             self.workingStarted()
-            stream_content_provider = StreamContentProvider(config.plugins.archivCZSK.downloadsPath.value,settings.STREAM_PATH)
+            stream_content_provider = StreamContentProvider(config.plugins.archivCZSK.downloadsPath.value, settings.STREAM_PATH)
             lst_items = stream_content_provider.get_content(None)
             self.session.openWithCallback(self.workingFinished, StreamContentScreen, stream_content_provider, lst_items)
 
@@ -765,7 +759,7 @@ class StreamContentScreen(BaseContentScreen, DownloadList, TipBar):
         import download
         if not self.working:
             self.workingStarted()
-            download.openDownloads(self.session,"Streamy",self.content_provider,self.workingFinished)
+            download.openDownloads(self.session, "Streamy", self.content_provider, self.workingFinished)
     
     def isStream(self):
         it = self.getSelectedItem()

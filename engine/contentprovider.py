@@ -30,6 +30,12 @@ def debug(text):
 class ContentProvider(object):
     def __init__(self, downloads_path):
         self.downloads_path = downloads_path
+        
+    def is_seekable(self):
+        return True
+    
+    def is_pausable(self):
+        return True
     
     def get_content(self, params={}):
         """get content from params"""
@@ -221,7 +227,13 @@ class AddonContentProvider(ContentProvider):
             self.content_deferred.errback(result)
             
 
-
+    
+    def is_seekable(self):
+        return self.video_addon.get_setting('seekable')
+    
+    def is_pausable(self):
+        return self.video_addon.get_setting('pausable')
+    
 
     def create_shortcut(self, item):
         return self.shortcuts.createShortcut(item)
@@ -245,6 +257,8 @@ class StreamContentProvider(ContentProvider):
         self.stream_root = None
         self.groups = []
         self.load_streams()
+        self.seekable = False
+        self.pausable = False
         
     def get_content(self, item):
         if item is None:
@@ -318,6 +332,12 @@ class StreamContentProvider(ContentProvider):
             
         groups.insert(0, PExit())
         self.groups = groups
+        
+    def is_seekable(self):
+        return False
+    
+    def is_pausable(self):
+        return False
             
         
     def save_streams(self):

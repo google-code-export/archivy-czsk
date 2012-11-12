@@ -35,7 +35,8 @@ from infobar import CustomPlayerInfobar
 
 from Plugins.Extensions.archivCZSK import _
 from Plugins.Extensions.archivCZSK.engine.items import RtmpStream
-from Plugins.Extensions.archivCZSK.engine.exceptions.archiveException import CustomInfoError
+from Plugins.Extensions.archivCZSK.engine.tools import util
+from Plugins.Extensions.archivCZSK.engine.exceptions.archiveException import CustomInfoError, CustomError
 from Plugins.Extensions.archivCZSK.gui.base import BaseArchivCZSKScreen
 
 def debug(data):
@@ -228,7 +229,7 @@ class CustomVideoPlayer(ArchivCZSKMoviePlayer):
 			})
 		self._play()
 		
-		self.doSeekRelative=self.__doSeekRelative
+		self.doSeekRelative = self.__doSeekRelative
 	
 	def __serviceStarted(self):
 		if self.useVideoController:
@@ -497,11 +498,11 @@ class Player():
 						
 				# internal player doesnt have rtmp support so we use rtmpgw
 				else:
-					#to make sure that rtmpgw is not running	
+					#to make sure that rtmpgw is not running
 					os.system('killall rtmpgw')
 					self.seekable = False
 					self._startRTMPGWProcess()
-					self._playStream('http://0.0.0.0:' + str(self.port), self.subtitles)
+					self._playStream('http://0.0.0.0:' + str(self.port), self.subtitles,verifyLink=False)
 			
 			# not a rtmp stream
 			else:
@@ -534,6 +535,10 @@ class Player():
 		
 	def _startRTMPGWProcess(self):
 		debug('starting rtmpgw process')
+		ret = util.check_program(RTMPGW_PATH)
+		if ret is None:
+			debug("Cannot found rtmpgw, make sure that you have installed it, or try to use Video player with internal rtmp support")
+			raise CustomError(_("Cannot found rtmpgw, make sure that you have installed it, or try to use Video player with internal rtmp support"))
 		
 		netstat = Popen(NETSTAT_PATH + ' -tulna', stderr=STDOUT, stdout=PIPE, shell=True)
 		out, err = netstat.communicate()
@@ -552,6 +557,7 @@ class Player():
 				rtmp_url.append(' --' + rtmp[0])
 				rtmp_url.append("'%s'" % rtmp[1])
 			rtmpUrl = "'%s'" % urlList[0] + ' '.join(rtmp_url)
+				
 			cmd = '%s --quiet --rtmp %s --sport %d --buffer %d' % (RTMPGW_PATH, rtmpUrl, self.port, self.rtmpBuffer)
 		print cmd			
 		debug('rtmpgw server streaming: %s' % cmd)
@@ -566,7 +572,13 @@ class Player():
 		self.rtmpgwProcess = None	
 								
 			
-	def _playStream(self, streamURL, subtitlesURL, playAndDownload=False):
+	def _playStream(self, streamURL, subtitlesURL, playAndDownload=False,verifyLink=True):
+		if verifyLink:
+			ret = util.url_exist(streamURL)
+			if ret is not None and not ret:
+				debug("Video url %s doesnt exist" % streamURL)
+				raise CustomInfoError(_("Video url doesnt exist, try to check it on web page of addon if it works."))
+		
 		self.session.nav.stopService()
 		sref = eServiceReference(4097, 0, streamURL)
 		sref.setName(self.name.encode('utf-8'))

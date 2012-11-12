@@ -6,6 +6,9 @@ import imp
 import traceback
 from xml.etree.cElementTree import ElementTree, fromstring
 from htmlentitydefs import name2codepoint as n2cp
+from urlparse import urlsplit
+import httplib
+import stat
 
 supported_video_extensions = ('.avi', '.mp4', '.mkv', '.mpeg', '.mpg')
 
@@ -83,7 +86,7 @@ def decode_html(data):
         return data
     
 def decode_string(string):
-    if isinstance(string,unicode):
+    if isinstance(string, unicode):
         return string    
     encodings = ['utf-8', 'windows-1250', 'iso-8859-2']
     for encoding in encodings:
@@ -326,3 +329,69 @@ class Language(object):
             return Language.language_map[language_id]
         else:
             return None
+        
+        
+        
+
+def url_exist(url):
+    """checks if given url exist
+    @return: None if cannot find out, if url exist or not
+    @return: True if url exist
+    @return: False if url not exist
+    """
+    if url is None:
+        return False
+    
+    if os.path.isfile(url):
+        return True
+    
+    if url == '' or url.find(' ') != -1:
+        return False 
+    
+    if not url.startswith('rtmp') and not url.startswith('mms') and not url.startswith('http'):
+        return False
+    # for now we cannot determine existence of url in rtmp or mms protocol
+    if url.startswith('rtmp') or url.startswith('mms'):
+        return None
+    parsed = urlsplit(url)
+    site = parsed.netloc
+    if site == '':
+        return False
+    path = parsed.path
+    conn = httplib.HTTPConnection(site, timeout=20)
+    conn.request('HEAD', path)
+    response = conn.getresponse()
+    conn.close()
+    return response.status in (200, 301, 302)
+
+
+def check_program(program):
+    
+    def is_file(fpath):
+        return os.path.isfile(fpath)
+        
+    def is_exe(fpath):
+        return os.access(fpath, os.X_OK)
+
+    def set_executable(program):
+        mode = os.stat(program).st_mode
+        os.chmod(program, mode | stat.S_IXUSR)
+    
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_file(program):
+            if not is_exe(program):
+                set_executable(program)
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            exe_file = os.path.join(path, program)
+            if is_file(exe_file):
+                if not is_exe(program):
+                    set_executable(program)
+                return exe_file
+    return None
+      
+    
+
+
