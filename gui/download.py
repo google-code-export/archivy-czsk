@@ -276,7 +276,7 @@ class DownloadsScreen(BaseArchivCZSKMenuListScreen, DownloadList):
     def ok(self):
         if not self.working and len(self.lst_items) > 0:
             it = self.getSelectedItem()
-            download = DownloadManager.getInstance().findDownloadByIt(it)
+            download = DownloadManager.getInstance().findDownloadByIT(it)
             if download is not None and download.running:
                 self.player.playDownload(download)
             else:

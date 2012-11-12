@@ -1,10 +1,7 @@
 # -*- coding: UTF-8 -*-
 import os
 
-
-
 from Screens.Screen import Screen
-from Screens.VirtualKeyBoard import VirtualKeyBoard
 from Components.ConfigList import ConfigList, ConfigListScreen
 from Components.config import config, configfile
 from Components.ActionMap import ActionMap
@@ -171,13 +168,18 @@ class BaseArchivCZSKConfigScreen(BaseArchivCZSKScreen, ConfigListScreen):
             x()
         
     def keySave(self):
-        self.saveAll()
+        for x in self["config"].list:
+            x[1].save()
+        configfile.save()
         self.close(True)
 
     def keyCancel(self):
         for x in self["config"].list:
             x[1].cancel()
         self.close()
+        
+    def keyOk(self):
+        pass
         
     def keyLeft(self):
         ConfigListScreen.keyLeft(self) 
@@ -264,23 +266,6 @@ class AddonConfigScreen(BaseArchivCZSKConfigScreen):
         
     def buildMenu(self):
         self.refreshConfigList() 
-        
-    def keyOk(self):
-        current = self["config"].getCurrent()[1]
-        if current == config.plugins.archivCZSK.archives.voyo.password:
-            self.session.openWithCallback(lambda x : self.VirtualKeyBoardCallback(x, 'password'), VirtualKeyBoard, title=(_("Enter the password:")), text=config.plugins.archivCZSK.archives.voyo.password.value)
-        elif current == config.plugins.archivCZSK.archives.stream.username:
-            self.session.openWithCallback(lambda x : self.VirtualKeyBoardCallback(x, 'username'), VirtualKeyBoard, title=(_("Enter the username:")), text=config.plugins.archivCZSK.archives.stream.username.value)        
-        else:
-            pass          
-            
-    def VirtualKeyBoardCallback(self, callback=None, entry=None):
-        if callback is not None and len(callback) and entry is not None and len(entry):
-            if entry == 'password':
-                config.plugins.archivCZSK.archives.voyo.password.setValue(callback)
-            if entry == 'username':
-                config.plugins.archivCZSK.archives.stream.username.setValue(callback)
-
 
 
 class SelectPath(Screen):
