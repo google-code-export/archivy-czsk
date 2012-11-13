@@ -13,15 +13,18 @@ from Components.ActionMap import ActionMap
 from Components.Label import Label
 from Components.AVSwitch import AVSwitch
 from Components.Pixmap import Pixmap
+from Components.config import config
+
 
 from Plugins.Extensions.archivCZSK import _
+from Plugins.Extensions.archivCZSK.engine.tools import util
 
 
 class Captcha(object):
     def __init__(self, session, image, captchaCB, dest='/tmp/captcha.png'):
         self.session = session
         self.captchaCB = captchaCB
-        self.dest =dest
+        self.dest = dest
         
         if os.path.isfile(image):
             self.openCaptchaDialog(image)
@@ -29,8 +32,10 @@ class Captcha(object):
             downloadPage(image, dest).addCallback(self.downloadCaptchaCB).addErrback(self.downloadCaptchaError)
         
         
-    def openCaptchaDialog(self,captcha_file):
-        self.session.openWithCallback(self.captchaCB,CaptchaDialog,captcha_file)
+    def openCaptchaDialog(self, captcha_file):
+        if config.plugins.archivCZSK.convertPNG.value:
+            captcha_file = util.convert_png_to_8bit(captcha_file)
+        self.session.openWithCallback(self.captchaCB, CaptchaDialog, captcha_file)
 
     def downloadCaptchaCB(self, txt=""):
         print "[Captcha] downloaded successfully:"
@@ -39,10 +44,11 @@ class Captcha(object):
     def downloadCaptchaError(self, err):
         print "[Captcha] download captcha error:", err
         self.captchaCB('')
+        
 
 
 class CaptchaDialog(VirtualKeyBoard):
-    def __init__(self, session,captcha_file):
+    def __init__(self, session, captcha_file):
         self.skin = """
             <screen position="center,center" size="1100,600" zPosition="99">
                 <widget source="Title" render="Label" position=" 50,12" size="1050, 33" halign="center" font="Regular;30" backgroundColor="background" shadowColor="black" shadowOffset="-3,-3" transparent="1"/>

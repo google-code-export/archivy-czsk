@@ -155,7 +155,8 @@ class DownloadStatus():
                 
             self.speed = speedB
             if totalLength > 0:
-                self.eta = int(float(totalLength - currentLength) / float(speedB))
+                if speedB > 0:
+                    self.eta = int(float(totalLength - currentLength) / float(speedB))
                 self.percent = float(totalLength - currentLength) / float(totalLength) * 100
             self.currentLength = currentLength
             
@@ -250,7 +251,7 @@ class RTMPDownloadE2(Download):
         self.running = False
         self.finish_time = time.time()
         if retval == 1 and not self.killed:
-            if os.path.getsize(self.local) > (0.95*self.length):
+            if os.path.getsize(self.local) > (0.95 * self.length):
                 self.downloaded = True
             else:
                 self.downloaded = False

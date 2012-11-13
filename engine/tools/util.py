@@ -335,24 +335,29 @@ class Language(object):
 
 def url_exist(url):
     """checks if given url exist
+    
     @return: None if cannot find out, if url exist or not
     @return: True if url exist
     @return: False if url not exist
     """
+    print 'testing',url
+    
     if url is None:
         return False
     
     if os.path.isfile(url):
         return True
     
+    if not url.startswith('rtmp') and not url.startswith('mms') and not url.startswith('http') and not url.startswith('rtsp'):
+        return False
+    
+    # for now we cannot determine existence of url in rtmp or mms protocol
+    if url.startswith('rtmp') or url.startswith('mms') or url.startswith('rtsp'):
+        return None
+    
     if url == '' or url.find(' ') != -1:
         return False 
     
-    if not url.startswith('rtmp') and not url.startswith('mms') and not url.startswith('http'):
-        return False
-    # for now we cannot determine existence of url in rtmp or mms protocol
-    if url.startswith('rtmp') or url.startswith('mms'):
-        return None
     parsed = urlsplit(url)
     site = parsed.netloc
     if site == '':
@@ -387,11 +392,26 @@ def check_program(program):
         for path in os.environ["PATH"].split(os.pathsep):
             exe_file = os.path.join(path, program)
             if is_file(exe_file):
-                if not is_exe(program):
-                    set_executable(program)
+                if not is_exe(exe_file):
+                    set_executable(exe_file)
                 return exe_file
     return None
-      
-    
 
+  
+def convert_png_to_8bit(png_path, pngquant_path='pngquant'):
+    pngquant = check_program(pngquant_path)
+    if pngquant is None:
+        print '[ArchivCZSK] cannot decode png %s, pngquant not found' % png_path
+        return png_path
+    
+    png_path_8bit = os.path.splitext(png_path)[0] + '-fs8.png'
+    cmd = '%s --force 32 %s' % (pngquant, png_path)
+
+    if os.path.isfile(png_path_8bit):
+        os.remove(png_path_8bit)
+    os.system(cmd)
+    if os.path.isfile(png_path_8bit):
+        print '[ArchivCZSK] png %s was successfully converted' % os.path.basename(png_path)
+        return png_path_8bit
+    return png_path
 

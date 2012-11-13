@@ -20,8 +20,6 @@ REPOSITORY_PATH = os.path.join(PLUGIN_PATH, 'resources/repositories')
 STREAM_PATH = os.path.join(PLUGIN_PATH, 'streams/streams.xml')
 
 ############ Updater Paths #############
-UPDATE_REPOSITORY_PATH = 'http://archivy-czsk.googlecode.com/svn/branch/update/ver_0.7'
-UPDATE_REPOSITORY_VERSION_PATH = UPDATE_REPOSITORY_PATH + 'version.xml'
 TMP_PATH = '/tmp/archivCZSK/'
 
 
@@ -63,7 +61,7 @@ config.plugins.archivCZSK.extensions_menu = ConfigYesNo(default=False)
 config.plugins.archivCZSK.clearMemory = ConfigYesNo(default=False)
 config.plugins.archivCZSK.autoUpdate = ConfigYesNo(default=False)
 config.plugins.archivCZSK.debug = ConfigYesNo(default=False)
-
+config.plugins.archivCZSK.convertPNG = ConfigYesNo(default=False)
 
 ############ Paths ####################### 
 
@@ -95,6 +93,7 @@ def get_main_settings():
     list.append(getConfigListEntry(_("Free memory after exit"), config.plugins.archivCZSK.clearMemory))
     list.append(getConfigListEntry(_("Add to extensions menu"), config.plugins.archivCZSK.extensions_menu))
     list.append(getConfigListEntry(_("Add to main menu"), config.plugins.archivCZSK.main_menu))
+    list.append(getConfigListEntry(_("Convert PNG images to 8bit"), config.plugins.archivCZSK.convertPNG))
     return list
     
 def get_path_settings():
