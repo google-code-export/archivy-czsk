@@ -197,14 +197,7 @@ class SubsSupport(object):
                 } , -5)
         
             self.onClose.append(self.exitSubs)
-            
-            #override infobarseek's methods if available
-            if hasattr(self, 'doSeekRelative'):
-                self.doSeekRelative = self.__doSeekRelative
-            if hasattr(self, 'doSeek'):
-                self.doSeek = self.__doSeek
     
-        
         if defaultPath is not None and os.path.isdir(defaultPath):
             self.__defaultPath = defaultPath
             self.__subsDir = defaultPath 
@@ -214,9 +207,7 @@ class SubsSupport(object):
             if alreadyPlaying and subclassOfScreen:
                 self.resumeSubs()
      
-     
-     
-    
+
     def __serviceStarted(self):
         print 'servicestarted'
         
@@ -232,12 +223,12 @@ class SubsSupport(object):
             self.__working = True
             self.__start_timer.start(500, True) 
     
-    def __doSeekRelative(self, pts):
+    def doSeekRelative(self, pts):
         print 'doseekrelative'
         super(SubsSupport, self).doSeekRelative(pts)
         self.playAfterSeek()
                 
-    def __doSeek(self, pts):
+    def doSeek(self, pts):
         print 'doseek'
         super(SubsSupport, self).doSeek(pts)
         self.playAfterSeek()        

@@ -40,7 +40,7 @@ from Plugins.Extensions.archivCZSK.engine.exceptions.archiveException import Cus
 from Plugins.Extensions.archivCZSK.gui.base import BaseArchivCZSKScreen
 
 def debug(data):
-	if config.plugins.archivCZSK.debug.getValue():
+	if config.plugins.archivCZSK.debug.value:
 		print '[ArchivCZSK] Player:', data.encode('utf-8')
 
 RTMPGW_PATH = '/usr/bin/rtmpgw'
@@ -66,7 +66,6 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, CustomPlayerInfob
 					self.setSkin("ArchivCZSKMoviePlayer_SD")
 			
 			CustomPlayerInfobar.__init__(self)
-			SubsSupport.__init__(self, subPath=subtitles, defaultPath=config.plugins.archivCZSK.subtitlesPath.value, forceDefaultPath=True)
 			
 			self["actions"] = HelpableActionMap(self, "ArchivCZSKMoviePlayerActions",
             {
@@ -90,6 +89,8 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, CustomPlayerInfob
 				InfoBarMoviePlayerSummarySupport, \
 				InfoBarServiceErrorPopupSupport:
 				x.__init__(self)
+				
+			SubsSupport.__init__(self, subPath=subtitles, defaultPath=config.plugins.archivCZSK.subtitlesPath.value, forceDefaultPath=True)
 			
 			self.service = service
 				
@@ -229,7 +230,7 @@ class CustomVideoPlayer(ArchivCZSKMoviePlayer):
 			})
 		self._play()
 		
-		self.doSeekRelative = self.__doSeekRelative
+		#self.doSeekRelative = self.__doSeekRelative
 	
 	def __serviceStarted(self):
 		if self.useVideoController:
@@ -265,7 +266,7 @@ class CustomVideoPlayer(ArchivCZSKMoviePlayer):
 		else:
 			self._play()
 		
-	def __doSeekRelative(self, pts):
+	def doSeekRelative(self, pts):
 		print 'dosee krelat ive'
 		if self.useVideoController:
 			print 'using video controller'
@@ -432,9 +433,9 @@ class Player():
 		self.seekable = True 
 		self.pausable = True
 		
-		self.playDelay = int(config.plugins.archivCZSK.videoPlayer.playDelay.getValue())
-		self.autoPlay = config.plugins.archivCZSK.videoPlayer.mipselPlayer.autoPlay.getValue()
-		self.playerBuffer = int(config.plugins.archivCZSK.videoPlayer.mipselPlayer.buffer.getValue())
+		self.playDelay = int(config.plugins.archivCZSK.videoPlayer.playDelay.value)
+		self.autoPlay = config.plugins.archivCZSK.videoPlayer.mipselPlayer.autoPlay.value
+		self.playerBuffer = int(config.plugins.archivCZSK.videoPlayer.mipselPlayer.buffer.value)
 		self.useVideoController = useVideoController 
 			
 		self.it = None
@@ -469,10 +470,10 @@ class Player():
 			self.stream = it.stream
 			
 		if self.stream is None and self.live:
-			self.rtmpBuffer = int(config.plugins.archivCZSK.videoPlayer.liveBuffer.getValue())
+			self.rtmpBuffer = int(config.plugins.archivCZSK.videoPlayer.liveBuffer.value)
 			
 		elif self.stream is None and not self.live:
-			self.rtmpBuffer = int(config.plugins.archivCZSK.videoPlayer.archiveBuffer.getValue())
+			self.rtmpBuffer = int(config.plugins.archivCZSK.videoPlayer.archiveBuffer.value)
 	
 		elif self.stream is not None:
 			self.playDelay = int(self.stream.playDelay)
@@ -490,11 +491,11 @@ class Player():
 			if self.playUrl.startswith('rtmp'):
 				
 				# internal player has rtmp support
-				if config.plugins.archivCZSK.videoPlayer.seeking.getValue():
+				if config.plugins.archivCZSK.videoPlayer.seeking.value:
 					if self.stream is not None:
-						self._playStream(self.stream.getUrl(), self.subtitles)
+						self._playStream(self.stream.getUrl(), self.subtitles,verifyLink = False)
 					else:
-						self._playStream(str(self.playUrl + ' buffer=' + str(self.rtmpBuffer)), self.subtitles)
+						self._playStream(str(self.playUrl + ' buffer=' + str(self.rtmpBuffer)), self.subtitles,verifyLink = False)
 						
 				# internal player doesnt have rtmp support so we use rtmpgw
 				else:
@@ -583,9 +584,9 @@ class Player():
 		sref = eServiceReference(4097, 0, streamURL)
 		sref.setName(self.name.encode('utf-8'))
 		
-		videoPlayerSetting = config.plugins.archivCZSK.videoPlayer.type.getValue()
+		videoPlayerSetting = config.plugins.archivCZSK.videoPlayer.type.value
 		videoPlayerController = None
-		useVideoController = config.plugins.archivCZSK.videoPlayer.useVideoController.getValue()
+		useVideoController = config.plugins.archivCZSK.videoPlayer.useVideoController.value
 		
 		if useVideoController:
 			videoPlayerController = VideoPlayerController(self.session, download=self.download, \

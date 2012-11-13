@@ -50,8 +50,6 @@ class VideoPlayerController(object):
         @param seekable: set if video playing in videoplayer is seekable
         @param pausable: set if video playing in videoplayer is pausable 
     """
-    
-    instance = None
     def __init__(self, session, download=None, video_check_interval=5, buffer_time=10, seekable=True, pausable=True, autoplay=True):
         self.video_player = None
         self.session = session
@@ -85,7 +83,7 @@ class VideoPlayerController(object):
         
         # I did couple of tests and seeking is not really precise,
         # so to make sure that we can seek when download we have seek_limit 
-        self.seek_limit = 80 * 90000 
+        self.seek_limit = 140 * 90000 
         
         # timers for checking and buffering
         self.check_timer = eTimer()
