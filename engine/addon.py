@@ -6,7 +6,7 @@ Created on 21.10.2012
 import os, traceback, sys, imp
 
 from Tools.LoadPixmap import LoadPixmap
-from Components.config import config, ConfigSubsection, ConfigSelection, ConfigYesNo, ConfigText, configfile, getConfigListEntry
+from Components.config import config, ConfigSubsection, ConfigSelection, ConfigYesNo, ConfigText, ConfigDirectory, configfile, getConfigListEntry
 
 from tools import util, parser
 from Plugins.Extensions.archivCZSK import settings
@@ -15,11 +15,11 @@ from Plugins.Extensions.archivCZSK.gui import menu
 from Plugins.Extensions.archivCZSK.gui import info
 from Plugins.Extensions.archivCZSK.gui import shortcuts
 from Plugins.Extensions.archivCZSK.gui import download
-from contentprovider import AddonContentProvider
+from contentprovider import VideoAddonContentProvider
 
 
 def debug(text):
-    if config.plugins.archivCZSK.debug.value:
+    if config.plugins.archivCZSK.debug.getValue():
         print '[ArchivCZSK] Addon', text.encode('utf-8')
 
 
@@ -91,7 +91,7 @@ class Addon(object):
         except Exception, e:
             debug('%s cannot retrieve setting %s\nreason %s' % (self, setting, str(e)))
         else:
-            return getattr(setting, 'value', setting)
+            return setting.getValue()
     
     def get_info(self, info):
         try:
@@ -140,8 +140,6 @@ class XBMCAddon(object):
                     return 'false'
             return val
         
-        
-                 
 class ToolsAddon(Addon):
     def __init__(self, info, repository):
         Addon.__init__(self, info, repository)
@@ -160,13 +158,19 @@ class VideoAddon(Addon):
         if self.script == '':
             raise Exception("%s entry point missing in addon.xml" % self)
         # content provider
-        downloads_path = os.path.join(config.plugins.archivCZSK.downloadsPath.value, self.id)
-        shortcuts_path = os.path.join(config.plugins.archivCZSK.dataPath.value, self.id)
-        self.provider = AddonContentProvider(self, downloads_path, shortcuts_path)
+        self.downloads_path = self.get_setting('download_path')
+        self.shortcuts_path = os.path.join(config.plugins.archivCZSK.dataPath.getValue(), self.id)
+        self.provider = VideoAddonContentProvider(self, self.downloads_path, self.shortcuts_path)
             
         debug('%s successfully loaded' % self)
     
   
+    def refresh_provider_paths(self):
+        self.downloads_path = self.get_setting('download_path')
+        self.shortcuts_path = os.path.join(config.plugins.archivCZSK.dataPath.getValue(), self.id)
+        self.provider.downloads_path = self.downloads_path
+        self.provider.shortcuts_path = self.shortcuts_path
+    
     def open_shortcuts(self, session, cb):
         shortcuts.openShortcuts(session, self, cb)
         
@@ -274,7 +278,7 @@ class AddonSettings(object):
         
         setattr(config.plugins.archivCZSK.archives, addon_id, ConfigSubsection())
         self.main = getattr(config.plugins.archivCZSK.archives, addon_id)
-        addon_config.add_global_addon_settings(self.main)
+        addon_config.add_global_addon_settings(addon, self.main)
         
         self.addon = addon
         self.entries = []
@@ -361,6 +365,10 @@ class AddonSettings(object):
         # fix dotted id
         entry['id'] = entry['id'].replace('.', '_')
         
+        if entry['type'] == 'folder':
+            setattr(setting, entry['id'], ConfigDirectory(default=entry['default']))
+            entry['setting_id'] = getattr(setting, entry['id'])
+        
         if entry['type'] == 'bool':
             setattr(setting, entry['id'], ConfigYesNo(default=(entry['default'] == 'true')))
             entry['setting_id'] = getattr(setting, entry['id'])
@@ -401,7 +409,7 @@ class AddonInfo(object):
         self.library = addon_dict['library']
         self.script = addon_dict['script']
         self.tmp_path = settings.TMP_PATH
-        self.data_path = os.path.join(config.plugins.archivCZSK.dataPath.value, self.id)
+        self.data_path = os.path.join(config.plugins.archivCZSK.dataPath.getValue(), self.id)
         self.profile = self.data_path
         
         if settings.LANGUAGE_SETTINGS_ID in addon_dict['description']:

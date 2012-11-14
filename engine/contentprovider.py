@@ -24,7 +24,7 @@ SUBTITLES_EXTENSIONS = ['.srt']
  
 
 def debug(text):
-    if config.plugins.archivCZSK.debug.value:
+    if config.plugins.archivCZSK.debug.getValue():
         print '[ArchivCZSK] contentprovider', text.encode('utf-8')        
         
 class ContentProvider(object):
@@ -43,8 +43,11 @@ class ContentProvider(object):
         
     def get_downloads(self):
         video_lst = []
-        if not os.path.exists(self.downloads_path):
-            return []
+        if not os.path.isdir(self.downloads_path):
+            try:
+                os.makedirs(self.downloads_path)
+            except OSError:
+                return []
         
         downloads = os.listdir(self.downloads_path)
         for download in downloads:
@@ -125,16 +128,16 @@ class AddonSys():
 
             
 
-class AddonContentProvider(ContentProvider):
+class VideoAddonContentProvider(ContentProvider):
     
     gui_item_list = [[], None, {}] #[0] for items, [1] for command to GUI [2] arguments for command
     addon_sys = AddonSys()
         
     @staticmethod
     def clear_list():
-        del AddonContentProvider.gui_item_list[0][:]
-        AddonContentProvider.gui_item_list[1] = None
-        AddonContentProvider.gui_item_list[2].clear()
+        del VideoAddonContentProvider.gui_item_list[0][:]
+        VideoAddonContentProvider.gui_item_list[1] = None
+        VideoAddonContentProvider.gui_item_list[2].clear()
         
     
     def __init__(self, video_addon, downloads_path, shortcuts_path):
@@ -145,6 +148,9 @@ class AddonContentProvider(ContentProvider):
         self.dependencies = [video_addon]
         self.resolved_dependencies = False
         self.addon_sys.add_addon(video_addon)
+        
+    def refresh_paths(self):
+        self.video_addon.refresh_provider_paths()
         
     def resolve_dependecies(self, strict=False):
         from Plugins.Extensions.archivCZSK import archivczsk
@@ -194,9 +200,6 @@ class AddonContentProvider(ContentProvider):
         self.resolved_dependencies = False
         self.dependencies = []
       
-      
-      
-        
     def get_content(self, session, params, successCB, errorCB):
         self.resolve_dependecies(strict=True)
         self.clear_list()
@@ -234,7 +237,13 @@ class AddonContentProvider(ContentProvider):
     def is_pausable(self):
         return self.video_addon.get_setting('pausable')
     
-
+    
+    
+    def get_downloads(self):
+        self.refresh_paths()
+        return super(VideoAddonContentProvider, self).get_downloads()
+    
+    
     def create_shortcut(self, item):
         return self.shortcuts.createShortcut(item)
 
@@ -242,6 +251,7 @@ class AddonContentProvider(ContentProvider):
         return self.shortcuts.removeShortcut(id_shortcut)
     
     def get_shortcuts(self):
+        self.refresh_paths()
         return self.shortcuts.getShortcuts()
     
     def save_shortcuts(self):
