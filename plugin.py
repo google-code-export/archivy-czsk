@@ -64,8 +64,8 @@ def Plugins(path, **kwargs):
 	descr = version.description
 	nameA = version.title
 	list = [PluginDescriptor(where=[PluginDescriptor.WHERE_SESSIONSTART], fnc=sessionstart), PluginDescriptor(name=nameA, description=descr, where=PluginDescriptor.WHERE_PLUGINMENU, fnc=main, icon="czsk.png"), ]
-	if config.plugins.archivCZSK.extensions_menu.value:
+	if config.plugins.archivCZSK.extensions_menu.getValue():
 		list.append(PluginDescriptor(name=nameA, description=descr, where=PluginDescriptor.WHERE_EXTENSIONSMENU, fnc=main))
-	if config.plugins.archivCZSK.main_menu.value:
+	if config.plugins.archivCZSK.main_menu.getValue():
 		list.append(PluginDescriptor(name=nameA, description=descr, where=PluginDescriptor.WHERE_MENU, fnc=startSetup))
 	return list

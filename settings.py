@@ -90,10 +90,8 @@ def get_main_settings():
     list = []
     list.append(getConfigListEntry(_("Allow auto-update"), config.plugins.archivCZSK.autoUpdate))
     list.append(getConfigListEntry(_("Debug mode"), config.plugins.archivCZSK.debug))
-    list.append(getConfigListEntry(_("Free memory after exit"), config.plugins.archivCZSK.clearMemory))
     list.append(getConfigListEntry(_("Add to extensions menu"), config.plugins.archivCZSK.extensions_menu))
     list.append(getConfigListEntry(_("Add to main menu"), config.plugins.archivCZSK.main_menu))
-    list.append(getConfigListEntry(_("Convert PNG images to 8bit"), config.plugins.archivCZSK.convertPNG))
     return list
     
 def get_path_settings():
@@ -102,6 +100,11 @@ def get_path_settings():
     list.append(getConfigListEntry(_("Downloads path"), config.plugins.archivCZSK.downloadsPath))
     list.append(getConfigListEntry(_("Subtitles path"), config.plugins.archivCZSK.subtitlesPath))
     return list
+
+def get_misc_settings():
+    list = []
+    list.append(getConfigListEntry(_("Convert captcha images to 8bit"), config.plugins.archivCZSK.convertPNG))
+    list.append(getConfigListEntry(_("Free memory after exit"), config.plugins.archivCZSK.clearMemory))
     
 
 
