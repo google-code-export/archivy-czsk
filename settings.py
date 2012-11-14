@@ -105,6 +105,7 @@ def get_misc_settings():
     list = []
     list.append(getConfigListEntry(_("Convert captcha images to 8bit"), config.plugins.archivCZSK.convertPNG))
     list.append(getConfigListEntry(_("Free memory after exit"), config.plugins.archivCZSK.clearMemory))
+    return list
     
 
 
