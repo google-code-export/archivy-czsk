@@ -3,7 +3,7 @@ import os
 
 from Screens.Screen import Screen
 from Components.ConfigList import ConfigList, ConfigListScreen
-from Components.config import config, configfile
+from Components.config import config, configfile, ConfigDirectory
 from Components.ActionMap import ActionMap
 from Components.Label import Label
 from Components.FileList import FileList
@@ -13,7 +13,7 @@ from Plugins.Extensions.archivCZSK import _
 from Plugins.Extensions.archivCZSK import settings
 from Plugins.Extensions.archivCZSK.resources.repositories import config as addon_config
 
-from common import CategoryWidgetSD,CategoryWidgetHD
+from common import CategoryWidgetSD, CategoryWidgetHD
 from base import BaseArchivCZSKScreen
 import info
 
@@ -21,11 +21,11 @@ import info
 def openArchivCZSKMenu(session):
     session.open(ArchiveCZSKConfigScreen)
     
-def openAddonMenu(session, addon,cb):
+def openAddonMenu(session, addon, cb):
     if cb is None:
         session.open(AddonConfigScreen, addon)
     else:
-        session.openWithCallback(cb,AddonConfigScreen,addon)
+        session.openWithCallback(cb, AddonConfigScreen, addon)
     
 class BaseArchivCZSKConfigScreen(BaseArchivCZSKScreen, ConfigListScreen):
 
@@ -152,25 +152,23 @@ class BaseArchivCZSKConfigScreen(BaseArchivCZSKScreen, ConfigListScreen):
     def changelog(self):
         changelog_path = os.path.join(settings.PLUGIN_PATH, 'changelog.txt')
         if os.path.isfile(changelog_path):
-            f= open(changelog_path, "r")
+            f = open(changelog_path, "r")
             changelog_text = f.read()
             f.close()
             info.showChangelog(self.session, _('ArchivCZSK Changelog'), changelog_text)    
     
-    def KeyOk(self):
-        pass
+    def keyOk(self):
+        current = self["config"].getCurrent()[1]
+        if isinstance(current, ConfigDirectory):
+            self.session.openWithCallback(self.pathSelected, SelectPath, current)
     
-    def KeyCancel(self):
-        pass
         
     def changedEntry(self):
         for x in self.onChangedEntry:
             x()
         
     def keySave(self):
-        for x in self["config"].list:
-            x[1].save()
-        configfile.save()
+        self.saveAll()
         self.close(True)
 
     def keyCancel(self):
@@ -178,9 +176,10 @@ class BaseArchivCZSKConfigScreen(BaseArchivCZSKScreen, ConfigListScreen):
             x[1].cancel()
         self.close()
         
-    def keyOk(self):
-        pass
-        
+    def pathSelected(self, res=None, config_entry=None):
+        if res is not None and config_entry is not None:
+            config_entry.setValue(res)
+
     def keyLeft(self):
         ConfigListScreen.keyLeft(self) 
 
@@ -195,7 +194,8 @@ class ArchiveCZSKConfigScreen(BaseArchivCZSKConfigScreen):
         categories = [
                       {'label':_("Main"), 'subentries':settings.get_main_settings},
                       {'label':_("Player"), 'subentries':settings.get_player_settings},
-                      {'label':_("Path"), 'subentries':settings.get_path_settings}
+                      {'label':_("Path"), 'subentries':settings.get_path_settings},
+                      {'label':_("Misc"), 'subentries':settings.get_misc_settings}
                      ]
         
         BaseArchivCZSKConfigScreen.__init__(self, session, categories=categories)
@@ -208,28 +208,6 @@ class ArchiveCZSKConfigScreen(BaseArchivCZSKConfigScreen):
     
     def buildMenu(self):
         self.refreshConfigList()
-    
-    def keyOk(self):
-        current = self["config"].getCurrent()[1]
-        if current == config.plugins.archivCZSK.subtitlesPath:
-            self.session.openWithCallback(self.pathSelectedSubtitles, SelectPath, config.plugins.archivCZSK.subtitlesPath.value)
-        if current == config.plugins.archivCZSK.dataPath:
-            self.session.openWithCallback(self.pathSelectedData, SelectPath, config.plugins.archivCZSK.dataPath.value)
-        if current == config.plugins.archivCZSK.downloadsPath:
-            self.session.openWithCallback(self.pathSelectedDownloads, SelectPath, config.plugins.archivCZSK.downloadsPath.value)
-        pass
-    
-    def pathSelectedSubtitles(self, res):
-        if res is not None:
-            config.plugins.archivCZSK.subtitlesPath.value = res
-    
-    def pathSelectedData(self, res):
-        if res is not None:
-            config.plugins.archivCZSK.dataPath.value = res
-    
-    def pathSelectedDownloads(self, res):
-        if res is not None:
-            config.plugins.archivCZSK.downloadsPath.value = res
 
     def keyLeft(self):
         ConfigListScreen.keyLeft(self) 
@@ -279,11 +257,16 @@ class SelectPath(Screen):
             <widget render="Label" source="key_red" position="0,0" size="140,40" zPosition="5" valign="center" halign="center" backgroundColor="red" font="Regular;21" transparent="1" foregroundColor="white" shadowColor="black" shadowOffset="-1,-1" />
             <widget render="Label" source="key_green" position="140,0" size="140,40" zPosition="5" valign="center" halign="center" backgroundColor="red" font="Regular;21" transparent="1" foregroundColor="white" shadowColor="black" shadowOffset="-1,-1" />
         </screen>"""
-    def __init__(self, session, initDir):
+    def __init__(self, session, configEntry):
+        initDir = configEntry.getValue()
+        if initDir is not None and not initDir.endswith('/'):
+            initDir = initDir + '/'
         Screen.__init__(self, session)
-        inhibitDirs = ["/bin", "/boot", "/dev", "/etc", "/lib", "/proc", "/sbin", "/sys", "/usr", "/var"]
-        inhibitMounts = []
-        self["filelist"] = FileList(initDir, showDirectories=True, showFiles=False, inhibitMounts=inhibitMounts, inhibitDirs=inhibitDirs)
+        #inhibitDirs = ["/bin", "/boot", "/dev", "/etc", "/lib", "/proc", "/sbin", "/sys", "/usr", "/var"]
+        #inhibitMounts = []
+        self.configEntry = configEntry
+        
+        self["filelist"] = FileList(initDir, showDirectories=True, showFiles=False)
         self["target"] = Label()
         self["actions"] = ActionMap(["WizardActions", "DirectionActions", "ColorActions", "EPGSelectActions"],
         {
@@ -305,10 +288,10 @@ class SelectPath(Screen):
         self.setTitle(_("Select directory"))
 
     def cancel(self):
-        self.close(None)
+        self.close(None, None)
 
     def green(self):
-        self.close(self["filelist"].getSelection()[0])
+        self.close(self["filelist"].getSelection()[0], self.configEntry)
 
     def up(self):
         self["filelist"].up()
