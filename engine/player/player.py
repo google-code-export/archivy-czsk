@@ -40,7 +40,7 @@ from Plugins.Extensions.archivCZSK.engine.exceptions.archiveException import Cus
 from Plugins.Extensions.archivCZSK.gui.base import BaseArchivCZSKScreen
 
 def debug(data):
-	if config.plugins.archivCZSK.debug.value:
+	if config.plugins.archivCZSK.debug.getValue():
 		print '[ArchivCZSK] Player:', data.encode('utf-8')
 
 RTMPGW_PATH = '/usr/bin/rtmpgw'
@@ -57,7 +57,7 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, CustomPlayerInfob
 	
 		def __init__(self, session, service, subtitles, useCustomInfobar=False):
 			BaseArchivCZSKScreen.__init__(self, session)
-			if config.plugins.archivCZSK.videoPlayer.useDefaultSkin.value:
+			if config.plugins.archivCZSK.videoPlayer.useDefaultSkin.getValue():
 				self.setSkinName("MoviePlayer")
 			else:
 				if self.HD:
@@ -90,7 +90,7 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, CustomPlayerInfob
 				InfoBarServiceErrorPopupSupport:
 				x.__init__(self)
 				
-			SubsSupport.__init__(self, subPath=subtitles, defaultPath=config.plugins.archivCZSK.subtitlesPath.value, forceDefaultPath=True)
+			SubsSupport.__init__(self, subPath=subtitles, defaultPath=config.plugins.archivCZSK.subtitlesPath.getValue(), forceDefaultPath=True)
 			
 			self.service = service
 				
@@ -171,12 +171,8 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, CustomPlayerInfob
 		
 		def handleLeave(self):
 			self.is_closing = True
-			list = (
-				(_("Yes"), "quit"),
-				(_("No"), "continue")
-				)
 			from Screens.ChoiceBox import ChoiceBox
-			self.session.openWithCallback(self.exitVideoPlayer, ChoiceBox, title=_("Stop playing this movie?"), list=list)
+			self.session.openWithCallback(self.leavePlayerConfirmed, MessageBox, text=_("Stop playing this movie?"), type=MessageBox.TYPE_YESNO)
 					
 		
 		def aspectratioSelection(self):
@@ -196,7 +192,7 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, CustomPlayerInfob
 				
 		
 		def leavePlayerConfirmed(self, answer):
-			if answer == 'quit':
+			if answer:
 				self.exitVideoPlayer()
 				
 		def exitVideoPlayer(self):
@@ -295,48 +291,41 @@ class CustomVideoPlayer(ArchivCZSKMoviePlayer):
 			self._doEofInternal(playing)
 			
 	def leavePlayerConfirmed(self, answer):
-		if answer == 'quit':
+		if answer:
 			self.exitVideoPlayer()
 		
-	def exitVideoPlayer(self, message=None):
-		if message is not None and self.useVideoController:
+	def exitVideoPlayer(self):
+		if self.useVideoController:
 			self.videoPlayerController._exit_video_player()
-		elif message is not None:
+		else:
 			self._exitVideoPlayer()
 	
 	
 
 class MipselVideoPlayer(CustomVideoPlayer):
 	def __init__(self, session, sref, videoPlayerController, autoPlay, videoBuffer, useVideoController=False, playAndDownload=False, subtitles=None):
-		self.session = session
 		self.buffering = False
 		self.bufferSeconds = 0
 		self.bufferPercent = 0
 		self.bufferSecondsLeft = 0
-		self.updateTimer = eTimer()
-		self.updateTimer.callback.append(self.updateInfo)
 		self.videoBuffer = videoBuffer
 		self.autoPlay = autoPlay
-		CustomVideoPlayer.__init__(self, session, sref, videoPlayerController, useVideoController, playAndDownload, subtitles)
-		streamed = session.nav.getCurrentService().streamed()
 		
-		if not playAndDownload:
-			if streamed is not None:
-				print '[MipselPlayer] setting buffer size of %d' % self.videoBuffer
-				self.streamed.setBufferSize(self.videoBuffer)
-			self.__event_tracker = ServiceEventTracker(screen=self, eventmap=
+		CustomVideoPlayer.__init__(self, session, sref, videoPlayerController, useVideoController, playAndDownload, subtitles)
+		self.__event_tracker = ServiceEventTracker(screen=self, eventmap=
             {
                 iPlayableService.evBuffering: self.__evUpdatedBufferInfo,
-                
             })
-			self.updateTimer.start(1000)
-			
-		self.videoPlayerController.set_video_player(self)
-		if self.playAndDownload and self.useVideoController:
-			self.videoPlayerController.start_video_check()
+		streamed = self.session.nav.getCurrentService().streamed()
+		if not self.playAndDownload:
+			if streamed is not None:
+				print '[MipselPlayer] setting buffer size of %d' % self.videoBuffer
+				streamed.setBufferSize(self.videoBuffer)
 
 	#buffer management from airplayer	
 	def __evUpdatedBufferInfo(self):
+		if self.playAndDownload:
+			return
 		bufferInfo = self.session.nav.getCurrentService().streamed().getBufferCharge()
 		if bufferInfo[2] != 0:
 			self.bufferSeconds = bufferInfo[4] / bufferInfo[2] #buffer size / avgOutRate
@@ -349,17 +338,14 @@ class MipselVideoPlayer(CustomVideoPlayer):
 		if(self.bufferPercent < 3):
 				self.bufferEmpty()
 		print "[MipselPlayer]", "Buffer", bufferInfo[4], "Info ", bufferInfo[0], "% filled ", bufferInfo[1], "/", bufferInfo[2], " buffered: ", self.bufferSecondsLeft, "s"
+		self.updateInfo()
 		
 	
 	def updateInfo(self):
 		downloading = False
 		buffering = self.buffering
 		buffer_time = self.bufferSecondsLeft
-		buffer_percent = self.bufferPercent
-		#video_length = self.getCurrentLength()
-		#buffer_length = video_length + (self.bufferSeconds * 90000)
 		self.updateInfobar(downloading=downloading, buffering=buffering, buffer_seconds=buffer_time)
-		
 	
 	def bufferFull(self):
 		self.buffering = False
@@ -372,11 +358,6 @@ class MipselVideoPlayer(CustomVideoPlayer):
 		if self.autoPlay:
 			if self.seekstate != self.SEEK_STATE_PAUSE :
 				self.setSeekState(self.SEEK_STATE_PAUSE)
-		
-	def _onClose(self):
-		self.updateTimer.stop()
-		self.updateTimer = None
-		super(MipselVideoPlayer, self)._onClose()
 
 ##TO DO				
 class BaseStreamVideoPlayer(ArchivCZSKMoviePlayer):
@@ -414,9 +395,6 @@ class StreamVideoPlayer():
 		self.player._play()
 		
 		
-			
-
-			
 class Player():
 	"""Player for playing PVideo it content"""
 	def __init__(self, session, callback=None, useVideoController=False, content_provider=None):
@@ -433,9 +411,9 @@ class Player():
 		self.seekable = True 
 		self.pausable = True
 		
-		self.playDelay = int(config.plugins.archivCZSK.videoPlayer.playDelay.value)
-		self.autoPlay = config.plugins.archivCZSK.videoPlayer.mipselPlayer.autoPlay.value
-		self.playerBuffer = int(config.plugins.archivCZSK.videoPlayer.mipselPlayer.buffer.value)
+		self.playDelay = int(config.plugins.archivCZSK.videoPlayer.playDelay.getValue())
+		self.autoPlay = config.plugins.archivCZSK.videoPlayer.mipselPlayer.autoPlay.getValue()
+		self.playerBuffer = int(config.plugins.archivCZSK.videoPlayer.mipselPlayer.buffer.getValue())
 		self.useVideoController = useVideoController 
 			
 		self.it = None
@@ -470,10 +448,10 @@ class Player():
 			self.stream = it.stream
 			
 		if self.stream is None and self.live:
-			self.rtmpBuffer = int(config.plugins.archivCZSK.videoPlayer.liveBuffer.value)
+			self.rtmpBuffer = int(config.plugins.archivCZSK.videoPlayer.liveBuffer.getValue())
 			
 		elif self.stream is None and not self.live:
-			self.rtmpBuffer = int(config.plugins.archivCZSK.videoPlayer.archiveBuffer.value)
+			self.rtmpBuffer = int(config.plugins.archivCZSK.videoPlayer.archiveBuffer.getValue())
 	
 		elif self.stream is not None:
 			self.playDelay = int(self.stream.playDelay)
@@ -491,11 +469,11 @@ class Player():
 			if self.playUrl.startswith('rtmp'):
 				
 				# internal player has rtmp support
-				if config.plugins.archivCZSK.videoPlayer.seeking.value:
+				if config.plugins.archivCZSK.videoPlayer.seeking.getValue():
 					if self.stream is not None:
-						self._playStream(self.stream.getUrl(), self.subtitles,verifyLink = False)
+						self._playStream(self.stream.getUrl(), self.subtitles, verifyLink=False)
 					else:
-						self._playStream(str(self.playUrl + ' buffer=' + str(self.rtmpBuffer)), self.subtitles,verifyLink = False)
+						self._playStream(str(self.playUrl + ' buffer=' + str(self.rtmpBuffer)), self.subtitles, verifyLink=False)
 						
 				# internal player doesnt have rtmp support so we use rtmpgw
 				else:
@@ -503,7 +481,7 @@ class Player():
 					os.system('killall rtmpgw')
 					self.seekable = False
 					self._startRTMPGWProcess()
-					self._playStream('http://0.0.0.0:' + str(self.port), self.subtitles,verifyLink=False)
+					self._playStream('http://0.0.0.0:' + str(self.port), self.subtitles, verifyLink=False)
 			
 			# not a rtmp stream
 			else:
@@ -573,7 +551,7 @@ class Player():
 		self.rtmpgwProcess = None	
 								
 			
-	def _playStream(self, streamURL, subtitlesURL, playAndDownload=False,verifyLink=True):
+	def _playStream(self, streamURL, subtitlesURL, playAndDownload=False, verifyLink=True):
 		if verifyLink:
 			ret = util.url_exist(streamURL)
 			if ret is not None and not ret:
@@ -581,12 +559,14 @@ class Player():
 				raise CustomInfoError(_("Video url doesnt exist, try to check it on web page of addon if it works."))
 		
 		self.session.nav.stopService()
+		if isinstance(streamURL, unicode):
+			streamURL = streamURL.encode('utf-8')
 		sref = eServiceReference(4097, 0, streamURL)
 		sref.setName(self.name.encode('utf-8'))
 		
-		videoPlayerSetting = config.plugins.archivCZSK.videoPlayer.type.value
+		videoPlayerSetting = config.plugins.archivCZSK.videoPlayer.type.getValue()
 		videoPlayerController = None
-		useVideoController = config.plugins.archivCZSK.videoPlayer.useVideoController.value
+		useVideoController = config.plugins.archivCZSK.videoPlayer.useVideoController.getValue()
 		
 		if useVideoController:
 			videoPlayerController = VideoPlayerController(self.session, download=self.download, \
