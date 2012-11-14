@@ -33,7 +33,7 @@ class Captcha(object):
         
         
     def openCaptchaDialog(self, captcha_file):
-        if config.plugins.archivCZSK.convertPNG.value:
+        if config.plugins.archivCZSK.convertPNG.getValue():
             captcha_file = util.convert_png_to_8bit(captcha_file)
         self.session.openWithCallback(self.captchaCB, CaptchaDialog, captcha_file)
 

@@ -14,7 +14,7 @@ import updater
 
 
 def debug(text):
-    if config.plugins.archivCZSK.debug.value:
+    if config.plugins.archivCZSK.debug.getValue():
         print '[ArchivCZSK] Repository', text.encode('utf-8')
 
 class Repository():

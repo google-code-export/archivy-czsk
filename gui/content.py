@@ -20,7 +20,7 @@ from Plugins.Extensions.archivCZSK import settings
 from Plugins.Extensions.archivCZSK.engine.items import PItem, PFolder, PExit, PVideo, PContextMenuItem, PSearch, \
                                                         PSearchItem, PDownload, PVideoAddon, Stream, RtmpStream
 from Plugins.Extensions.archivCZSK.engine.tools.task import Task
-from Plugins.Extensions.archivCZSK.engine.contentprovider import StreamContentProvider, AddonContentProvider
+from Plugins.Extensions.archivCZSK.engine.contentprovider import StreamContentProvider, VideoAddonContentProvider
 from Plugins.Extensions.archivCZSK.engine.player.player import Player, StreamPlayer
 
 
@@ -100,7 +100,7 @@ class VideoAddonItemHandler(ItemHandler):
         self.session.openWithCallback(self.open_video_addon_cb, ContentScreen, addon, list_items)
         
     def open_video_addon_cb(self, content_provider):
-        if isinstance(content_provider, AddonContentProvider):
+        if isinstance(content_provider, VideoAddonContentProvider):
             content_provider.release_dependencies()
         self.content_screen.workingFinished()
         
@@ -550,7 +550,7 @@ class VideoAddonsContentScreen(BaseContentScreen, DownloadList, TipBar):
     def showStreams(self):
         if not self.working:
             self.workingStarted()
-            stream_content_provider = StreamContentProvider(config.plugins.archivCZSK.downloadsPath.value, settings.STREAM_PATH)
+            stream_content_provider = StreamContentProvider(config.plugins.archivCZSK.downloadsPath.getValue(), settings.STREAM_PATH)
             lst_items = stream_content_provider.get_content(None)
             self.session.openWithCallback(self.workingFinished, StreamContentScreen, stream_content_provider, lst_items)
 
@@ -592,7 +592,7 @@ class VideoAddonsContentScreen(BaseContentScreen, DownloadList, TipBar):
 
     def closePlugin(self, callback=None):
         if callback:
-            if config.plugins.archivCZSK.clearMemory.value:
+            if config.plugins.archivCZSK.clearMemory.getValue():
                 os.system("echo 1 > /proc/sys/vm/drop_caches")  
             #We dont need worker thread anymore so we stop it  
             Task.stopWorkerThread()
@@ -608,7 +608,7 @@ class ContentScreen(BaseContentScreen, DownloadList, TipBar):
        
     def __init__(self, session, addon, lst_items):
         self.addon = addon
-        player = Player(session, self.workingFinished, config.plugins.archivCZSK.videoPlayer.useVideoController.value)
+        player = Player(session, self.workingFinished, config.plugins.archivCZSK.videoPlayer.useVideoController.getValue())
         item_handler = ContentItemHandler(session, self, addon.provider, player)
         BaseContentScreen.__init__(self, session, item_handler, lst_items)
         
@@ -697,7 +697,7 @@ class StreamContentScreen(BaseContentScreen, DownloadList, TipBar):
     LIVE_PIXMAP = None   
     
     def __init__(self, session, content_provider, lst_items):
-        player = StreamPlayer(session, self.workingFinished, config.plugins.archivCZSK.videoPlayer.useVideoController.value, settings.STREAM_PATH)
+        player = StreamPlayer(session, self.workingFinished, config.plugins.archivCZSK.videoPlayer.useVideoController.getValue(), settings.STREAM_PATH)
         item_handler = StreamContentItemHandler(session, self, content_provider, player)
         BaseContentScreen.__init__(self, session, item_handler, lst_items)
         self.content_provider = content_provider
@@ -771,7 +771,7 @@ class StreamContentScreen(BaseContentScreen, DownloadList, TipBar):
     
     def isMipselPlayerSelected(self):
         it = self.getSelectedItem()
-        return isinstance(it, PVideo) and config.plugins.archivCZSK.videoPlayer.type.value == 'mipsel'
+        return isinstance(it, PVideo) and config.plugins.archivCZSK.videoPlayer.type.getValue() == 'mipsel'
     
     def updateStreamInfo(self):
         it = self.getSelectedItem()

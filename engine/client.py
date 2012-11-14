@@ -10,13 +10,13 @@ from Components.config import config
 from Plugins.Extensions.archivCZSK import _
 from Plugins.Extensions.archivCZSK.gui.captcha import Captcha
 from Plugins.Extensions.archivCZSK.resources.libraries import simplejson as json
-from Plugins.Extensions.archivCZSK.engine.contentprovider import AddonContentProvider
+from Plugins.Extensions.archivCZSK.engine.contentprovider import VideoAddonContentProvider
 from Plugins.Extensions.archivCZSK.engine.tools import util
 from Plugins.Extensions.archivCZSK.engine.tools.task import callFromThread, Task
 from Plugins.Extensions.archivCZSK.engine.exceptions.archiveException import CustomInfoError, CustomWarningError, CustomError, ArchiveThreadException
 from Plugins.Extensions.archivCZSK.engine.items import PFolder, PVideo, PNotSupportedVideo, PSearch, PSearchItem, PContextMenuItem, Stream
 
-GItem_lst = AddonContentProvider.gui_item_list
+GItem_lst = VideoAddonContentProvider.gui_item_list
 
 def decode_string(string):
     if isinstance(string,unicode):
@@ -27,7 +27,7 @@ def decode_string(string):
 
 
 def debug(info):
-    if config.plugins.archivCZSK.debug.value:
+    if config.plugins.archivCZSK.debug.getValue():
         print '[archivCZSK]', info
 
 @callFromThread
@@ -221,7 +221,7 @@ def add_video(name, url, subs=None, image=None, infoLabels={}, menuItems={}, fil
         
 # source from xbmc_doplnky
 def get_searches(addon, server):
-        local = os.path.join(config.plugins.archivCZSK.dataPath.value, addon.id)
+        local = os.path.join(config.plugins.archivCZSK.dataPath.getValue(), addon.id)
         if not os.path.exists(local):
                 os.makedirs(local)
         local = os.path.join(local, server)
@@ -236,7 +236,7 @@ def get_searches(addon, server):
 # source from xbmc_doplnky
 def add_search(addon, server, search, maximum):
         searches = []
-        local = os.path.join(config.plugins.archivCZSK.dataPath.value, addon.id)
+        local = os.path.join(config.plugins.archivCZSK.dataPath.getValue(), addon.id)
         if not os.path.exists(local):
                 os.makedirs(local)
         local = os.path.join(local, server)
@@ -258,7 +258,7 @@ def add_search(addon, server, search, maximum):
 
 # source from xbmc_doplnky
 def remove_search(addon, server, search):
-        local = os.path.join(config.plugins.archivCZSK.dataPath.value, addon.id)
+        local = os.path.join(config.plugins.archivCZSK.dataPath.getValue(), addon.id)
         if not os.path.exists(local):
                 return
         local = os.path.join(local, server)

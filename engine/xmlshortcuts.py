@@ -10,7 +10,7 @@ import items
 from Components.config import config
 
 def debug(text):
-    if config.plugins.archivCZSK.debug.value:
+    if config.plugins.archivCZSK.debug.getValue():
         print '[ArchivCZSK] shorcuts:' + text.encode('utf-8')
     
 
