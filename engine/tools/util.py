@@ -329,18 +329,16 @@ class Language(object):
             return Language.language_map[language_id]
         else:
             return None
-        
-        
-        
 
-def url_exist(url):
+
+def url_exist(url, timeout=20):
     """checks if given url exist
     
     @return: None if cannot find out, if url exist or not
     @return: True if url exist
     @return: False if url not exist
     """
-    print 'testing',url
+    print '[testing]', url
     
     if url is None:
         return False
@@ -358,15 +356,33 @@ def url_exist(url):
     if url == '' or url.find(' ') != -1:
         return False 
     
-    parsed = urlsplit(url)
-    site = parsed.netloc
-    if site == '':
+    scheme, netloc, path, query, fragment = urlsplit(url)
+    #print 'scheme:', scheme
+    #print 'netloc:', netloc
+    #print 'path:', path
+    #print 'query:', query
+    #print 'fragment:', fragment
+    
+    if netloc == '':
         return False
-    path = parsed.path
-    conn = httplib.HTTPConnection(site, timeout=20)
-    conn.request('HEAD', path)
-    response = conn.getresponse()
-    conn.close()
+    
+    site = netloc
+        
+    if query != '':
+        query = '?' + query    
+    path = path + query
+    print site, path
+    
+    conn = None
+    try:
+        conn = httplib.HTTPConnection(site, timeout=timeout)
+        conn.request('HEAD', path)
+        response = conn.getresponse()
+    except Exception:
+        print traceback.print_exc()
+        return False
+    finally:
+        if conn: conn.close()
     return response.status in (200, 301, 302)
 
 

@@ -107,7 +107,7 @@ class VideoPlayerController(object):
         self.video_length = 0 
         self.video_length_total = 0
         
-        debug('initializing %s'% self)
+        debug('initializing %s' % self)
         
     def __repr__(self):
         return "downloading: %s, video_check_interval:%ss buffer_time: %s seekable: %s pausable: %s autoplay: %s" % \
@@ -275,6 +275,10 @@ class VideoPlayerController(object):
                 
                 # whole video available
                 if self.download is None or self.download.downloaded:
+                    self._do_seek_relative(relative_pts)
+                    
+                    # not working in some situations, disabled for now
+                    """    
                     #we want to seek to pts
                     if self.is_pts_available(pts):
                         self._do_seek_relative(relative_pts)
@@ -285,6 +289,7 @@ class VideoPlayerController(object):
                         else:
                             #seek to start
                             self._do_seek_relative(-player_position)
+                    """
                             
                 # downloading video
                 else:
