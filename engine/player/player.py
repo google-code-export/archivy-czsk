@@ -553,7 +553,7 @@ class Player():
 			
 	def _playStream(self, streamURL, subtitlesURL, playAndDownload=False, verifyLink=config.plugins.archivCZSK.linkVerification.getValue()):
 		if verifyLink:
-			ret = util.url_exist(streamURL, config.plugins.archivCZSK.verificationTimeout.getValue())
+			ret = util.url_exist(streamURL, int(config.plugins.archivCZSK.verificationTimeout.getValue()))
 			if ret is not None and not ret:
 				debug("Video url %s doesnt exist" % streamURL)
 				raise CustomInfoError(_("Video url doesnt exist, try to check it on web page of addon if it works."))
