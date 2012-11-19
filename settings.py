@@ -120,6 +120,7 @@ def get_misc_settings():
     list.append(getConfigListEntry(_("Use link verification"), config.plugins.archivCZSK.linkVerification))
     if verification:
         list.append(getConfigListEntry(_("Verification timeout"), config.plugins.archivCZSK.linkVerificationTimeout))
+    return list
     
 
     
