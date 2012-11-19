@@ -537,8 +537,7 @@ class Player():
 				rtmp_url.append("'%s'" % rtmp[1])
 			rtmpUrl = "'%s'" % urlList[0] + ' '.join(rtmp_url)
 				
-			cmd = '%s --quiet --rtmp %s --sport %d --buffer %d' % (RTMPGW_PATH, rtmpUrl, self.port, self.rtmpBuffer)
-		print cmd			
+			cmd = '%s --quiet --rtmp %s --sport %d --buffer %d' % (RTMPGW_PATH, rtmpUrl, self.port, self.rtmpBuffer)		
 		debug('rtmpgw server streaming: %s' % cmd)
 		
 		self.rtmpgwProcess = eConsoleAppContainer()
@@ -553,7 +552,7 @@ class Player():
 			
 	def _playStream(self, streamURL, subtitlesURL, playAndDownload=False, verifyLink=config.plugins.archivCZSK.linkVerification.getValue()):
 		if verifyLink:
-			ret = util.url_exist(streamURL, int(config.plugins.archivCZSK.verificationTimeout.getValue()))
+			ret = util.url_exist(streamURL, int(config.plugins.archivCZSK.linkVerificationTimeout.getValue()))
 			if ret is not None and not ret:
 				debug("Video url %s doesnt exist" % streamURL)
 				raise CustomInfoError(_("Video url doesnt exist, try to check it on web page of addon if it works."))
@@ -593,8 +592,7 @@ class Player():
 		
 		url = self.download.local
 		self.name = self.download.name
-		
-		subs_path = os.path.join(self.download.local, os.path.splitext(self.download.local)[0] + '.srt')
+		subs_path = os.path.splitext(self.download.local)[0] + '.srt'
 		
 		if os.path.isfile(subs_path):
 			subtitles = subs_path

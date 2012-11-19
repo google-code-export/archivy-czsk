@@ -128,7 +128,7 @@ class XBMCAddon(object):
     def getLocalizedString(self, id_language):
         return self._addon.get_localized_string(id_language)
     
-    def getAddonInfo(self, inf):
+    def getAddonInfo(self, info):
         return self._addon.get_info(info)
     
     def getSetting(self, setting):
