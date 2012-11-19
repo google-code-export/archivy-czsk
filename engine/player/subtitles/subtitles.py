@@ -105,6 +105,7 @@ for f in FONT_CP.keys():
     else:
         del FONT[f]
 
+FONT_CP = None
 #initializing settings
 plugin_settings = getattr(config.plugins, PLUGIN_NAME)
 setattr(plugin_settings, 'subtitles', ConfigSubsection())
@@ -119,7 +120,7 @@ for e in ENCODINGS.keys():
 subtitles_settings.encodingsGroup = ConfigSelection(default=_("Central and Eastern Europe"), choices=choicelist)
 
 choicelist = []
-for f in FONT_CP.keys():
+for f in FONT.keys():
     choicelist.append(f)
 subtitles_settings.fontType = ConfigSelection(default="Default", choices=choicelist)
 
@@ -182,9 +183,9 @@ class SubsSupport(object):
         self.__encodings = ALL_LANGUAGES_ENCODINGS + ENCODINGS[subtitles_settings.encodingsGroup.getValue()]
         self.__start_timer = None
         
+        self.__start_timer = eTimer()
+        self.__start_timer.callback.append(self.__updateSubs)
         if subclassOfScreen:
-            self.__start_timer = eTimer()
-            self.__start_timer.callback.append(self.__updateSubs)
             self.__event_tracker = ServiceEventTracker(screen=self, eventmap=
             {
                 iPlayableService.evEnd: self.__serviceEnd,
@@ -222,6 +223,12 @@ class SubsSupport(object):
         if self.__subsPath is None and self.__autoLoad:
             self.__working = True
             self.__start_timer.start(500, True) 
+    
+    def startSubs(self, time):
+        if self.__working or self.isSubsLoaded():
+            while self.__working:
+                pass
+            self.__start_timer.start(time, True) 
     
     def doSeekRelative(self, pts):
         print 'doseekrelative'
@@ -376,7 +383,8 @@ class SubsSupport(object):
     def hideSubsDialog(self):
         if self.__loaded:
             print '[Subtitles] hide dialog' 
-            self.__subsScreen.hide()
+            if self.__subsScreen:
+                self.__subsScreen.hide()
         
     def subsMenu(self):
         if not self.__working:
@@ -434,6 +442,10 @@ class SubsScreen(Screen):
         self.sc_height = size.height()
         fontSize = int(subtitles_settings.fontSize.getValue())
         fontType = subtitles_settings.fontType.getValue()
+        if fontType not in FONT:
+            fontType = "Default"
+            subtitles_settings.fontType.setValue("Default")
+            subtitles_settings.fontType.save()
         
         self.font = {"regular":gFont(FONT[fontType]['regular'], fontSize),
                      "italic":gFont(FONT[fontType]['italic'], fontSize),
@@ -1054,7 +1066,9 @@ class SubProcessPath(object):
         if self.current_encoding is not None:
             current_encoding_idx = self.encodings.index(self.current_encoding)
             current_idx = current_encoding_idx + 1
-            
+            if current_idx >= len(self.encodings):
+                current_idx = 0
+        
         while current_idx != current_encoding_idx:
             enc = self.encodings[current_idx]
             try:
