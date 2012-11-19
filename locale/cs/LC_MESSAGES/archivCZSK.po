@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: archivCZSK 0.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-11-14 18:47+0100\n"
-"PO-Revision-Date: 2012-11-14 18:47+0100\n"
+"POT-Creation-Date: 2012-11-19 22:41+0100\n"
+"PO-Revision-Date: 2012-11-19 22:44+0100\n"
 "Last-Translator: mx3L <mxfitsat@gmail.com>\n"
 "Language-Team: mx3L\n"
 "MIME-Version: 1.0\n"
@@ -32,89 +32,93 @@ msgstr "Následující doplňky byly úspěšně aktualizovány:"
 msgid "You need to restart E2. Do you want to restart it now?"
 msgstr "Změny se projeví po restartu E2. Chcete nyní restartovat E2?"
 
-#: settings.py:31
+#: settings.py:32
 msgid "standard player"
 msgstr "Standardní přehrávač"
 
-#: settings.py:31
+#: settings.py:32
 msgid "custom player (subtitle support)"
 msgstr "Upravený přehrávač (podpora titulků)"
 
-#: settings.py:31
+#: settings.py:32
 msgid "mipsel player"
 msgstr "Mipsel přehrávač"
 
-#: settings.py:76
+#: settings.py:88
 msgid "Video player"
 msgstr "Video přehrávač"
 
-#: settings.py:78
+#: settings.py:90
 msgid "Use video controller"
 msgstr "Použít video kontrolér"
 
-#: settings.py:80
+#: settings.py:92
 msgid "Video player Buffer"
 msgstr "buffer video přehrávače"
 
-#: settings.py:81
+#: settings.py:93
 msgid "AutoPlay"
 msgstr "automaticky přehrávat"
 
-#: settings.py:82
+#: settings.py:94
 msgid "Video player with RTMP support"
 msgstr "Video přehrávač s RTMP podporou"
 
-#: settings.py:83
+#: settings.py:95
 msgid "TV archive rtmp buffer"
 msgstr "Buffer pro TV archivy"
 
-#: settings.py:84
+#: settings.py:96
 msgid "Default live rtmp streams buffer"
 msgstr "Buffer pro živé vysílání"
 
-#: settings.py:85
+#: settings.py:97
 msgid "Play after"
 msgstr "Přehrávat po"
 
-#: settings.py:86
+#: settings.py:98
 msgid "Use default skin"
 msgstr "Použi pôvodný skin"
 
-#: settings.py:91
+#: settings.py:103
 msgid "Allow auto-update"
 msgstr "Povolit automatickou kontrolu aktualizací"
 
-#: settings.py:92
+#: settings.py:104
 msgid "Debug mode"
 msgstr "Debug mód"
 
-#: settings.py:93
+#: settings.py:105
 msgid "Add to extensions menu"
 msgstr "Přidat do menu rozšíření"
 
-#: settings.py:94
+#: settings.py:106
 msgid "Add to main menu"
 msgstr "Přidat do hlavního menu"
 
-#: settings.py:99
+#: settings.py:111
 msgid "Data path"
 msgstr "Data"
 
-#: settings.py:100
+#: settings.py:112
 msgid "Downloads path"
 msgstr "Stahování"
 
-#: settings.py:101
+#: settings.py:113
 msgid "Subtitles path"
 msgstr "Titulky"
 
-#: settings.py:106
+#: settings.py:118
 msgid "Convert captcha images to 8bit"
 msgstr "Konvertovat captcha obrázky"
 
-#: settings.py:107
-msgid "Free memory after exit"
-msgstr "Uvolnit paměť po ukončení"
+#: settings.py:120
+msgid "Use link verification"
+msgstr "Ověřovat video adresu"
+
+#: settings.py:122
+msgid "Verification timeout"
+msgstr "timeout ověřování"
 
 #: version.py:3
 msgid "ArchivCZSK"
@@ -140,15 +144,15 @@ msgstr "nepodporovaný protokol"
 msgid "Its not possible to seek in this video"
 msgstr "Není možné přetáčet v tomhle videu"
 
-#: engine/player/controller.py:304
+#: engine/player/controller.py:309
 msgid "Cannot seek, not enough video is downloaded"
 msgstr "Nemohu přetáčet, nedostatek stáhnutého videa"
 
-#: engine/player/controller.py:315
+#: engine/player/controller.py:320
 msgid "Its not possible to pause this video"
 msgstr "Není možné pozastavit tohle video"
 
-#: engine/player/controller.py:322
+#: engine/player/controller.py:327
 msgid "Cannot unpause, Video is not buffered yet..."
 msgstr "Nemúžu odpauzovat, Nedostatek načteného videa"
 
@@ -210,33 +214,33 @@ msgstr "Živé vysílání"
 msgid "Cannot found rtmpgw, make sure that you have installed it, or try to use Video player with internal rtmp support"
 msgstr "Nemôžem nájsť rtmpgw, uistite sa že ho máte nainštlovaný alebo použite video prehrávač s rtmp podporou. "
 
-#: engine/player/player.py:559
+#: engine/player/player.py:558
 msgid "Video url doesnt exist, try to check it on web page of addon if it works."
 msgstr "Video adresa nejestvuje, skuste ověřit funkčnost na stránce archívu."
 
-#: engine/player/player.py:615
+#: engine/player/player.py:613
 msgid "Video starts playing in"
 msgstr "Video se začne přehrávat o..."
 
-#: engine/player/player.py:616
+#: engine/player/player.py:614
 msgid "seconds."
 msgstr "sekúnd."
 
-#: engine/player/player.py:626
+#: engine/player/player.py:624
 msgid "Do you want to save"
 msgstr "Chcete uložit"
 
-#: engine/player/player.py:627
-#: engine/player/player.py:631
+#: engine/player/player.py:625
+#: engine/player/player.py:629
 msgid "to disk?"
 msgstr "na disk?"
 
-#: engine/player/player.py:630
+#: engine/player/player.py:628
 msgid "Do you want to continue downloading"
 msgstr "Chcete pokračovat v stahování"
 
 #: engine/player/subtitles/subtitles.py:67
-#: engine/player/subtitles/subtitles.py:119
+#: engine/player/subtitles/subtitles.py:120
 #, fuzzy
 msgid "Central and Eastern Europe"
 msgstr "Střední Evropa"
@@ -250,124 +254,124 @@ msgstr "Střední Evropa"
 msgid "Russia"
 msgstr ""
 
-#: engine/player/subtitles/subtitles.py:141
+#: engine/player/subtitles/subtitles.py:142
 msgid "red"
 msgstr "červená"
 
-#: engine/player/subtitles/subtitles.py:143
+#: engine/player/subtitles/subtitles.py:144
 msgid "green"
 msgstr "zelená"
 
-#: engine/player/subtitles/subtitles.py:144
+#: engine/player/subtitles/subtitles.py:145
 msgid "purple"
 msgstr "fialová"
 
-#: engine/player/subtitles/subtitles.py:145
+#: engine/player/subtitles/subtitles.py:146
 msgid "yellow"
 msgstr "žlutá"
 
-#: engine/player/subtitles/subtitles.py:146
+#: engine/player/subtitles/subtitles.py:147
 msgid "white"
 msgstr "bílá"
 
-#: engine/player/subtitles/subtitles.py:147
+#: engine/player/subtitles/subtitles.py:148
 msgid "blue"
 msgstr "modrá"
 
-#: engine/player/subtitles/subtitles.py:196
+#: engine/player/subtitles/subtitles.py:197
 #, fuzzy
 msgid "show subtitles menu"
 msgstr "Zobrazit titulky"
 
-#: engine/player/subtitles/subtitles.py:320
+#: engine/player/subtitles/subtitles.py:327
 msgid "Cannot decode subtitles. Try another encoding group"
 msgstr ""
 
-#: engine/player/subtitles/subtitles.py:329
+#: engine/player/subtitles/subtitles.py:336
 #, fuzzy
 msgid "Cannot parse subtitles"
 msgstr "Vybrat titulky"
 
-#: engine/player/subtitles/subtitles.py:695
+#: engine/player/subtitles/subtitles.py:707
 msgid "Currently choosed subtitles"
 msgstr "Momentálně vybrané titulky"
 
-#: engine/player/subtitles/subtitles.py:702
+#: engine/player/subtitles/subtitles.py:714
 msgid "encoding"
 msgstr "kódovaní"
 
-#: engine/player/subtitles/subtitles.py:706
+#: engine/player/subtitles/subtitles.py:718
 #, fuzzy
 msgid "cannot decode"
 msgstr "Nemúžu stáhnout"
 
-#: engine/player/subtitles/subtitles.py:708
+#: engine/player/subtitles/subtitles.py:720
 msgid "None"
 msgstr "Žádné"
 
-#: engine/player/subtitles/subtitles.py:710
+#: engine/player/subtitles/subtitles.py:722
 msgid "Subtitles"
 msgstr "Titulky"
 
-#: engine/player/subtitles/subtitles.py:711
+#: engine/player/subtitles/subtitles.py:723
 msgid "Choose subtitles"
 msgstr "Vybrat titulky"
 
-#: engine/player/subtitles/subtitles.py:712
+#: engine/player/subtitles/subtitles.py:724
 msgid "Subtitles settings"
 msgstr "Nastavení titulků"
 
-#: engine/player/subtitles/subtitles.py:714
+#: engine/player/subtitles/subtitles.py:726
 msgid "Change encoding"
 msgstr "změnit kódovaní?"
 
-#: engine/player/subtitles/subtitles.py:808
-#: engine/player/subtitles/subtitles.py:827
+#: engine/player/subtitles/subtitles.py:820
+#: engine/player/subtitles/subtitles.py:839
 msgid "Subtitles setting"
 msgstr "Nastavení titulků"
 
-#: engine/player/subtitles/subtitles.py:818
+#: engine/player/subtitles/subtitles.py:830
 msgid "Save"
 msgstr "Uložit"
 
-#: engine/player/subtitles/subtitles.py:819
+#: engine/player/subtitles/subtitles.py:831
 msgid "Cancel"
 msgstr "Zrušit"
 
-#: engine/player/subtitles/subtitles.py:831
+#: engine/player/subtitles/subtitles.py:843
 msgid "Show subtitles"
 msgstr "Zobrazit titulky"
 
-#: engine/player/subtitles/subtitles.py:832
+#: engine/player/subtitles/subtitles.py:844
 msgid "Font type"
 msgstr "Font"
 
-#: engine/player/subtitles/subtitles.py:833
+#: engine/player/subtitles/subtitles.py:845
 msgid "Font size"
 msgstr "Velikost písma"
 
-#: engine/player/subtitles/subtitles.py:834
+#: engine/player/subtitles/subtitles.py:846
 msgid "Position"
 msgstr "Pozice"
 
-#: engine/player/subtitles/subtitles.py:835
+#: engine/player/subtitles/subtitles.py:847
 msgid "Color"
 msgstr "Barva"
 
-#: engine/player/subtitles/subtitles.py:836
+#: engine/player/subtitles/subtitles.py:848
 msgid "Encoding"
 msgstr "kódovaní"
 
-#: engine/player/subtitles/subtitles.py:938
+#: engine/player/subtitles/subtitles.py:950
 msgid "List of Storage Devices"
 msgstr ""
 
-#: engine/player/subtitles/subtitles.py:940
+#: engine/player/subtitles/subtitles.py:952
 #, fuzzy
 msgid "Parent Directory"
 msgstr "Vyberte adresář"
 
-#: engine/player/subtitles/subtitles.py:1003
+#: engine/player/subtitles/subtitles.py:1015
 msgid "Choose Subtitles"
 msgstr "Vybrat titulky"
 
@@ -646,23 +650,23 @@ msgstr "Rùzní"
 msgid "Configuration of ArchivCZSK"
 msgstr "Konfigurace ArchivCZSK"
 
-#: gui/menu.py:228
+#: gui/menu.py:230
 msgid "Settings of "
 msgstr "Nastavení"
 
-#: gui/menu.py:240
+#: gui/menu.py:242
 msgid "Settings of"
 msgstr "Nastavení"
 
-#: gui/menu.py:284
+#: gui/menu.py:286
 msgid "OK"
 msgstr "OK"
 
-#: gui/menu.py:288
+#: gui/menu.py:290
 msgid "Select directory"
 msgstr "Vyberte adresář"
 
-#: gui/menu.py:322
+#: gui/menu.py:324
 msgid "Invalid Location"
 msgstr "Nesprávné umístění"
 
@@ -701,6 +705,9 @@ msgstr "Stahovat do"
 #: test/mponline/ta3/default.py:62
 msgid "Live"
 msgstr "živý stream"
+
+#~ msgid "Free memory after exit"
+#~ msgstr "Uvolnit paměť po ukončení"
 
 #~ msgid "Update"
 #~ msgstr "Aktualizovat"
