@@ -23,7 +23,7 @@ import cgi
 import simplejson as json
 
 
-class YoutubePlayer():
+class YoutubePlayer(object):
     fmt_value = {
             5: "240p",
             18: "360p",
@@ -165,12 +165,6 @@ def resolve(url):
                 item['subs'] = ''
         resolved.append(item)
         return resolved
-
-# returns the steam url
-def url(url):
-    m = _regex(url)
-    if not m == None:
-        [r['url'] for r in resolve(url)]
 
 def _regex(url):
     return re.search('https?\://www\.youtube\.com/(watch\?v=|v/|embed/)(?P<id>.+?)(\?|$|&)',url,re.IGNORECASE | re.DOTALL)

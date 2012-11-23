@@ -20,15 +20,9 @@
 # *
 # */
 import re,util,urllib2,traceback
-__name__ = 'sledujuserialy'
+__name__ = 'zkouknito.cz'
 def supports(url):
     return not _regex(url) == None
-
-# returns the steam url
-def url(url):
-    resolved = resolve(url)
-    if resolved:
-        return resolved[0]['url']
 
 def resolve(url):
     m = _regex(url)
@@ -38,10 +32,7 @@ def resolve(url):
             video = re.search('\'file\'\: \'(?P<url>.+?flv)',data)
             if video:
                 item = {}
-                item['surl'] = url
                 item['url'] = video.group('url')
-                item['quality'] = '???'
-                item['name'] = __name__
                 subs = re.search('\'file\'\: \'(?P<url>.+?srt)',data)
                 if subs:
                     item['subs'] = _furl(subs.group('url'))

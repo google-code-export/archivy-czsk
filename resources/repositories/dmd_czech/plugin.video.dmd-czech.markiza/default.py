@@ -55,7 +55,7 @@ def LIST_VOYO(url):
     doc = markiza_read(url)
     items = doc.find('div', 'productsList')
     for item in items.findAll('div', 'poster'):
-        title = item.a['title'].encode('utf-8') 
+        title = item.a['title'].encode('utf-8')
         name_a = item.a['href']
         url = __baseurl__+name_a
         thumb = str(item.img['src'])  
@@ -63,16 +63,16 @@ def LIST_VOYO(url):
     try:
         pager = doc.find('div', 'pagination')
         next_item = pager.findAll('a')
-       	for item in next_item:
-	    if item.getText(" ").encode('utf-8') != '>':
-		continue
-	    else:
-		next_url = item['href']
+        for item in next_item:
+            if item.getText(" ").encode('utf-8') != '>':
+                continue
+            else:
+                next_url = item['href']
         addDir('Další strana >>',__baseurl__+ next_url,5,nexticon)
     except:
         print 'STRANKOVANI NENALEZENO'
 
-              
+             
 def VIDEOLINK_VOYO(url,name):
     #req = urllib2.Request(url)
     #req.add_header('User-Agent', _UserAgent_)
@@ -106,7 +106,7 @@ def VIDEOLINK_VOYO(url,name):
                  'sudkyna-hattchetova':'sudkyna',
                  'dr-oz':'droz',
                  'comeback-i':'comebacki',
-                 'v-dobrom-aj-v-zlom':'vdobrom',                 
+                 'v-dobrom-aj-v-zlom':'vdobrom',                
                  'vo-stvorici-po-slovensku':'vostvorici',
                  'dokonaly-svet-i':'sveti'}
     if re.search('rychle-televizne-noviny', url, re.U):
