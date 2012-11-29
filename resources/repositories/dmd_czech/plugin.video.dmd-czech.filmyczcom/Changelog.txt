@@ -1,3 +1,5 @@
+2012-11-29:
+ * oprava resolveru vk.com
 2012-08-14:
  * oprava vyhledávání a položky Seriály
 2012-08-07:

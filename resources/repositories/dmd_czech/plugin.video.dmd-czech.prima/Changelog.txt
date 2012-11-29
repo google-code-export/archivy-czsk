@@ -1,3 +1,5 @@
+2012-11-26:
+ * oprava zasilani klice
 2012-11-05:
  * opet oprava autorizace
 2012-10-30:
