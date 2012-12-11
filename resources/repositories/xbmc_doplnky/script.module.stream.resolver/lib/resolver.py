@@ -17,6 +17,7 @@
 # *  http://www.gnu.org/copyleft/gpl.html
 # *
 # */
+
 import sys,os,util,re,traceback
 
 sys.path.append( os.path.join ( os.path.dirname(__file__),'server') )
@@ -31,14 +32,15 @@ for module in os.listdir(os.path.join(os.path.dirname(__file__),'server')):
     resolver = eval(module)
     util.debug('found %s %s' % (resolver,dir(resolver)))
 
-#    if not hasattr(resolver,'resolve'):
-#        resolver.resolve = _resolve
+    if not hasattr(resolver,'__priority__'):
+        resolver.__priority__ = 0
     RESOLVERS.append(resolver)
 del module
+RESOLVERS = sorted(RESOLVERS,key=lambda m: -m.__priority__)
 util.debug('done')
 
 def item():
-    return {'name':'','url':'','quality':'','surl':'','subs':''}
+    return {'name':'','url':'','quality':'???','surl':'','subs':''}
 
 def resolve(url):
     url = util.decode_html(url)

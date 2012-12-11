@@ -7,16 +7,17 @@
 # *
 # */
 import re
-__name__='simple'
-__priority__ = -1
+__name__='eserial'
 def supports(url):
     return not _regex(url) == None
 
 # returns the steam url
 def resolve(url):
-    if supports(url):
-        return [{'url':url}]
+    m = _regex(url)
+    if m:
+        print 'yes'
+        return [{'url':m.group('url')}]
 
 def _regex(url):
-    return re.search('\.(flv|mp4|avi|wmv)$',url,re.IGNORECASE | re.DOTALL)
+    return re.search('eserial\.cz/video\.php\?file=(?P<url>.+?)$',url,re.IGNORECASE | re.DOTALL)
 
