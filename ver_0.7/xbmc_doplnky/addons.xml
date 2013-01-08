@@ -24,11 +24,11 @@
 
 <addon id="plugin.video.eserial.cz"
        name="eserial.cz"
-       version="1.0.4"
+       version="1.0.8"
        provider-name="Libor Zoubek">
   <requires>
     <import addon="xbmc.python" version="1.0"/>
-    <import addon="script.module.stream.resolver" version="1.3.11"/>
+    <import addon="script.module.stream.resolver" version="1.4.1" />
   </requires>
   <extension point="xbmc.python.pluginsource"
              provides="video"
@@ -154,6 +154,28 @@
   </extension>
 </addon>
 
+<addon id="plugin.video.petka.cz"
+       name="Petka.cz"
+       version="1.0.0"
+       provider-name="Ivo Brhel">
+  <requires>
+    <import addon="xbmc.python" version="1.0"/>
+    <import addon="script.module.stream.resolver" version="1.3.12"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource"
+             provides="video"
+             library="default.py">
+    <provides>video</provides>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en">petka.cz</summary>
+    <summary lang="cs">petka.cz</summary>
+    <description lang="en">Watch online www.petka.cz/porady</description>
+    <description lang="cs">Sledujte online www.petka.cz/porady</description>
+    <platform>all</platform>
+  </extension>
+</addon>
+
 <addon id="plugin.video.play-movie.eu"
        name="Play-Movie"
        version="1.0.0"
@@ -200,11 +222,11 @@
 
 <addon id="plugin.video.rajfilmy.cz"
        name="Rajfilmy.cz"
-       version="1.0.1"
+       version="1.0.2"
        provider-name="Ivo Brhel">
   <requires>
     <import addon="xbmc.python" version="1.0"/>
-    <import addon="script.module.stream.resolver" version="1.3.4"/>
+    <import addon="script.module.stream.resolver" version="1.3.12"/>
   </requires>
   <extension point="xbmc.python.pluginsource"
              provides="video"
@@ -216,6 +238,28 @@
     <summary lang="cs">rajfilmy.cz</summary>
     <description lang="en">Watch online www.rajfilmy.cz</description>
     <description lang="cs">Sledujte online www.rajfilmy.cz</description>
+    <platform>all</platform>
+  </extension>
+</addon>
+
+<addon id="plugin.video.rajserialu.cz"
+       name="Rajserialu.cz"
+       version="1.0.0"
+       provider-name="Ivo Brhel">
+  <requires>
+    <import addon="xbmc.python" version="1.0"/>
+    <import addon="script.module.stream.resolver" version="1.3.12"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource"
+             provides="video"
+             library="default.py">
+    <provides>video</provides>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en">rajserialu.cz</summary>
+    <summary lang="cs">rajserialu.cz</summary>
+    <description lang="en">Watch online www.rajserialu.cz</description>
+    <description lang="cs">Sledujte online www.rajserialu.cz</description>
     <platform>all</platform>
   </extension>
 </addon>
@@ -266,11 +310,11 @@
 
 <addon id="plugin.video.sledujuserialy.cz"
        name="sledujuserialy.cz"
-       version="1.0.0"
+       version="1.0.3"
        provider-name="Libor Zoubek">
   <requires>
     <import addon="xbmc.python" version="1.0"/>
-    <import addon="script.module.stream.resolver" version="1.3.8" />
+    <import addon="script.module.stream.resolver" version="1.4.1" />
   </requires>
   <extension point="xbmc.python.pluginsource"
              provides="video"
@@ -284,6 +328,7 @@
     <description lang="cs">Sledujte online seriály ze servru sledujuserialy.cz</description>
     <platform>all</platform>
   </extension>
+  <broken>server docasne nedostupny</broken>
 </addon>
 
 <addon id="plugin.video.zkouknito.cz"
@@ -310,12 +355,11 @@
 
 <addon id="script.module.stream.resolver"
        name="stream resolver"
-       version="1.3.11"
+       version="1.4.1"
        provider-name="Libor Zoubek">
   <requires>
     <import addon="xbmc.python" version="1.0"/>
     <import addon="script.module.simplejson" version="2.0.10" />
-    <import addon="script.usage.tracker" version="0.9.4" />
   </requires>
   <extension point="xbmc.python.module"
              library="lib" />
