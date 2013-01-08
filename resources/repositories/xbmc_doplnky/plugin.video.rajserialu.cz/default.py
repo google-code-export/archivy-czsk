@@ -19,24 +19,20 @@
 # *  http://www.gnu.org/copyleft/gpl.html
 # *
 # */
-import re,util
-__name__ = 'gosupark'
-def supports(url):
-    return not _regex(url) == None
+sys.path.append( os.path.join ( os.path.dirname(__file__),'resources','lib') )
+from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
 
-# returns the steam url
-def resolve(url):
-    m = _regex(url)
-    if m:
-        #http://gosupark.com/embed-j3erxu8i2o30-630x320.html
-        data = util.request('http://gosupark.com/'+m.group('url'))
-        n = re.search('file: \"(.+?)\"',data,re.IGNORECASE | re.DOTALL)
-        quality = '???'
-        q = re.search('x(\d+)\.html',url)
-        if q:
-            quality = q.group(1)+'p'
-        if not n == None:
-            return [{'quality':quality,'url':n.group(1).strip()}]
+import re,os
+import util,xbmcprovider
+import rajserialu
 
-def _regex(url):
-    return re.search('gosupark\.com/(?P<url>.+?)$',url,re.IGNORECASE | re.DOTALL)
+__scriptid__   = 'plugin.video.rajserialu.cz'
+__scriptname__ = 'rajserialu.cz'
+__addon__ = ArchivCZSK.get_xbmc_addon(__scriptid__)
+__language__ = __addon__.getLocalizedString
+
+settings = {'quality':__addon__.getSetting('quality')}
+
+xbmcprovider.XBMCMultiResolverContentProvider(rajserialu.RajserialuContentProvider(),settings,__addon__,session).run(params)
+
+

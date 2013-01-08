@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # *      Copyright (C) 2012 Libor Zoubek
 # *				modified by mx3L
 # *
@@ -106,10 +107,10 @@ class XBMContentProvider(object):
 		if streams is not None:
 			if type(streams) == type([]):
 				for stream in streams:
-					xbmcutil.add_play('%s - %s[%s]' % (params['title'], stream['title'], stream['quality']), stream['url'], subs=stream['subs'], filename=params['title'])
+					xbmcutil.add_play(params['title'], stream['title'], stream['quality'], stream['url'], subs=stream['subs'], filename=params['title'])
 			else:
 				#ulozto,bezvadata..
-				xbmcutil.add_play('%s - %s[%s]' % (params['title'], streams['title'], streams['quality']), streams['url'], subs=streams['subs'], filename=params['title'])
+				xbmcutil.add_play(params['title'], streams['title'], streams['quality'], streams['url'], subs=streams['subs'], filename=params['title'])
 
 	def resolve(self, url):
 		item = self.provider.video_item()

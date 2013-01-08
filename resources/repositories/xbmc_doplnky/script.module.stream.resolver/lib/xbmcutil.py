@@ -96,7 +96,7 @@ def decode_html(data):
     		return entity_re.subn(_substitute_entity, data)[0]
 	except:
 		traceback.print_exc()
-		print [data]
+		#print [data]
 		return data
 
 def debug(text):
@@ -201,11 +201,11 @@ def add_video(name, params={}, logo=None, infoLabels={}, menuItems={}):
 		params[key] = value
 	add_dir(name, params, logo=logo, infoLabels=infoLabels, menuItems=menuItems)
     
-def add_play(name, url, subs=None, filename=None, image=None, infoLabels={}, menuItems={}):
-    name = decode_html(name)
-    if not 'title' in infoLabels:
-        infoLabels['title'] = name
-    client.add_video(name, url, subs=subs, filename=filename, image=image, infoLabels=infoLabels, menuItems=menuItems)
+def add_play(title, provider_name, quality, url, subs=None, filename=None, image=None, infoLabels={}, menuItems={}):
+	name = '%s - %s[%s]' % (decode_html(title), decode_html(provider_name), decode_html(quality))
+	if not 'title' in infoLabels:
+		infoLabels['title'] = name
+	client.add_video(name, url, subs=subs, filename=filename, image=image, infoLabels=infoLabels, menuItems=menuItems)
 
 _diacritic_replace = {u'\u00f3':'o',
 u'\u0213':'-',
