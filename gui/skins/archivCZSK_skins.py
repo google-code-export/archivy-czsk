@@ -302,7 +302,7 @@ ArchivCZSKMoviePlayer_HD = """
       
       <widget name="buffer_label" position="960,40" size="120,20" text="Buffer" font="Regular; 16" backgroundColor="background" transparent="1"/>
       
-      <widget name="buffer_percent" position="1090,41" size="70,20" text="N/A" font="Regular; 16" backgroundColor="background" transparent="1" />
+      <widget name="buffer_state" position="1090,41" size="70,20" text="N/A" font="Regular; 16" backgroundColor="background" transparent="1" />
       
       <widget name="download_label" position="960,65" size="120,20" text="Speed" font="Regular; 16" backgroundColor="background" transparent="1"/>
       
