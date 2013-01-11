@@ -13,30 +13,8 @@ from Components.config import config
 
 import gui.download as dwnld
 from archivczsk import ArchivCZSK
-from engine.repository import Repository
 from engine.downloader import DownloadManager
 import version
-import settings
-
-# loading repositories and their addons
-
-print '[ArchivCZSK] looking for repositories in %s' % settings.REPOSITORY_PATH
-for repo in os.listdir(settings.REPOSITORY_PATH):
-	repo_path = os.path.join(settings.REPOSITORY_PATH, repo)
-	if os.path.isfile(repo_path):
-		continue
-	print '[ArchivCZSK] founded repository %s' % repo
-	repo_xml = os.path.join(repo_path, 'addon.xml')
-	try:
-		repository = Repository(repo_xml)
-	except Exception:
-		traceback.print_exc()
-		print '[ArchivCZSK] cannot load repository %s' % repo
-		print "[ArchivCZSK] skipping"
-		continue
-	else:
-		ArchivCZSK.add_repository(repository)
-	
 
 def sessionstart(reason, session):
 	dwnld.setGlobalSession(session)
@@ -69,3 +47,7 @@ def Plugins(path, **kwargs):
 	if config.plugins.archivCZSK.main_menu.getValue():
 		list.append(PluginDescriptor(name=nameA, description=descr, where=PluginDescriptor.WHERE_MENU, fnc=startSetup))
 	return list
+
+
+if config.plugins.archivCZSK.preload.getValue() and not ArchivCZSK.isLoaded():
+	ArchivCZSK.load_repositories()

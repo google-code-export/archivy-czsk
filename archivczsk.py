@@ -5,16 +5,21 @@ Created on 21.10.2012
 '''
 
 import traceback
+import os
 
 from Screens.MessageBox import MessageBox
 from Components.config import config
 
 from . import _
 
+import settings
+# loading repositories and their addons
+
 from gui.content import VideoAddonsContentScreen
 from engine.items import PVideoAddon
 from engine.addon import VideoAddon, XBMCAddon
 from engine.exceptions import archiveException
+from engine.tools.task import Task
 
 nova = 'plugin.video.dmd-czech.voyo'
 btv = 'plugin.video.dmd-czech.btv'
@@ -34,10 +39,39 @@ tv_archives = [stv, joj, ct, prima, nova, huste, metropol, btv, markiza, stream]
 
 class ArchivCZSK():
     
+    __loaded = False
     __need_restart = False
     
     __repositories = {}
     __addons = {}
+    __loaded = False
+    
+    @staticmethod
+    def isLoaded():
+        return ArchivCZSK.__loaded
+    
+    @staticmethod
+    def load_repositories():
+        from engine.repository import Repository
+        print '[ArchivCZSK] looking for repositories in %s' % settings.REPOSITORY_PATH
+        for repo in os.listdir(settings.REPOSITORY_PATH):
+            repo_path = os.path.join(settings.REPOSITORY_PATH, repo)
+            if os.path.isfile(repo_path):
+                continue
+            print '[ArchivCZSK] founded repository %s' % repo
+            repo_xml = os.path.join(repo_path, 'addon.xml')
+            try:
+                repository = Repository(repo_xml)
+            except Exception:
+                traceback.print_exc()
+                print '[ArchivCZSK] cannot load repository %s' % repo
+                print "[ArchivCZSK] skipping"
+                continue
+            else:
+                ArchivCZSK.add_repository(repository)
+        ArchivCZSK.__loaded = True
+        
+      
     
     @staticmethod
     def get_repository(repository_id):
@@ -123,7 +157,7 @@ class ArchivCZSK():
             
     def _update_addons(self):
         for addon in self.toupdate_addons:
-            updated=False
+            updated = False
             try:
                 updated = addon.update()
             except Exception:
@@ -144,11 +178,13 @@ class ArchivCZSK():
     def restart_e2(self, callback=None):
         if callback:
             from Screens.Standby import TryQuitMainloop
-            self.session.open(TryQuitMainloop, 3)
+            self.session.open(TryQuitMainloop, 10)
         
     
     
     def open_archive_screen(self):
+        if not ArchivCZSK.__loaded:
+            self.load_repositories()
         tv_video_addon = []
         video_addon = []
         for key in ArchivCZSK.__addons.keys():
@@ -164,10 +200,18 @@ class ArchivCZSK():
                 
        
         tv_video_addon.sort(key=lambda addon:addon.name)
-        video_addon.sort(key=lambda addon:addon.name)         
-        self.session.open(VideoAddonsContentScreen, tv_video_addon, video_addon)
+        video_addon.sort(key=lambda addon:addon.name)
+        # first screen to open when starting plugin, so we start worker thread where we can run our tasks(ie. loading archives)
+        Task.startWorkerThread()
+        self.session.openWithCallback(self.close_archive_screen, VideoAddonsContentScreen, tv_video_addon, video_addon)
+        
+    def close_archive_screen(self):
+        if not config.plugins.archivCZSK.preload.getValue():
+            self.__addons.clear()
+            self.__repositories.clear()
+            ArchivCZSK.__loaded = False
+        #We dont need worker thread anymore so we stop it  
+        Task.stopWorkerThread()
         
     def show_error(self, info):
         self.session.open(MessageBox, info, type=MessageBox.TYPE_ERROR, timeout=1)
-        
-        

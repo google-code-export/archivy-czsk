@@ -47,11 +47,11 @@
 		<key id="KEY_DOWN" mapto="down" flags="m" />
 		<key id="KEY_LEFT" mapto="left" flags="m" />
 		<key id="KEY_RIGHT" mapto="right" flags="m" />
-		<key id="KEY_SUBTITLE" mapto="subtitles" flags="m" />
-		<key id="KEY_TEXT" mapto="subtitles" flags="m" />
-		<key id="KEY_ZOOM" mapto="aspectChange" flags="m" />
-		<key id="KEY_5" mapto="aspectChange" flags="m" /> 
-		
+	</map>
+	
+	<map context="InfobarAspectSelectionActions">
+		<key id="KEY_ZOOM" mapto="aspectSelection" flags="m" />
+		<key id="KEY_5" mapto="aspectSelection" flags="m" /> 
 	</map>
 	
 	<map context="StreamActions">
@@ -59,7 +59,13 @@
 		<key id="KEY_4" mapto="decBuffer" flags="m" />
 		<key id="KEY_2" mapto="incPlayDelay" flags="m" />
 		<key id="KEY_5" mapto="decPlayDelay" flags="m" />
-		
+	</map>
+	
+	<map context="SubtitlesActions">
+		<key id="KEY_SUBTITLE" mapto="subtitles" flags="m" />
+		<key id="KEY_TEXT" mapto="subtitles" flags="m" />
+		<key id="KEY_RIGHT" mapto="subsDelayInc" flags="m" />
+		<key id="KEY_LEFT" mapto="subsDelayDec" flags="m" />
 	</map>
 
 </keymap>
