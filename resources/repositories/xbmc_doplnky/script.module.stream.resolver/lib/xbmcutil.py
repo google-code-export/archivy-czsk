@@ -101,15 +101,15 @@ def decode_html(data):
 
 def debug(text):
         text = "xbmc_doplnky: debug " + (str([text]))
-        client.debug(text)
+        client.log.debug(text)
 
 def info(text):
         text = "xbmc_doplnky: info " + (str([text]))
-        client.debug(text)
+        client.log.info(text)
         
 def error(text):
         text = "xbmc_doplnky: error" + (str([text]))
-        client.debug(text)
+        client.log.error(text)
 
 
 def get_searches(addon, server):

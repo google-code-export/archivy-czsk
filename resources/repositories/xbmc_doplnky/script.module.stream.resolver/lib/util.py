@@ -19,14 +19,14 @@
 # *  http://www.gnu.org/copyleft/gpl.html
 # *
 # */
-import os,re,sys,urllib,urllib2,traceback,cookielib,time,socket
+import os, re, sys, urllib, urllib2, traceback, cookielib, time, socket
 from htmlentitydefs import name2codepoint as n2cp
 import simplejson as json
 from Plugins.Extensions.archivCZSK.engine import client
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
-UA='Mozilla/6.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.5) Gecko/2008092417 Firefox/3.0.3'
+UA = 'Mozilla/6.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.5) Gecko/2008092417 Firefox/3.0.3'
 
-sys.path.append( os.path.join ( os.path.dirname(__file__),'contentprovider') )
+sys.path.append(os.path.join (os.path.dirname(__file__), 'contentprovider'))
 ##
 # initializes urllib cookie handler
 def init_urllib():
@@ -34,42 +34,42 @@ def init_urllib():
 	opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
 	urllib2.install_opener(opener)
 
-def request(url,headers={}):
+def request(url, headers={}):
 	debug('request: %s' % url)
-	req = urllib2.Request(url,headers=headers)
+	req = urllib2.Request(url, headers=headers)
 	response = urllib2.urlopen(req)
 	data = response.read()
 	response.close()
 	debug('len(data) %s' % len(data))
 	return data
 
-def post(url,data):
+def post(url, data):
 	postdata = urllib.urlencode(data)
-	req = urllib2.Request(url,postdata)
-	req.add_header('User-Agent',UA)
+	req = urllib2.Request(url, postdata)
+	req.add_header('User-Agent', UA)
 	response = urllib2.urlopen(req)
 	data = response.read()
 	response.close()
 	return data
 
 def icon(name):
-	return 'https://github.com/lzoubek/xbmc-doplnky/raw/dharma/icons/'+name
+	return 'https://github.com/lzoubek/xbmc-doplnky/raw/dharma/icons/' + name
 
-def substr(data,start,end):
+def substr(data, start, end):
 	i1 = data.find(start)
-	i2 = data.find(end,i1)
+	i2 = data.find(end, i1)
 	return data[i1:i2]
 	
 
-def save_to_file(url,file):
+def save_to_file(url, file):
 	try:
 		return save_data_to_file(request(url))
 	except:
 		traceback.print_exc()
 
-def save_data_to_file(data,file):
+def save_data_to_file(data, file):
 	try:
-		f = open(file,'w')
+		f = open(file, 'w')
 		f.write(data)
 		f.close()
 		return True
@@ -78,7 +78,7 @@ def save_data_to_file(data,file):
 def read_file(file):
 	if not os.path.exists(file):
 		return ''
-	f = open(file,'r')
+	f = open(file, 'r')
 	data = f.read()
 	f.close()
 	return data
@@ -92,7 +92,7 @@ def _substitute_entity(match):
                 return unichr(int(ent))
             elif match.group(2) == 'x':
                 # number is in hex
-                return unichr(int('0x'+ent, 16))
+                return unichr(int('0x' + ent, 16))
         else:
             # they were using a name
             cp = n2cp.get(ent)
@@ -102,9 +102,9 @@ def _substitute_entity(match):
 def decode_html(data):
 	try:
 		if not type(data) == unicode:
-			data = unicode(data,'utf-8',errors='ignore')
+			data = unicode(data, 'utf-8', errors='ignore')
 		entity_re = re.compile(r'&(#?)(x?)(\w+);')
-    		return entity_re.subn(_substitute_entity,data)[0]
+    		return entity_re.subn(_substitute_entity, data)[0]
 	except:
 		traceback.print_exc()
 		print [data]
@@ -112,18 +112,18 @@ def decode_html(data):
 
 def debug(text):
         text = "xbmc_doplnky: debug " + (str([text]))
-        client.debug(text)
+        client.log.debug(text)
 
 def info(text):
         text = "xbmc_doplnky: info " + (str([text]))
-        client.debug(text)
+        client.log.info(text)
         
 def error(text):
         text = "xbmc_doplnky: error" + (str([text]))
-        client.debug(text)
+        client.log.error(text)
 
 
-_diacritic_replace= {u'\u00f3':'o',
+_diacritic_replace = {u'\u00f3':'o',
 u'\u0213':'-',
 u'\u00e1':'a',
 u'\u010d':'c',
