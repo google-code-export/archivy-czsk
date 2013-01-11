@@ -4,7 +4,7 @@ Created on 28.2.2012
 
 @author: marko
 '''
-import copy, os 
+import copy, os
 
 from enigma import eTimer
 from Screens.MessageBox import MessageBox
@@ -16,6 +16,7 @@ from Components.Pixmap import Pixmap, PixmapConditional
 from Tools.LoadPixmap import LoadPixmap
 
 from Plugins.Extensions.archivCZSK import _
+from Plugins.Extensions.archivCZSK import log
 from Plugins.Extensions.archivCZSK import settings
 from Plugins.Extensions.archivCZSK.engine.items import PItem, PFolder, PExit, PVideo, PContextMenuItem, PSearch, \
                                                         PSearchItem, PDownload, PVideoAddon, Stream, RtmpStream
@@ -37,10 +38,6 @@ PanelListEntry = PanelListEntryHD
 KEY_MENU_IMG = LoadPixmap(cached=True, path=os.path.join(settings.IMAGE_PATH, 'key_menu.png'))
 KEY_INFO_IMG = LoadPixmap(cached=True, path=os.path.join(settings.IMAGE_PATH, 'key_info.png'))
 KEY_5_IMG = LoadPixmap(cached=True, path=os.path.join(settings.IMAGE_PATH, 'key_5.png'))
-
-def debug(data):
-    if config.plugins.archivCZSK.debug.getValue():
-        print '[ArchivCZSK] ContentScreen:', data.encode('utf-8')
         
 class ItemHandler():
     """ Handles item interaction """
@@ -93,7 +90,7 @@ class VideoAddonItemHandler(ItemHandler):
         else:
             self.content_screen.stopLoading()
             self.content_screen.workingFinished()
-            debug("cannot open unknown item %s" % item.__class__.__name__)
+            log.debug("cannot open unknown item %s" , item.__class__.__name__)
             
             
     def open_video_addon(self, addon, list_items):
@@ -170,7 +167,7 @@ class ContentItemHandler(ItemHandler):
             self.run_item(item)
             
         else:
-            debug("cannot open unknown item %s" % item.__class__.__name__)
+            log.debug("cannot open unknown item %s" , item.__class__.__name__)
             self.content_screen.stopLoading()
             self.content_screen.showList()
             self.content_screen.workingFinished()
@@ -301,7 +298,7 @@ class ContentItemHandler(ItemHandler):
     def ask_add_shortcut(self, item):
         self.item = item
         self.session.openWithCallback(self.add_shortcut_cb, MessageBox,
-                                      text=_("Do you want to add") + " " + item.name.encode('utf-8') + " " + _("shortcut?"),
+                                      text=_("Do you want to add") + " " + item.name.encode('utf-8','ignore') + " " + _("shortcut?"),
                                       type=MessageBox.TYPE_YESNO)
         
     def add_shortcut_cb(self, cb=None):
@@ -396,11 +393,11 @@ class BaseContentScreen(BaseArchivCZSKMenuListScreen):
           
     
     def updateMenuList(self, newlist=True):
-        debug("updateMenuList")
+        log.debug("updateMenuList")
         menu_list = []
         
         for idx, it in enumerate(self.lst_items):
-            menu_list.append(PanelListEntry(it.name.encode('utf-8'), idx, it.thumb))
+            menu_list.append(PanelListEntry(it.name, idx, it.thumb))
             
         self["menu"].setList(menu_list)
         if newlist:
@@ -408,7 +405,7 @@ class BaseContentScreen(BaseArchivCZSKMenuListScreen):
             
     def load(self, params):
         """loads content of screen from screen parameters"""
-        debug("loading screen")
+        log.debug("loading screen")
         #set defaults for new "screen" (list+parameters)
         self.refresh = False
         self.input = None
@@ -424,13 +421,13 @@ class BaseContentScreen(BaseArchivCZSKMenuListScreen):
         else:
             self.updateMenuList(True)
         if self.parent_it is None:
-            debug("loading screen of root item")
+            log.debug("loading screen of root item")
         else:
-            debug("loading screen of %s item" % self.parent_it.name)
+            log.debug("loading screen of %s item" , self.parent_it.name)
             
     def save(self):
         """saves current screen to stack"""
-        debug("saving current screen to stack")
+        log.debug("saving current screen to stack")
         #saving screen parameters to stack
         self.stack.append({'lst_items':self.lst_items, 'parent_it':copy.copy(self.parent_it), 'refresh':self.refresh})
         
@@ -441,7 +438,7 @@ class BaseContentScreen(BaseArchivCZSKMenuListScreen):
             self.parent_it.params = {}
             self.parent_it.name = 'root'
             
-        debug("refreshing screen for %s item" % self.parent_it.name)
+        log.debug("refreshing screen for %s item" , self.parent_it.name)
         self.refreshing = True
         self.item_handler.open_item(self.parent_it)
         
@@ -458,14 +455,14 @@ class BaseContentScreen(BaseArchivCZSKMenuListScreen):
     
     def resolveCommand(self, command, arg):
         print arg
-        debug("resolving %s command " % str(command))
+        log.debug("resolving %s command " , str(command))
 
         if command is None:
             pass
         elif command == 'refreshnow':
             self.refreshList()
         else:
-            debug("unknown command %s" % command)
+            log.debug("unknown command %s" , command)
     
  
     def ok(self):
@@ -492,24 +489,23 @@ class VideoAddonsContentScreen(BaseContentScreen, DownloadList, TipBar):
         self.tv_video_addon = tv_video_addon
         self.video_addon = video_addon
         
-        # first screen to open when starting plugin, so we start worker thread where we can run our tasks(ie. loading archives)
-        Task.startWorkerThread()
+        self.updateGUITimer = eTimer()
+        self.updateGUITimer.callback.append(self.updateAddonGUI)
         
         #include DownloadList
         DownloadList.__init__(self)
         
         #include TipList
         TipBar.__init__(self, [self.CONTEXT_TIP], startOnShown=True)
-        self.onUpdateGUI.append(self.updateAddonGUI)
+        self.onUpdateGUI.append(self.changeAddon)
         
-        debug('initializing')
+        log.debug('initializing')
         
         self["image"] = Pixmap()
         self["title"] = Label("")
         self["author"] = Label("")
         self["version"] = Label("")
         self["about"] = Label("")
-        self["menu"] = PanelList([])
         
         self["key_red"] = Label(_("TV archives"))
         self["key_green"] = Label(_("Video archives"))
@@ -553,14 +549,20 @@ class VideoAddonsContentScreen(BaseContentScreen, DownloadList, TipBar):
             stream_content_provider = StreamContentProvider(config.plugins.archivCZSK.downloadsPath.getValue(), settings.STREAM_PATH)
             lst_items = stream_content_provider.get_content(None)
             self.session.openWithCallback(self.workingFinished, StreamContentScreen, stream_content_provider, lst_items)
-
+    
+    
+    def changeAddon(self):
+        if self.execing:
+            self.updateGUITimer.start(100, True)
+        
+    
     def updateAddonGUI(self):
         it = self.getSelectedItem()
         if it is not None:
             self["image"].instance.setPixmap(it.image)
-            self["title"].setText(it.name.encode('utf-8'))
-            self["author"].setText(_("Author: ") + it.author.encode('utf-8'))
-            self["version"].setText(_("Version: ") + it.version.encode('utf-8'))
+            self["title"].setText(it.name.encode('utf-8','ignore'))
+            self["author"].setText(_("Author: ") + it.author.encode('utf-8','ignore'))
+            self["version"].setText(_("Version: ") + it.version.encode('utf-8','ignore'))
             self["about"].setText(it.description.encode('utf-8'))
         else:
             self["image"].instance.setPixmap(None)
@@ -579,7 +581,7 @@ class VideoAddonsContentScreen(BaseContentScreen, DownloadList, TipBar):
             self["status_label"].setText("Loading...")
             Task.getInstance().setResume()
         else:
-            debug("Task is not running")
+            log.debug("Task is not running")
             
     
     def cancel(self):
@@ -593,9 +595,8 @@ class VideoAddonsContentScreen(BaseContentScreen, DownloadList, TipBar):
     def closePlugin(self, callback=None):
         if callback:
             if config.plugins.archivCZSK.clearMemory.getValue():
-                os.system("echo 1 > /proc/sys/vm/drop_caches")  
-            #We dont need worker thread anymore so we stop it  
-            Task.stopWorkerThread()
+                os.system("echo 1 > /proc/sys/vm/drop_caches")
+            self.updateGUITimer = None
             
             self.close()
 
@@ -618,7 +619,7 @@ class ContentScreen(BaseContentScreen, DownloadList, TipBar):
         #include TipList
         TipBar.__init__(self, [self.CSFD_TIP, self.CONTEXT_TIP, self.INFO_TIP], startOnShown=True)
         
-        debug('initializing')
+        log.debug('initializing')
          
         self["key_red"] = Label("")
         self["key_green"] = Label(_("Downloads"))
@@ -642,7 +643,7 @@ class ContentScreen(BaseContentScreen, DownloadList, TipBar):
         
     def setWindowTitle(self):
         print 'setwindowtitle'
-        self.setTitle(self.addon.name.encode('utf-8'))
+        self.setTitle(self.addon.name)
         
     def openAddonShortcuts(self):
         if not self.working:
@@ -677,7 +678,7 @@ class ContentScreen(BaseContentScreen, DownloadList, TipBar):
             self["status_label"].setText("Loading...")
             Task.getInstance().setResume()
         else:
-            debug("Task is not running")
+            log.debug("Task is not running")
         
     def exitItem(self):
         if len(self.stack) == 0:
@@ -724,8 +725,8 @@ class StreamContentScreen(BaseContentScreen, DownloadList, TipBar):
         self['livestream_pixmap'] = PixmapConditional()
         self['rtmpbuffer_label'] = MyConditionalLabel(_("RTMP BUFFER:"), self.isRtmpStream)
         self['rtmpbuffer'] = MyConditionalLabel("", self.isRtmpStream)
-        self['playerbuffer_label'] = MyConditionalLabel(_("PLAYER BUFFER:"), self.isMipselPlayerSelected)
-        self['playerbuffer'] = MyConditionalLabel("", self.isMipselPlayerSelected)      
+        self['playerbuffer_label'] = MyConditionalLabel(_("PLAYER BUFFER:"), self.isGstreamerPlayerSelected)
+        self['playerbuffer'] = MyConditionalLabel("", self.isGstreamerPlayerSelected)      
 
         
         self["actions"] = NumberActionMap(["archivCZSKActions"],
@@ -769,9 +770,9 @@ class StreamContentScreen(BaseContentScreen, DownloadList, TipBar):
         it = self.getSelectedItem()
         return isinstance(it, PVideo) and it.url.startswith('rtmp')
     
-    def isMipselPlayerSelected(self):
+    def isGstreamerPlayerSelected(self):
         it = self.getSelectedItem()
-        return isinstance(it, PVideo) and config.plugins.archivCZSK.videoPlayer.type.getValue() == 'mipsel'
+        return isinstance(it, PVideo) and config.plugins.archivCZSK.videoPlayer.detectedType.getValue() == 'gstreamer'
     
     def updateStreamInfo(self):
         it = self.getSelectedItem()
@@ -780,12 +781,12 @@ class StreamContentScreen(BaseContentScreen, DownloadList, TipBar):
         else:
             stream = it.stream
             if self.isStream():
-                self['protocol'].setText(it.get_protocol().encode('utf-8'))
+                self['protocol'].setText(it.get_protocol())
                 self['playdelay'].setText(str(stream.playDelay))
                 self['livestream_pixmap'].instance.setPixmap(self.LIVE_PIXMAP)
             if self.isRtmpStream():
                 self['rtmpbuffer'].setText(str(stream.rtmpBuffer))
-            if self.isMipselPlayerSelected():
+            if self.isGstreamerPlayerSelected():
                 self['playerbuffer'].setText(str(stream.playerBuffer))
                
         self['streaminfo_label'].update()

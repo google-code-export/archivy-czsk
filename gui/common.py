@@ -16,7 +16,13 @@ from enigma import loadPNG, RT_HALIGN_RIGHT, RT_VALIGN_TOP, eSize, eListbox, ePo
 
 from Plugins.Extensions.archivCZSK import settings
 
-PNG_PATH = settings.IMAGE_PATH+'/'
+PNG_PATH = settings.IMAGE_PATH + '/'
+
+def toUTF8(text):
+    if isinstance(text, unicode):
+        return text.encode('utf-8', 'ignore')
+    return text
+    
 
 class PanelList(MenuList):
     def __init__(self, list):
@@ -28,23 +34,23 @@ def PanelListEntryHD(name, idx, png=''):
     res = [(name)]
     if fileExists(png):
         res.append(MultiContentEntryPixmapAlphaTest(pos=(5, 5), size=(35, 25), png=loadPNG(png)))
-        res.append(MultiContentEntryText(pos=(60, 5), size=(950, 30), font=0, flags=RT_VALIGN_TOP, text=name))
+        res.append(MultiContentEntryText(pos=(60, 5), size=(950, 30), font=0, flags=RT_VALIGN_TOP, text=toUTF8(name)))
     else:
-        res.append(MultiContentEntryText(pos=(5, 5), size=(950, 30), font=0, flags=RT_VALIGN_TOP, text=name))
+        res.append(MultiContentEntryText(pos=(5, 5), size=(950, 30), font=0, flags=RT_VALIGN_TOP, text=toUTF8(name)))
     return res 
 
 def PanelListEntrySD(name, idx, png=''):
     res = [(name)]
     if fileExists(png):
         res.append(MultiContentEntryPixmapAlphaTest(pos=(5, 5), size=(35, 25), png=loadPNG(png)))
-        res.append(MultiContentEntryText(pos=(60, 5), size=(550, 30), font=0, flags=RT_VALIGN_TOP, text=name))
+        res.append(MultiContentEntryText(pos=(60, 5), size=(550, 30), font=0, flags=RT_VALIGN_TOP, text=toUTF8(name)))
     else:
-        res.append(MultiContentEntryText(pos=(5, 5), size=(330, 30), font=0, flags=RT_VALIGN_TOP, text=name))
+        res.append(MultiContentEntryText(pos=(5, 5), size=(330, 30), font=0, flags=RT_VALIGN_TOP, text=toUTF8(name)))
     return res
 
 def PanelListDownloadEntry(name, download):
     res = [(name)]
-    res.append(MultiContentEntryText(pos=(0, 5), size=(400, 30), font=0, flags=RT_VALIGN_TOP, text=name))
+    res.append(MultiContentEntryText(pos=(0, 5), size=(400, 30), font=0, flags=RT_VALIGN_TOP, text=toUTF8(name)))
     if download.downloaded and not download.running:
         res.append(MultiContentEntryText(pos=(420, 5), size=(180, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('finished'), color=0x00FF00))
     elif not download.downloaded and not download.running:
@@ -172,7 +178,7 @@ class CategoryWidget():
         self.screen = screen
         self.name = name
         self.label = label
-        if isinstance(label,unicode):
+        if isinstance(label, unicode):
             self.label = label.encode('utf-8')
         self.x_position = 0
         self.y_position = 0
@@ -228,11 +234,11 @@ class ButtonLabel(MultiColorLabel):
     TYPE_PRESSED = 1
     TYPE_DISABLED = 2
     
-    def __init__(self,text,state=0):
-        MultiColorLabel.__init__(self,text)
+    def __init__(self, text, state=0):
+        MultiColorLabel.__init__(self, text)
         self.changeLabel(state)
         
-    def changeLabel(self,idx):
+    def changeLabel(self, idx):
         self.setForegroundColorNum(idx)
         self.setBackgroundColorNum(idx)
         

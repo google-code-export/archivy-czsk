@@ -2,6 +2,7 @@
 
 # system imports
 from urllib2 import HTTPError, URLError
+import traceback
 
 # enigma2 imports
 from Screens.Screen import Screen
@@ -14,11 +15,8 @@ from enigma import getDesktop
 from skins import archivCZSK_skins
 from common import PanelList, PanelListEntryHD, PanelListEntrySD
 from Plugins.Extensions.archivCZSK import _
+from Plugins.Extensions.archivCZSK import log
 from Plugins.Extensions.archivCZSK.engine.exceptions.archiveException import CustomInfoError, CustomWarningError, CustomError, ArchiveThreadException
-
-def debug(data):
-    if config.plugins.archivCZSK.debug.getValue():
-        print '[ArchivCZSK] BaseScreens', data.encode('utf-8')
 
 PanelListEntry = PanelListEntryHD
 
@@ -32,20 +30,20 @@ class BaseArchivCZSKScreen(Screen):
         if getDesktop(0).size().width() == 1280:
             self.HD = True
         if self.HD and hasattr(archivCZSK_skins, self.__class__.__name__ + '_HD'):
-            debug('setting %s skin' % (self.__class__.__name__ + '_HD'))
+            log.debug('setting %s skin' , self.__class__.__name__ + '_HD')
             self.skin = getattr(archivCZSK_skins, self.__class__.__name__ + '_HD')
             
         elif not self.HD and hasattr(archivCZSK_skins, self.__class__.__name__ + '_SD'):
-            debug('setting %s skin' % (self.__class__.__name__ + '_SD'))
+            log.debug('setting %s skin' , self.__class__.__name__ + '_SD')
             self.skin = getattr(archivCZSK_skins, self.__class__.__name__ + '_SD')
             
         else:
             if hasattr(archivCZSK_skins, self.__class__.__name__):
                 self.skin = getattr(archivCZSK_skins, self.__class__.__name__)
-                debug('setting %s skin' % self.__class__.__name__)
+                log.debug('setting %s skin' , self.__class__.__name__)
                 
             else:
-                debug("Cannot find skin for screen %s" % self.__class__.__name__)
+                log.debug("Cannot find skin for screen %s" , self.__class__.__name__)
 
         #Screen initialization    
         Screen.__init__(self, session)
@@ -55,7 +53,7 @@ class BaseArchivCZSKScreen(Screen):
         if hasattr(archivCZSK_skins, skinName):
             self.skin = getattr(archivCZSK_skins, skinName)
         else:
-            debug("cannot find skinName '%s'" % skinName)
+            log.debug("cannot find skinName '%s'", skinName)
             
     def setSkinName(self, skinName):
         self.skinName = skinName
@@ -89,6 +87,7 @@ class BaseArchivCZSKMenuListScreen(BaseArchivCZSKScreen):
         
         # gui menu list
         self["menu"] = PanelList([])
+        self["menu"].onSelectionChanged.append(self.updateGUI)
         
         #called by workingStarted
         self.onStartWork = [self.startWorking]
@@ -104,11 +103,11 @@ class BaseArchivCZSKMenuListScreen(BaseArchivCZSKScreen):
     
     
     def stopWorking(self):
-        debug("stop working")
+        log.debug("stop working")
         self.working = False
         
     def startWorking(self):
-        debug("start working")
+        log.debug("start working")
         self.working = True
             
     def workingFinished(self, callback=None):
@@ -124,11 +123,11 @@ class BaseArchivCZSKMenuListScreen(BaseArchivCZSKScreen):
             f()
             
     def hideList(self):
-        debug('hiding list')
+        log.debug('hiding list')
         self["menu"].hide()
         
     def showList(self):
-        debug('showing list')
+        log.debug('showing list')
         self["menu"].show()  
 
     
@@ -155,12 +154,12 @@ class BaseArchivCZSKMenuListScreen(BaseArchivCZSKScreen):
     def up(self):
         if not self.working:
             self["menu"].up()
-            self.updateGUI()
+            #self.updateGUI()
     
     def down(self):
         if not self.working:
             self["menu"].down()
-            self.updateGUI()
+            #self.updateGUI()
             
     def open_screen(self, *args, **kwargs):
         self.session.open(*args, **kwargs)
@@ -173,17 +172,17 @@ class BaseArchivCZSKMenuListScreen(BaseArchivCZSKScreen):
             
     def showError(self, error, timeout=5):
         if isinstance(error, unicode):
-            error = error.encode('utf-8')
+            error = error.encode('utf-8', 'ignore')
         self.session.openWithCallback(self.workingFinished, MessageBox, error, type=MessageBox.TYPE_ERROR, timeout=timeout)
 
     def showWarning(self, warning, timeout=5):
         if isinstance(warning, unicode):
-            warning = warning.encode('utf-8')
+            warning = warning.encode('utf-8', 'ignore')
         self.session.openWithCallback(self.workingFinished, MessageBox, warning, type=MessageBox.TYPE_WARNING, timeout=timeout)
         
     def showInfo(self, info, timeout=5):
         if isinstance(info, unicode):
-            info = info.encode('utf-8')
+            info = info.encode('utf-8', 'ignore')
         self.session.openWithCallback(self.workingFinished, MessageBox, info, type=MessageBox.TYPE_INFO, timeout=timeout)
 
         
@@ -216,7 +215,9 @@ class BaseArchivCZSKMenuListScreen(BaseArchivCZSKScreen):
             
             # unknown exception       
             except Exception, e:
-                self.showError("%s:%s" % (_("Unknown Error"), str(e)), self.timeout)
+                self.showError(_("Script error, author of this addon needs to update it"))
+                traceback.print_exc()
+                #self.showError("%s:%s" % (_("Unknown Error"), str(e)), self.timeout)
         return wrapped
         
             

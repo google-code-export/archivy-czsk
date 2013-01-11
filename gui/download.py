@@ -39,20 +39,20 @@ class DownloadManagerMessages(object):
         session = DownloadManagerMessages.session
         def updateDownloadList(callback=None):
             if DownloadListScreen.instance is not None:
-                DownloadListScreen.instance.updateGUI()
+                DownloadListScreen.instance.refreshList()
         if download.downloaded:
             session.openWithCallback(updateDownloadList, MessageBox, _("ArchivCZSK - Download:") + ' ' + \
-                                      download.name.encode('utf-8') + ' ' + _("successfully finished."), \
+                                      download.name.encode('utf-8','ignore') + ' ' + _("successfully finished."), \
                                       type=MessageBox.TYPE_INFO, timeout=5)
         else:
             session.openWithCallback(updateDownloadList, MessageBox, _("ArchivCZSK - Download:") + ' ' + \
-                                      download.name.encode('utf-8') + ' ' + _("finished with errors."), \
+                                      download.name.encode('utf-8','ignore') + ' ' + _("finished with errors."), \
                                       type=MessageBox.TYPE_ERROR, timeout=5)  
     @staticmethod
     def startDownloadCB(download):
         session = DownloadManagerMessages.session
         session.open(MessageBox, _("ArchivCZSK - Download:") + ' ' + \
-                     download.name.encode('utf-8') + ' ' + _("started."), \
+                     download.name.encode('utf-8','ignore') + ' ' + _("started."), \
                      type=MessageBox.TYPE_INFO, timeout=5)
         
     @staticmethod
@@ -66,7 +66,7 @@ class DownloadManagerMessages(object):
                 pass
         if download is not None:
             session.openWithCallback(DownloadManagerMessages.saveDownload, MessageBox, _("The file")\
-                                      + download.name.encode('utf-8') + "already exist. Do you want to override?" , \
+                                      + download.name.encode('utf-8','ignore') + "already exist. Do you want to override?" , \
                                        type=MessageBox.TYPE_YESNO)  
 
 
@@ -150,8 +150,8 @@ class DownloadListScreen(BaseArchivCZSKMenuListScreen):
                 "up": self.up,
                 "down": self.down,
             }, -2)
-            
-        self.onLayoutFinish.append(self.updateGUI)
+        
+        self.lst_items = DownloadManager.getInstance().download_lst
         self.onShown.append(self.setWindowTitle)
         
     def __onClose(self):
@@ -159,34 +159,35 @@ class DownloadListScreen(BaseArchivCZSKMenuListScreen):
 
     def setWindowTitle(self):
         self.setTitle(self.title)
-    
-    def updateGUI(self):
+        
+    def refreshList(self):
         self.lst_items = DownloadManager.getInstance().download_lst
-        self.updateMenuList()
+        self.updateMenuList() 
+        
         
     def askCancelDownload(self):
         if len(self.lst_items) > 0:
             download = self.getSelectedItem()
             self.session.openWithCallback(self.cancelDownload, MessageBox, _('Do you want to cancel') + ' '\
-                                           + download.name.encode('utf-8') + ' ?', type=MessageBox.TYPE_YESNO)    
+                                           + download.name.encode('utf-8','ignore') + ' ?', type=MessageBox.TYPE_YESNO)    
     
     def cancelDownload(self, callback=None):
         if callback:
             download = self.getSelectedItem()
             DownloadManager.getInstance().cancelDownload(download)
-            self.updateGUI()
+            self.refreshList()
             
     def askRemoveDownload(self):
         if len(self.lst_items) > 0:
             download = self.getSelectedItem()
             self.session.openWithCallback(self.removeDownload, MessageBox, _('Do you want to remove') + ' '\
-                                           + download.name.encode('utf-8') + ' ?', type=MessageBox.TYPE_YESNO)    
+                                           + download.name.encode('utf-8','ígnore') + ' ?', type=MessageBox.TYPE_YESNO)    
     
     def removeDownload(self, callback=None):
         if callback:
             download = self.getSelectedItem()
             DownloadManager.getInstance().removeDownload(download)
-            self.updateGUI()
+            self.refreshList()
             
     def askPlayDownload(self):
         if len(self.lst_items) > 0:
@@ -195,7 +196,7 @@ class DownloadListScreen(BaseArchivCZSKMenuListScreen):
             if download.downloaded or not download.running:
                 self.playDownload(True)
             else:
-                message = '%s %s %s' % (_("The file"), download.name.encode('utf-8'), _('is not downloaded yet. Do you want to play it anyway?'))
+                message = '%s %s %s' % (_("The file"), download.name.encode('utf-8','ígnore'), _('is not downloaded yet. Do you want to play it anyway?'))
                 self.session.openWithCallback(self.playDownload, MessageBox, message, type=MessageBox.TYPE_YESNO)
     
             
@@ -209,7 +210,7 @@ class DownloadListScreen(BaseArchivCZSKMenuListScreen):
     def updateMenuList(self):
         menu_list = []
         for idx, x in enumerate(self.lst_items):
-            menu_list.append(PanelListDownloadEntry(x.name.encode('utf-8'), x)) 
+            menu_list.append(PanelListDownloadEntry(x.name, x)) 
         self["menu"].setList(menu_list)      
 
     def ok(self):
@@ -235,7 +236,7 @@ class DownloadsScreen(BaseArchivCZSKMenuListScreen, DownloadList):
         self["key_blue"] = Button("")
         
         self.lst_items = self.content_provider.get_downloads()
-        self.title = self.name.encode('utf-8') + ' ' + (_("downloads"))
+        self.title = self.name.encode('utf-8','ignore') + ' ' + (_("downloads"))
 
         self["actions"] = NumberActionMap(["archivCZSKActions"],
             {
@@ -247,12 +248,11 @@ class DownloadsScreen(BaseArchivCZSKMenuListScreen, DownloadList):
             }, -2)
         
         self.onShown.append(self.setWindowTitle)    
-        self.onLayoutFinish.append(self.updateGUI)
 
     def setWindowTitle(self):
         self.setTitle(self.title)
     
-    def updateGUI(self):
+    def refreshList(self):
         self.lst_items = self.content_provider.get_downloads()
         self.updateMenuList()
         
@@ -260,17 +260,17 @@ class DownloadsScreen(BaseArchivCZSKMenuListScreen, DownloadList):
         if len(self.lst_items) > 0:
             download = self.getSelectedItem()
             self.session.openWithCallback(self.removeDownload, MessageBox, _('Do you want to remove') \
-                                          + ' ' + download.name.encode('utf-8') + ' ?', type=MessageBox.TYPE_YESNO)    
+                                          + ' ' + download.name.encode('utf-8','ignore') + ' ?', type=MessageBox.TYPE_YESNO)    
     
     def removeDownload(self, callback=None):
         if callback:
             self.content_provider.remove_download(self.getSelectedItem())
-            self.updateGUI()
+            self.refreshList()
 
     def updateMenuList(self):
         menu_list = []
         for idx, x in enumerate(self.lst_items):
-            menu_list.append(PanelListEntry(x.name.encode('utf-8'), idx, x.thumb)) 
+            menu_list.append(PanelListEntry(x.name, idx, x.thumb)) 
         self["menu"].setList(menu_list)        
 
     def ok(self):

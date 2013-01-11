@@ -17,14 +17,13 @@ PanelListEntry = PanelListEntryHD
 def openShortcuts(session, addon, cb):
 	session.openWithCallback(cb, ShortcutsScreen, addon)
 
-
 class ShortcutsScreen(BaseArchivCZSKMenuListScreen):
 	def __init__(self, session, addon):
 		BaseArchivCZSKMenuListScreen.__init__(self, session)
 		
 		self.addon = addon
 		self.lst_items = self.addon.provider.get_shortcuts()
-		self.title = _("Shortcut") + ' ' + addon.name.encode('utf-8')
+		self.title = _("Shortcut") + ' ' + addon.name.encode('utf-8', 'ignore')
 		
 		self["key_red"] = Button(_("Remove shortcut"))
 		self["key_green"] = Button("")
@@ -48,7 +47,7 @@ class ShortcutsScreen(BaseArchivCZSKMenuListScreen):
 		it = self.getSelectedItem()
 		if it is not None:
 			self.session.openWithCallback(self.removeShortcut,
-										MessageBox, _('Do you want to delete') + ' ' + it.name.encode('utf-8') + '?',
+										MessageBox, _('Do you want to delete') + ' ' + it.name.encode('utf-8', 'ignore') + '?',
 										type=MessageBox.TYPE_YESNO)	
 	
 	def removeShortcut(self, callback=None):
@@ -61,7 +60,7 @@ class ShortcutsScreen(BaseArchivCZSKMenuListScreen):
 	def updateMenuList(self):
 		menu_list = []
 		for idx, x in enumerate(self.lst_items):
-			menu_list.append(PanelListEntry(x.name.encode('utf-8'), idx, x.thumb))
+			menu_list.append(PanelListEntry(x.name, idx, x.thumb))
 		self["menu"].setList(menu_list)		
 	
 

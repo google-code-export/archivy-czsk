@@ -43,7 +43,7 @@ class ChangelogScreen(BaseArchivCZSKScreen):
 		self.title = title
 		
 		if self.changelog is not None:
-			self["changelog"] = ScrollLabel(self.changelog.encode('utf-8'))
+			self["changelog"] = ScrollLabel(self.changelog.encode('utf-8','ignore'))
 		else:
 			self["changelog"] = ScrollLabel('')
 				
@@ -53,7 +53,7 @@ class ChangelogScreen(BaseArchivCZSKScreen):
 			"up": self.pageUp,
 			"down": self.pageDown,
 		}, -2)	
-		self.title = self.title.encode('utf-8') + ' changelog'
+		self.title = self.title.encode('utf-8','ignore') + ' changelog'
 	
 	def pageUp(self):
 		self["changelog"].pageUp()
@@ -69,7 +69,7 @@ class Info(object):
 		self.dest = ''
 		self.imagelink = ''
 		if it.image is not None:
-			self.imagelink = it.image.encode('utf-8')
+			self.imagelink = it.image.encode('utf-8','ígnore')
 			self.dest = os.path.join('/tmp/', self.imagelink.split('/')[-1])
 
 			if os.path.exists(self.dest):
@@ -106,7 +106,7 @@ class InfoScreen(BaseArchivCZSKScreen):
 		self.it = it
 		self.image_dest = None
 		if it.image is not None:
-			self.image_link = it.image.encode('utf-8')
+			self.image_link = it.image.encode('utf-8','ignore')
 			self.image_dest = os.path.join('/tmp/', self.image_link.split('/')[-1])
 		self.plot = ''
 		self.genre = ''
@@ -135,7 +135,7 @@ class InfoScreen(BaseArchivCZSKScreen):
 			"up": self.pageUp,
 			"down": self.pageDown,
 		}, -2)	
-		self.title = self.it.name.encode('utf-8')
+		self.title = self.it.name.encode('utf-8','ignore')
 		self.Scale = AVSwitch().getFramebufferScale()
 		self.picLoad = ePicLoad()
 		self.picLoad.PictureData.get().append(self.decodePicture)
