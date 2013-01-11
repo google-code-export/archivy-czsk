@@ -4,15 +4,13 @@ Created on 20.3.2012
 
 @author: marko
 '''
-from  xml.etree.cElementTree import ElementTree, Element, SubElement
 import os
 import items
-from Components.config import config
+import logging
+from  xml.etree.cElementTree import ElementTree, Element, SubElement
 
-def debug(text):
-    if config.plugins.archivCZSK.debug.getValue():
-        print '[ArchivCZSK] shorcuts:' + text.encode('utf-8')
-    
+from Components.config import config
+log = logging.getLogger(__name__)
 
 class mainXML(object):
     
@@ -56,7 +54,7 @@ class mainXML(object):
         self.xmlTree = ElementTree(self.xmlRootElement).write(self.path, encoding='utf-8')
     
 class ShortcutXML(mainXML):
-    def __init__(self,path):
+    def __init__(self, path):
         mainXML.__init__(self, path)
         if not self.fileExist:
             self.createXMLArchive()
@@ -66,11 +64,11 @@ class ShortcutXML(mainXML):
         SubElement(self.xmlRootElement, 'shortcuts')
 
     def createShortcut(self, shortcut_it):
-        debug("creating shortcut %s" % shortcut_it.name)
+        log.debug("creating shortcut %s" % shortcut_it.name)
         shortcuts = self.xmlRootElement.find('shortcuts')
         id_sc = shortcut_it.get_id()
         if self.findShortcutById(id_sc) is not None:
-            debug('shortcut %s already exist' % shortcut_it.name)
+            log.debug('shortcut %s already exist' % shortcut_it.name)
             return False
         else:
             shortcut = Element('shortcut')
@@ -102,7 +100,7 @@ class ShortcutXML(mainXML):
         shortcuts = self.xmlRootElement.find('shortcuts')
         shortcut = self.findShortcutById(shortcut_id)
         if shortcut is None:
-            debug('cannot find shortcut by %s id' % shortcut_id)
+            log.debug('cannot find shortcut by %s id' % shortcut_id)
             return
         shortcuts.remove(shortcut)  
 

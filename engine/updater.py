@@ -3,31 +3,20 @@ Created on 25.6.2012
 
 @author: marko
 '''
-
-from xml.etree.cElementTree import ElementTree
-import urllib2
 import os, shutil
-
-#from Components.config import config
+import logging
 
 from tools import unzip, util, parser
 from exceptions import archiveException as archiveException
 
-GUI_CB = None
+log = logging.getLogger(__name__)
 
-def debug(text):
-    text = '[archivCZSK [update] ] %s' % text
-    if GUI_CB is not None:
-        GUI_CB(text)
-    #if config.plugins.archivCZSK.debug.value:
-    print text
-    
 def removePyOC(pyfile):
     if os.path.isfile(pyfile + 'c'):
-        debug('removing %s' % (pyfile + 'c'))
+        log.debug('removing %s' % (pyfile + 'c'))
         os.remove(pyfile + 'c')
     elif os.path.isfile(pyfile + 'o'):
-        debug('removing %s' % (pyfile + 'o'))
+        log.debug('removing %s' % (pyfile + 'o'))
         os.remove(pyfile + 'o')
 
 def removeFiles(files):
@@ -49,24 +38,24 @@ class Updater(object):
     
     def check_addon(self, addon, update_xml=True):
         """check if addon needs update"""
-        debug("checking updates for %s" % addon.name)
+        log.debug("checking updates for %s" % addon.name)
         self._get_server_addon(addon, update_xml)
         
         remote_version = self.remote_addons_dict[addon.id]['version']
         local_version = addon.version
         if util.check_version(local_version, remote_version):
-            debug("%s local version %s < remote version %s" % (addon.name, local_version, remote_version))
-            debug("%s is not up to date" % addon.name)
+            log.debug("%s local version %s < remote version %s" % (addon.name, local_version, remote_version))
+            log.debug("%s is not up to date" % addon.name)
             return True
         else:
-            debug("%s local version %s >= remote version %s" % (addon.name, local_version, remote_version))
-            debug("%s is up to date" % addon.name)  
+            log.debug("%s local version %s >= remote version %s" % (addon.name, local_version, remote_version))
+            log.debug("%s is up to date" % addon.name)  
         return False
           
     def update_addon(self, addon):
         """updates addon"""
         
-        debug("updating %s" % addon.name)
+        log.debug("updating %s" % addon.name)
         self._get_server_addon(addon)
     
         local_base = os.path.join(self.local_path, addon.id)        
@@ -79,15 +68,15 @@ class Updater(object):
             unzipper = unzip.unzip()
             unzipper.extract(zip_file, self.local_path)
             
-            debug("%s was successfully updated to version %s" % (addon.name, self.remote_addons_dict[addon.id]['version']))
+            log.debug("%s was successfully updated to version %s" % (addon.name, self.remote_addons_dict[addon.id]['version']))
             return True
-        debug("%s failed to update to version %s" % (addon.name, addon.version))
+        log.debug("%s failed to update to version %s" % (addon.name, addon.version))
         return False
     
     
     def check_addons(self, new=True):
         """checks every addon in repository, and update its state accordingly"""
-        debug('checking addons')
+        log.debug('checking addons')
         update_needed = []
         self._get_server_addons()
         for addon_id in self.remote_addons_dict.keys():
@@ -97,17 +86,17 @@ class Updater(object):
                 if local_addon.check_update(False):
                     update_needed.append(local_addon)
             elif new:
-                debug("%s not in local repository, adding dummy Addon to update" % remote_addon['name'])
+                log.debug("%s not in local repository, adding dummy Addon to update" % remote_addon['name'])
                 new_addon = DummyAddon(self.repository, remote_addon['id'], remote_addon['name'], remote_addon['version'])
                 update_needed.append(new_addon)
             else:
-                debug("dont want new addons skipping %s" % remote_addon['id'])
+                log.debug("dont want new addons skipping %s" % remote_addon['id'])
         return update_needed        
             
             
     def update_addons(self, addons):
         """update addons in repository, according to their state"""
-        debug('updating addons')
+        log.debug('updating addons')
         update_success = []
         for addon in addons:
             if addon.need_update():
@@ -148,7 +137,7 @@ class Updater(object):
         remote_file = remote_base + '/' + zip_filename
 
         try:
-            util.download_to_file(remote_file, local_file, debugfnc=debug)
+            util.download_to_file(remote_file, local_file, debugfnc=log.debug)
         except:
             shutil.rmtree(tmp_base)
             return None
@@ -158,9 +147,9 @@ class Updater(object):
     def _download_update_xml(self):
         """downloads update xml of repository"""
         try:
-            util.download_to_file(self.update_xml_url, self.update_xml_file, debugfnc=debug)
+            util.download_to_file(self.update_xml_url, self.update_xml_file, debugfnc=log.debug)
         except Exception:
-            debug('cannot download %s update xml' % self.repository.name)
+            log.debug('cannot download %s update xml' % self.repository.name)
             raise archiveException.UpdateXMLVersionException()
         
 

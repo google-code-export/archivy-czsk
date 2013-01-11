@@ -2,6 +2,7 @@
 #### module for addon creators #####
 import os
 import twisted.internet.defer as defer
+from Plugins.Extensions.archivCZSK import log
 
 from Screens.VirtualKeyBoard import VirtualKeyBoard
 from Screens.MessageBox import MessageBox
@@ -25,10 +26,6 @@ def decode_string(string):
         string = unicode(string, 'utf-8', 'ignore')
         return _(string)
 
-
-def debug(info):
-    if config.plugins.archivCZSK.debug.getValue():
-        print '[archivCZSK]', info
 
 @callFromThread
 def getTextInput(session, text):

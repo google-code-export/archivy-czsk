@@ -121,23 +121,6 @@ def make_path(p):
         os.makedirs(p)
     except OSError:
         pass
-    
-def which(program):
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
-    fpath, fname = os.path.split(program)
-    if fpath:
-        if is_exe(program):
-            return program
-    else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            exe_file = os.path.join(path, program)
-            if is_exe(exe_file):
-                return exe_file
-
-    return None
-            
 
 def download_to_file(remote, local, mode='wb', debugfnc=None):
     try:
@@ -378,6 +361,8 @@ def url_exist(url, timeout=20):
         conn = httplib.HTTPConnection(site, timeout=timeout)
         conn.request('HEAD', path)
         response = conn.getresponse()
+        #print response.getheaders()
+        print response.getheader('accept-ranges')
     except Exception:
         print traceback.print_exc()
         return False
@@ -386,6 +371,32 @@ def url_exist(url, timeout=20):
     return response.status in (200, 301, 302)
 
 
+def check_seekable_url(video_url):
+    if response.getheader('accept-ranges') is not None:
+        return True
+    else:
+        return False
+    
+def chckCpu():
+    what = "mipsel"
+    try:
+        cpu = open("/proc/cpuinfo", "r").read()
+        if cpu.find("sh4") != -1:
+            what = "sh4"
+    except: pass
+    return what
+
+def getPlayer():
+    if os.path.isdir('usr/lib/gstreamer-0.10'):
+        print '[ArchivCZSK] founded gstreamer'
+        return 'gstreamer'
+    else:
+        if os.path.isfile('/lib/libeplayer2.so') or os.path.isfile('/lib/libeplayer3.so'):
+            print '[ArchivCZSK] founded eplayer'
+            return 'eplayer'
+        print '[ArchivCZKS] cannot found player libraries, assuming gstreamer'
+        return 'gstreamer'
+    
 def check_program(program):
     
     def is_file(fpath):
@@ -413,7 +424,7 @@ def check_program(program):
                 return exe_file
     return None
 
-  
+
 def convert_png_to_8bit(png_path, pngquant_path='pngquant'):
     pngquant = check_program(pngquant_path)
     if pngquant is None:

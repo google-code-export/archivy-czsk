@@ -27,6 +27,14 @@ class unzip:
     def __init__(self, verbose = False, percent = 10):
         self.verbose = verbose
         self.percent = percent
+        
+    
+    def extract2(self,file,dir):
+
+        z = zipfile.ZipFile(file)
+        z.extractall(dir)
+    
+    
 
        
     def extract(self, file, dir):

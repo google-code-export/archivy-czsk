@@ -5,16 +5,14 @@ Created on 10.9.2012
 '''
 import Queue
 import threading
+
 from twisted.internet import defer
 from twisted.python import log, context, failure
 
 from enigma import eTimer
 from Components.config import config
+from Plugins.Extensions.archivCZSK import log
 from Plugins.Extensions.archivCZSK.engine.exceptions import archiveException as exceptions
-
-def debug(info):
-    if config.plugins.archivCZSK.debug.value:
-        print '[ArchivCZSK] Task ', info.encode('utf-8')
         
 # object for stopping workerThread        
 WorkerStop = object()
@@ -34,13 +32,12 @@ def callFromThread(func):
     def wrapped(*args, **kwargs):
         
         def _callFromThread():
-            debug("_callFromThread")
             result = defer.maybeDeferred(func, *args, **kwargs)
             result.addBoth(fnc_in_queue.put)
             
         fnc_out_queue.put(_callFromThread)
         result = fnc_in_queue.get()
-        debug("result is %s" % str(result))
+        log.debug("result is %s" % str(result))
         if isinstance(result, failure.Failure):
             result.raiseException()
         return result
@@ -55,9 +52,9 @@ class WorkerThread(threading.Thread):
         self.q = fnc_queue
 
     def run(self):
-        debug("WorkerThread, waiting for function to execute")
+        log.debug("WorkerThread, waiting for function to execute")
         o = self.q.get()
-        debug("getting function")
+        log.debug("getting function")
         while o is not WorkerStop:
             ctx, function, args, kwargs, onResult = o
             del o
@@ -83,10 +80,10 @@ class WorkerThread(threading.Thread):
             del ctx, onResult, result
 
             o = self.q.get()
-        debug("working thread stopped")
+        log.debug("working thread stopped")
             
     def stop(self):
-        debug("stopping working thread")
+        log.debug("stopping working thread")
         self.q.put(WorkerStop)  
         
         
@@ -105,13 +102,13 @@ class Task():
     
     @staticmethod
     def startWorkerThread():
-        debug("starting workerThread")
+        log.debug("starting workerThread")
         Task.worker_thread = WorkerThread(fnc_queue)
         Task.worker_thread.start()
         
     @staticmethod   
     def stopWorkerThread():
-        debug("stopping workerThread")
+        log.debug("stopping workerThread")
         Task.worker_thread.stop()
         Task.worker_thread.join()
         Task.worker_thread = None
@@ -122,7 +119,7 @@ class Task():
         
     
     def __init__(self, callback, fnc, *args, **kwargs):
-        debug('initializing')
+        log.debug('initializing')
         Task.instance = self
         self.running = False
         self._aborted = False
@@ -135,7 +132,7 @@ class Task():
         
           
     def run(self):
-        debug('running')
+        log.debug('running')
         self.running = True
         self._aborted = False
         
@@ -147,26 +144,29 @@ class Task():
         
     #poll this function in reactor thread
     def check_fnc_callback(self):
-        """check non-blockingly in reactor thread if function executed in workerThread 
-            didnt send function which wants to call in reactor thread. 
-            If there is an function, than call it.
+        """
+        check non-blockingly in reactor thread if function executed in workerThread 
+        didnt send function which wants to call in reactor thread. 
+        If there is an function, than call it.
         """
         if self.running:
-            debug("checking function in thread callback")
+            log.debug("checking function in thread callback")
             try:
                 return fnc_out_queue.get(block=False)()
             except Exception:
-                debug("nothing in queue")
+                log.debug("nothing in queue")
         else:
             self.timer.stop()    
         
     def setResume(self):
-        debug("resuming")
+        log.debug("resuming")
         self._aborted = False
     
     def setCancel(self):
-        """setting flag to abort executing compatible task(ie. controlling this flag in task execution)"""
-        debug('cancelling...')
+        """
+        setting flag to abort executing compatible task(ie. controlling this flag in task execution)
+        """
+        log.debug('cancelling...')
         self._aborted = True
             
     def isCancelling(self):
@@ -175,9 +175,9 @@ class Task():
     def onComplete(self, success, result):
         self.running = False
         if success:
-            debug('completed with success')
+            log.debug('completed with success')
         else:
-            debug('completed with failure')
+            log.debug('completed with failure')
         #To make sure that, when we abort processing of task, that its always the same type of failure
         if self._aborted:
             success = False
@@ -186,12 +186,12 @@ class Task():
     
             
     def onCompleteSuccess(self, result):
-        debug('completed with success')
+        log.debug('completed with success')
         self.finish(True, result)
             
     def onCompleteFailure(self, failure):
         self.finish(False, failure)
-        debug('completed with failure')
+        log.debug('completed with failure')
             
     def finish(self, success, result):
         Task.instance = None

@@ -10,6 +10,7 @@ from xml.etree.cElementTree import ElementTree
 from Components.config import config
 
 from Plugins.Extensions.archivCZSK import _
+from Plugins.Extensions.archivCZSK import log
 from Plugins.Extensions.archivCZSK.engine.exceptions.archiveException import CustomInfoError
 from Plugins.Extensions.archivCZSK import settings
 import xmlshortcuts 
@@ -17,15 +18,8 @@ from tools import task, util
 from downloader import DownloadManager
 from items import PVideo, PFolder, PDownload, Stream, RtmpStream, PExit
 
-
-
 VIDEO_EXTENSIONS = ['.avi', '.mkv', '.mp4', '.flv', '.mpg', '.mpeg', '.wmv']
-SUBTITLES_EXTENSIONS = ['.srt']
- 
-
-def debug(text):
-    if config.plugins.archivCZSK.debug.getValue():
-        print '[ArchivCZSK] contentprovider', text.encode('utf-8')        
+SUBTITLES_EXTENSIONS = ['.srt']    
         
 class ContentProvider(object):
     def __init__(self, downloads_path):
@@ -73,10 +67,10 @@ class ContentProvider(object):
     
     def remove_download(self, item):
         if item is not None and isinstance(item, PDownload):
-            debug('removing item %s from disk' % item.name)
+            log.debug('removing item %s from disk' % item.name)
             os.remove(item.path.encode('utf-8'))
         else:
-            debug('cannot remove item %s from disk, not PDownload instance' % str(item))
+            log.info('cannot remove item %s from disk, not PDownload instance', str(item))
             
         
     def download(self, item, startCB, finishCB, playDownload=False):
@@ -88,7 +82,7 @@ class ContentProvider(object):
                                            live=item.live, destination=self.downloads_path,
                                            startCB=startCB, finishCB=finishCB, quiet=quiet, playDownload=playDownload)
         if item.subs is not None and item.subs != '':
-            debug('subtitles link: %s' % item.subs)
+            log.debug('subtitles link: %s' , item.subs)
             subs_file_path = os.path.join(self.downloads_path, os.path.splitext(d.filename)[0] + '.srt')
             util.download_to_file(item.subs, subs_file_path)
         if d is not None:
@@ -158,32 +152,32 @@ class VideoAddonContentProvider(ContentProvider):
             return
         
         self.video_addon.include()
-        debug("trying to resolve dependencies for %s" % (self.video_addon))
+        log.info("trying to resolve dependencies for %s" , self.video_addon)
         for dependency in self.video_addon.requires:
             addon_id, version = dependency['addon'], dependency['version']
-            debug("%s requires %s addon, version %s" % (self.video_addon, addon_id, version))
+            log.info("%s requires %s addon, version %s" , self.video_addon, addon_id, version)
             if archivczsk.ArchivCZSK.has_addon(addon_id):
                 tools_addon = archivczsk.ArchivCZSK.get_addon(addon_id)
-                debug("required %s founded" % tools_addon)
+                log.info("required %s founded" , tools_addon)
                 if  not util.check_version(tools_addon.version, version):
-                    debug("version %s>=%s" % (tools_addon.version, version))
+                    log.debug("version %s>=%s" , tools_addon.version, version)
                     self.dependencies.append(tools_addon)
                 else:
-                    debug("version %s<=%s" % (tools_addon.version, version))
+                    log.debug("version %s<=%s" , tools_addon.version, version)
                     if strict:
-                        debug("cannot execute %s " % self.video_addon)
+                        log.error("cannot execute %s " , self.video_addon)
                         raise Exception("Cannot execute addon %s, dependency %s version %s needs to be at least version %s" 
                                         % (self.video_addon, tools_addon.id, tools_addon.version, version))
                     else:
-                        debug("skipping")
+                        log.debug("skipping")
                         continue
             else:
-                debug("required %s addon not founded" % addon_id)
+                log.info("required %s addon not founded" , addon_id)
                 if strict:
-                    debug("cannot execute %s addon" % self.video_addon)
+                    log.info("cannot execute %s addon" , self.video_addon)
                     raise Exception("Cannot execute %s, missing dependency %s" % self.video_addon, addon_id)
                 else:
-                    debug("skipping")
+                    log.debug("skipping")
         self.resolved_dependencies = True
         self.include_dependencies()
         
@@ -193,7 +187,7 @@ class VideoAddonContentProvider(ContentProvider):
             self.addon_sys.add_addon(addon)
                  
     def release_dependencies(self):
-        debug("trying to release dependencies for %s" % self.video_addon)
+        log.debug("trying to release dependencies for %s" , self.video_addon)
         for addon in self.dependencies:
             addon.deinclude()
         self.addon_sys.clear_addons()
@@ -204,7 +198,7 @@ class VideoAddonContentProvider(ContentProvider):
         self.resolve_dependecies(strict=True)
         self.clear_list()
         
-        debug('get_content params:%s' % str(params))
+        #log.debug('get_content params:%s' % str(params))
         self.content_deferred = defer.Deferred()
         self.content_deferred.addCallbacks(successCB, errorCB)
         
@@ -214,12 +208,21 @@ class VideoAddonContentProvider(ContentProvider):
     
     def run_script(self, session, params):
         script_path = os.path.join(self.video_addon.path, self.video_addon.script)
-        execfile(script_path, {'session':session, 'params':params, '__file__':script_path, 'sys':self.addon_sys, 'os':os})
+        #globals_dict = 
+        execfile(script_path, {'session':session,
+                               'params':params,
+                               '__file__':script_path,
+                               'sys':self.addon_sys, 'os':os})
+        #print globals_dict, locals_dict
+        #globals_dict.clear()
+        #locals_dict.clear()
+        #del globals_dict
+        #del locals_dict
         
     def _get_content_cb(self, success, result):
-        debug('get_content_cb success:%s result: %s' % (success, result))
+        log.debug('get_content_cb success:%s result: %s' % (success, result))
         if success:
-            debug("successfully loaded %d items" % len(self.gui_item_list[0]))
+            log.debug("successfully loaded %d items" % len(self.gui_item_list[0]))
             lst_itemscp = [[], None, {}]
             lst_itemscp[0] = self.gui_item_list[0][:]
             lst_itemscp[0].insert(0, PExit())
@@ -256,6 +259,9 @@ class VideoAddonContentProvider(ContentProvider):
     
     def save_shortcuts(self):
         self.shortcuts.writeFile()
+        
+    def close(self):
+        self.video_addon = None
     
     
     
@@ -300,7 +306,7 @@ class StreamContentProvider(ContentProvider):
                 play_delay = channel.findtext('playDelay')
             
                 if name is None or stream_url is None:
-                    debug('skipping stream, cannot find name or url')
+                    log.debug('skipping stream, cannot find name or url')
                     continue
                 if picon is None: pass
                 if playpath is None: playpath = u''
@@ -310,7 +316,7 @@ class StreamContentProvider(ContentProvider):
                 if live_stream is None: live_stream = True
                 else: live_stream = not live_stream == 'False'
                 if rtmp_buffer is None: rtmp_buffer = int(config.plugins.archivCZSK.videoPlayer.liveBuffer.getValue())
-                if player_buffer is None: player_buffer = int(config.plugins.archivCZSK.videoPlayer.mipselPlayer.buffer.getValue())
+                if player_buffer is None: player_buffer = int(config.plugins.archivCZSK.videoPlayer.bufferSize.getValue())
                 if play_delay is None: play_delay = int(config.plugins.archivCZSK.videoPlayer.playDelay.getValue())
             
                 if stream_url.startswith('rtmp'):
@@ -351,16 +357,16 @@ class StreamContentProvider(ContentProvider):
             
         
     def save_streams(self):
-        debug('saving streams to %s' % self.streams_path)
+        log.debug('saving streams to %s' , self.streams_path)
         ElementTree(self.xmlRootElement).write(self.streams_path)
     
     def remove_stream(self, stream):
-        debug('removing stream %s' % stream.name)
+        log.debug('removing stream %s' , stream.name)
         self.stream.root_xml.remove(stream.xml)
         del stream
             
     def remove_folder(self, folder):
-        debug('removing folder %s' % folder.name)
+        log.debug('removing folder %s' , folder.name)
         self.stream_root.remove(folder.xml)
         
         

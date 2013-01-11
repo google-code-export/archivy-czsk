@@ -4,11 +4,11 @@ Created on 21.10.2012
 @author: marko
 '''
 import os, traceback, sys, imp
-
 from Tools.LoadPixmap import LoadPixmap
 from Components.config import config, ConfigSubsection, ConfigSelection, ConfigYesNo, ConfigText, ConfigDirectory, configfile, getConfigListEntry
 
 from tools import util, parser
+from Plugins.Extensions.archivCZSK import log
 from Plugins.Extensions.archivCZSK import settings
 from Plugins.Extensions.archivCZSK.resources.repositories import config as addon_config
 from Plugins.Extensions.archivCZSK.gui import menu
@@ -16,12 +16,6 @@ from Plugins.Extensions.archivCZSK.gui import info
 from Plugins.Extensions.archivCZSK.gui import shortcuts
 from Plugins.Extensions.archivCZSK.gui import download
 from contentprovider import VideoAddonContentProvider
-
-
-def debug(text):
-    if config.plugins.archivCZSK.debug.getValue():
-        print '[ArchivCZSK] Addon', text.encode('utf-8')
-
 
 class Addon(object):
     
@@ -38,7 +32,7 @@ class Addon(object):
         self.path = info.path
         self.relative_path = os.path.relpath(self.path, repository.path)
         
-        debug("initializing %s" % self)
+        log.info("initializing %s" % self)
 
         self._updater = repository._updater
         self.__need_update = False
@@ -65,6 +59,7 @@ class Addon(object):
     def __repr__(self):
         return "%s(%s %s)" % (self.__class__.__name__, self.name, self.version)
         
+        
     def update(self):
         if self.__need_update:
             ret = self._updater.update_addon(self)
@@ -89,7 +84,7 @@ class Addon(object):
         try:
             setting = getattr(self.settings.main, '%s' % setting)
         except Exception, e:
-            debug('%s cannot retrieve setting %s\nreason %s' % (self, setting, str(e)))
+            log.debug('%s cannot retrieve setting %s\nreason %s', self, setting, str(e))
         else:
             return setting.getValue()
     
@@ -98,7 +93,7 @@ class Addon(object):
             atr = getattr(self.info, '%s' % info)
         except Exception:
             print traceback.print_exc()
-            debug("get_info cannot retrieve info")
+            log.debug("get_info cannot retrieve info")
             return None
         else:
             return atr
@@ -115,6 +110,13 @@ class Addon(object):
         
     def deinclude(self):
         self.loader.remove_importer()
+        
+    def close(self):
+        self.loader.close()
+        self.info = None
+        self.loader = None
+        self._updater = None
+        self.repository = None
         
         
         
@@ -144,7 +146,7 @@ class ToolsAddon(Addon):
     def __init__(self, info, repository):
         Addon.__init__(self, info, repository)
         self.library = self.info.library
-        debug('%s successfully loaded' % self)
+        log.info('%s successfully loaded', self)
         
         lib_path = os.path.join(self.path, self.library)
         self.loader.add_path(lib_path)
@@ -162,7 +164,7 @@ class VideoAddon(Addon):
         self.shortcuts_path = os.path.join(config.plugins.archivCZSK.dataPath.getValue(), self.id)
         self.provider = VideoAddonContentProvider(self, self.downloads_path, self.shortcuts_path)
             
-        debug('%s successfully loaded' % self)
+        log.info('%s successfully loaded', self)
     
   
     def refresh_provider_paths(self):
@@ -176,6 +178,11 @@ class VideoAddon(Addon):
         
     def open_downloads(self, session, cb):
         download.openAddonDownloads(session, self, cb)
+        
+    def close(self):
+        Addon.close(self)
+        self.provider.close()
+        self.provider = None
 
         
 
@@ -196,17 +203,17 @@ class AddonLanguage(object):
         self.default_language_id = 'en'
         self.current_language_id = 'en'
         self.languages = {}
-        debug("initializing languages of %s" % addon)
+        log.info("initializing languages of %s", addon)
         
         if not os.path.isdir(languages_dir):
-            debug("%s cannot load languages, missing %s directory" % (self, os.path.basename(languages_dir)))
+            log.debug("%s cannot load languages, missing %s directory" % (self, os.path.basename(languages_dir)))
             return
     
         for language_dir in os.listdir(languages_dir):
             language_id = self.get_language_id(language_dir)
             if language_id is None:
-                debug("%s unknown language %s, you need to update Language map to use it" % self, language_dir)
-                debug("skipping language %s" % language_dir)
+                log.debug("%s unknown language %s, you need to update Language map to use it" % self, language_dir)
+                log.debug("skipping language %s" % language_dir)
                 continue
             language_dir_path = os.path.join(languages_dir, language_dir)
             language_file_path = os.path.join(language_dir_path, self._language_filename)
@@ -214,7 +221,7 @@ class AddonLanguage(object):
                 try:
                     el = util.load_xml(language_file_path)
                 except Exception:
-                    debug("skipping language %s" % language_dir)
+                    log.debug("skipping language %s" % language_dir)
                 else:
                     language = {}
                     strings = el.getroot()
@@ -223,11 +230,11 @@ class AddonLanguage(object):
                         text = string.text
                         language[string_id] = text
                     self.languages[language_id] = language
-                    debug("%s language %s was successfully loaded" % (self, language_dir))
+                    log.info("%s language %s was successfully loaded" % (self, language_dir))
                     el = None
             else:
-                debug("%s cannot find language file %s" % (self, language_file_path))
-                debug("skipping language %s" % language_dir)
+                log.info("%s cannot find language file %s" % (self, language_file_path))
+                log.info("skipping language %s" % language_dir)
                 
     def __repr__(self):
         return "%s Language" % self.addon
@@ -249,7 +256,7 @@ class AddonLanguage(object):
         if string_id in self.current_language:
             return self.current_language[string_id]
         else:
-            debug("%s cannot find language id %s in %s language of %s\n returning id of language" % (self, string_id, self.current_language_id))
+            log.debug("%s cannot find language id %s in %s language of %s\n returning id of language" % (self, string_id, self.current_language_id))
             return str(string_id)
         
     
@@ -258,21 +265,24 @@ class AddonLanguage(object):
         
     def set_language(self, language_id):
         if self.has_language(language_id):
-            debug("setting current language %s to %s" % (self.current_language_id, language_id))
+            log.debug("setting current language %s to %s" % (self.current_language_id, language_id))
             self.current_language_id = language_id
             self.current_language = self.languages[language_id]
         else:
-            debug("%s cannot set language %s, language is not available" % (self, language_id))
+            log.debug("%s cannot set language %s, language is not available" % (self, language_id))
             
     def get_language(self):
         return self.current_language_id
+    
+    def close(self):
+        self.addon = None
                     
      
      
 class AddonSettings(object):
     
     def __init__(self, addon, settings_file):
-        debug("initializing settings of addon %s" % addon.name)
+        log.info("initializing settings of addon %s" % addon.name)
         # remove dots from addon.id to resolve issue with load/save config of addon
         addon_id = addon.id.replace('.', '_')
         
@@ -286,7 +296,7 @@ class AddonSettings(object):
         try:
             el = util.load_xml(settings_file)
         except Exception:
-            debug("cannot load %s" % self)
+            log.debug("cannot load %s" % self)
             el = None
         if el is not None:
             settings = el.getroot()
@@ -321,7 +331,7 @@ class AddonSettings(object):
             for subentry in entry['subentries']:
                 self.initialize_entry(self.main, subentry)
                 category['subentries'].append(getConfigListEntry(self.get_label(subentry['label']).encode('utf-8'), subentry['setting_id']))
-            debug("initialized category %s" % str(category))
+            log.debug("initialized category %s", str(category))
             self.categories.append(category)                                      
 
                             
@@ -340,21 +350,21 @@ class AddonSettings(object):
         if entry['type'] == 'labelenum':
             entry['values'] = setting.attrib.get('values')
             
-        debug("getting entry from xml %s" % str(entry))
+        log.debug("getting entry from xml %s" , str(entry))
         return entry
     
     def get_label(self, label):
-        debug('resolving label: %s' % label)
+        log.debug('resolving label: %s', label)
         try:
             string_id = int(label)
         except ValueError:
-            debug("isstring")
+            #log.debug("isstring")
             if isinstance(label, unicode):
-                debug("isunicode %s" % label)
+                #log.debug("isunicode %s" , label)
                 return label
             else:
                 label = util.decode_string(label)
-                debug('decoded label: %s' % label)
+                #log.debug('decoded label: %s' , label)
                 return label
         else:
             label = self.addon.get_localized_string(string_id)
@@ -387,13 +397,16 @@ class AddonSettings(object):
             setattr(setting, entry['id'], ConfigSelection(default=entry['default'], choices=choicelist))
             entry['setting_id'] = getattr(setting, entry['id'])
         else:
-            debug('%s cannot initialize unknown entry %s' % (self, entry['type']))
+            log.debug('%s cannot initialize unknown entry %s' , self, entry['type'])
+            
+    def close(self):
+        self.addon = None
 
 
 class AddonInfo(object):
     
     def __init__(self, info_file):
-        debug("initializing info of addon from %s" % info_file)
+        log.info("initializing info of addon from %s" , info_file)
         
         pars = parser.XBMCAddonXMLParser(info_file)
         addon_dict = pars.parse()
@@ -443,16 +456,19 @@ class AddonInfo(object):
             try:
                 self.changelog = text.decode('windows-1250')
             except Exception:
-                debug('cannot decode c[C]angleog.txt')
+                log.debug('cannot decode c[C]angleog.txt')
                 self.changelog = u''
                 pass
         else:
-            debug('c[C]hangelog.txt missing')
+            log.debug('c[C]hangelog.txt missing')
             self.changelog = u''
                 
                 
     def get_changelog(self):
         return self.changelog
+    
+    def close(self):
+        self.addon = None
     
     
 class AddonLoader():    
@@ -464,12 +480,20 @@ class AddonLoader():
         self.__importer.add_path(path)
     
     def add_importer(self):
-        debug("%s adding importer" % self.addon)
-        sys.meta_path.append(self.__importer)
+        log.debug("%s adding importer" , self.addon)
+        if self.__importer in sys.meta_path:
+            log.debug("%s importer is already in meta_path" % self.addon)
+        else:
+            sys.meta_path.append(self.__importer)
         
     def remove_importer(self):
-        debug("%s removing importer" % self.addon)
+        log.debug("%s removing importer" , self.addon)
         sys.meta_path.remove(self.__importer)
+        
+    def close(self):
+        self.addon = None
+        self.__importer.release_modules()
+        self.__importer = None
         
         
 
@@ -494,30 +518,30 @@ class AddonImporter:
         return "[%s-importer] " % self.name               
 
     def find_module(self, fullname, path):
-        debug("%s import '%s'" % (self, fullname))
+        log.debug("%s import '%s'" , self, fullname)
         
         if fullname in sys.modules:
-            debug("%s found '%s' in sys.modules\nUsing python standard importer" % self, fullname)
+            log.debug("%s found '%s' in sys.modules\nUsing python standard importer" , self, fullname)
             return None
         
         if fullname in self.__modules:
-            debug("%s found '%s' in modules" % (self, fullname))
+            log.debug("%s found '%s' in modules" , self, fullname)
             return self
         try:
             path = self.__path
-            debug("%s finding modul '%s' in %s" % (self, fullname, path))
+            log.debug("%s finding modul '%s' in %s" , self, fullname, path)
             self.__filehandle, self.filename, self.description = imp.find_module(fullname, path)
-            debug("%s found modul '%s' <filename:%s description:%s>" % (self, fullname, self.filename, self.description))
+            log.debug("%s found modul '%s' <filename:%s description:%s>" , self, fullname, self.filename, self.description)
         except ImportError:
-            debug("%s cannot found modul %s" % (self, fullname))
+            log.debug("%s cannot found modul %s" , self, fullname)
             if self.__filehandle: 
                 self.__filehandle.close()
                 self.__filehandle = None
             return None
         if self.__filehandle is None:
-            debug("%s cannot import package '%s', try to append it to sys.path" % (self, fullname))
+            log.debug("%s cannot import package '%s', try to append it to sys.path" , self, fullname)
             raise ImportError
-        debug("%s trying to load module '%s'" % (self, fullname))
+        log.debug("%s trying to load module '%s'" , self, fullname)
         return self
     
     def load_module(self, fullname):
@@ -531,7 +555,7 @@ class AddonImporter:
             if self.__filehandle:
                 self.__filehandle.close()
                 self.__filehandle = None
-        debug("%s importing modul '%s'" % (self, fullname))
+        log.debug("%s importing modul '%s'" , self, fullname)
         mod = self.__modules[fullname] = imp.new_module(fullname)
         mod.__file__ = self.filename
         mod.__loader__ = self
@@ -539,7 +563,7 @@ class AddonImporter:
         del self.description
         try:
             exec code in mod.__dict__
-            debug("%s imported modul '%s'" % (self, fullname))
+            log.debug("%s imported modul '%s'", self, fullname)
         except Exception:
             del self.__modules[fullname]
             raise

@@ -8,14 +8,10 @@ from Components.config import config
 
 from Plugins.Extensions.archivCZSK import settings
 from Plugins.Extensions.archivCZSK import archivczsk
+from Plugins.Extensions.archivCZSK import log
 from addon import AddonInfo, ToolsAddon, VideoAddon
 from tools import parser
 import updater
-
-
-def debug(text):
-    if config.plugins.archivCZSK.debug.getValue():
-        print '[ArchivCZSK] Repository', text.encode('utf-8')
 
 class Repository():
     
@@ -28,7 +24,7 @@ class Repository():
     SUPPORTED_ADDONS = ['video', 'tools']
         
     def __init__(self, config_file):
-        debug("initializing repository from %s" % config_file)
+        log.info("initializing repository from %s" , config_file)
         pars = parser.XBMCAddonXMLParser(config_file)
         repo_dict = pars.parse()
         
@@ -61,7 +57,7 @@ class Repository():
         self._addons = {}
         
         #create updater for repository
-        self._updater = updater.Updater(self, os.path.join(settings.TMP_PATH,self.id))
+        self._updater = updater.Updater(self, os.path.join(settings.TMP_PATH, self.id))
         
         # load installed addons in repository
         for addon_dir in os.listdir(self.addons_path):
@@ -77,8 +73,8 @@ class Repository():
                     addon = VideoAddon(addon_info, self)
                 except Exception:
                     traceback.print_exc()
-                    debug("%s cannot load video addon %s" % (self, addon_dir))
-                    debug("skipping")
+                    log.info("%s cannot load video addon %s" , self, addon_dir)
+                    log.info("skipping")
                     continue
                 else:
                     archivczsk.ArchivCZSK.add_addon(addon)
@@ -90,13 +86,13 @@ class Repository():
                     tools = ToolsAddon(addon_info, self)
                 except Exception:
                     traceback.print_exc()
-                    debug("%s cannot load tools addon %s" % (self, addon_dir))
-                    debug("skipping")
+                    log.info("%s cannot load tools addon %s" , self, addon_dir)
+                    log.info("skipping")
                     continue
                 else:
                     archivczsk.ArchivCZSK.add_addon(tools)
                     self.add_addon(tools)
-        debug("%s successfully loaded" % self)
+        log.info("%s successfully loaded" , self)
         
      
     def __repr__(self):
@@ -109,7 +105,7 @@ class Repository():
         if self.is_supported_addon(addon):
             self._addons[addon.id] = addon
         else:
-            debug("%s cannot add %s" % str(addon))
+            log.debug("%s cannot add %s, not supported addon" , str(addon))
                 
     def is_supported_addon(self, addon):
         if isinstance(addon, VideoAddon):
