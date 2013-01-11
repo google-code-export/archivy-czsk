@@ -16,8 +16,7 @@ except ImportError:
 RTMP_DUMP_PATH = '/usr/bin/rtmpdump'
 WGET_PATH = 'wget'
 USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:14.0) Gecko/20100101 Firefox/14.0.1'
-VIDEO_EXTENSIONS = ('.avi', '.flv', '.mp4', '.mkv', '.mpeg', '.asf', '.wmv', '.divx')
-
+VIDEO_EXTENSIONS = ('.avi', '.flv', '.mp4', '.mkv', '.mpeg', 'mpg', '.asf', '.wmv', '.divx')
 
 
 class DownloadManager(object):
@@ -97,7 +96,17 @@ class DownloadManager(object):
                 else:
                     ext = mimetypes.guess_extension(exttype)
                     if ext is not None:
-                        filename = filename + ext
+                        if ext in VIDEO_EXTENSIONS:
+                            filename = filename + ext
+                        else:
+                            url_ext = '.' + url.split('.')[-1]
+                            if url_ext in VIDEO_EXTENSIONS:
+                                filename = filename + url_ext
+                            else:
+                                # if identified extension is not video extension
+                                # then try to add custom video extension(mp4) to be able to play the file
+                                filename = filename + '.mp4'
+                        
                 filename = filename.replace(' ', '_')
             else:
                 path = urlparse.urlparse(url).path
