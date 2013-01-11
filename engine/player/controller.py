@@ -2,56 +2,25 @@ from enigma import  eTimer
 from Screens.MessageBox import MessageBox
 from Components.config import config
 from Plugins.Extensions.archivCZSK import _
+from Plugins.Extensions.archivCZSK import log
 
 
-def debug(text):
-    if config.plugins.archivCZSK.debug.value:
-        print '[ArchivCZSK] PlayerController', text.encode('utf-8')
-    
-def send_info_message(session, info, timeout=1):
+
+def send_info_message(session, info, timeout=5):
     session.open(MessageBox, info, timeout=timeout, type=MessageBox.TYPE_INFO)
-    
-    
-class Video():
-    def __init__(self, session):
-        self.session = session
-        
-    def __getSeekable(self):
-        service = self.session.nav.getCurrentService()
-        if service is None:
-            return None
-        return service.seek()
-    
-    def getCurrentPosition(self):
-        seek = self.__getSeekable()
-        if seek is None:
-            return None
-        r = seek.getPlayPosition()
-        if r[0]:
-            return None
-        return long(r[1])
-
-    def getCurrentLength(self):
-        seek = self.__getSeekable()
-        if seek is None:
-            return None
-        r = seek.getLength()
-        if r[0]:
-            return None
-        return long(r[1])
-    
 
 class VideoPlayerController(object):
-    """External Video Player Controller for video playback
-    
-        @param session: reference to active session for info messages
-        @param download: reference for active download to control "download and play"
-        @param video_check_interval: set video check interval in seconds
-        @param seekable: set if video playing in videoplayer is seekable
-        @param pausable: set if video playing in videoplayer is pausable 
+    """
+    External Video Player Controller for video playback
+    @param session: reference to active session for info messages
+    @param download: reference for active download to control "download and play"
+    @param video_check_interval: set video check interval in seconds
+    @param seekable: set if video playing in videoplayer is seekable
+    @param pausable: set if video playing in videoplayer is pausable 
     """
     def __init__(self, session, download=None, video_check_interval=5, buffer_time=10, seekable=True, pausable=True, autoplay=True):
         self.video_player = None
+        self.video = None
         self.session = session
         self.download = download
         
@@ -86,17 +55,9 @@ class VideoPlayerController(object):
         self.seek_limit = 140 * 90000 
         
         # timers for checking and buffering
-        self.check_timer = eTimer()
-        self.check_timer.callback.append(self.check_position)
-        self.check_timer.callback.append(self._update_download_status)
-        self.check_timer.callback.append(self._update_info_bar)
+        self.check_timer = None
         self.check_timer_running = False
-        
-        
-        self.buffering_timer = eTimer()
-        self.buffering_timer.callback.append(self.check_position)
-        self.buffering_timer.callback.append(self._update_download_status)
-        self.buffering_timer.callback.append(self._update_info_bar)
+        self.buffering_timer = None
         self.buffering_timer_running = False
         
         self.buffered_percent = 0
@@ -104,28 +65,42 @@ class VideoPlayerController(object):
         
         self.download_position = 0
         self.player_position = 0
-        self.video_length = 0 
-        self.video_length_total = 0
+        self.video_length = None 
+        self.video_length_total = None
         
-        debug('initializing %s' % self)
+        log.info('initializing %s', self)
         
     def __repr__(self):
         return "downloading: %s, video_check_interval:%ss buffer_time: %s seekable: %s pausable: %s autoplay: %s" % \
                 (self.download is not None, self.video_check_interval, self.buffer_time, self.seekable, self.pausable, self.autoplay)
         
-    
-    def set_video_player(self, video_player):
+    def start(self, video_player, play_and_download):
         self.video_player = video_player
-        video_length_total = video_player.getCurrentLength()
-        if video_length_total is not None:
-            self.video_length_total = video_length_total
+        self.video = video_player.video
+        
+        self.video_length_total = self.video.getCurrentLength()
         self.update_video_length()
+        
+        # only start video check when we have total length
+        if play_and_download and self.video_length_total:
+            
+            self.buffering_timer = eTimer()
+            self.buffering_timer.callback.append(self.check_position)
+            self.buffering_timer.callback.append(self._update_download_status)
+            self.buffering_timer.callback.append(self._update_info_bar)
+            
+            self.check_timer = eTimer()
+            self.check_timer.callback.append(self.check_position)
+            self.check_timer.callback.append(self._update_download_status)
+            self.check_timer.callback.append(self._update_info_bar)
+            
+            self.start_video_check()
           
     def set_video_check_interval(self, interval):
         self.check_video_interval = interval
     
     def start_video_check(self):
-        debug('starting video_checking')
+        log.debug('starting video_checking')
         self.check_timer.start(self.video_check_interval)
         self.check_timer_running = True
         
@@ -133,20 +108,20 @@ class VideoPlayerController(object):
         self.check_position()
         
     def stop_video_check(self):
-        debug('stopping video_checking')
+        log.debug('stopping video_checking')
         if self.check_timer_running:
             self.check_timer.stop()
             self.check_timer_running = False
         
     def start_buffer_check(self):
-        debug('starting buffer_checking')
+        log.debug('starting buffer_checking')
         self.buffering_timer.start(self.buffer_check_interval)
         self.buffering_timer_running = True
         
         self.download_interval_check = self.buffer_check_interval
         
     def stop_buffer_check(self):
-        debug('stopping buffer_checking')
+        log.debug('stopping buffer_checking')
         if self.buffering_timer_running:
             self.buffering_timer.stop()
             self.buffering_timer_running = False
@@ -161,33 +136,36 @@ class VideoPlayerController(object):
         sec = self.pts_to_sec(pts)
         m, s = divmod(sec, 60)
         h, m = divmod(m, 60)
-        return (h, m, s)
+        return h, m, s
+            
 
     
     def get_download_position(self):
+        if self.video_length_total is None:
+            return None
+            
         download_pts = long(float(self.download.getCurrentLength()) / float(self.download.length) * self.video_length_total)
-        debug('download_time: %dh:%02dm:%02ds' % self.pts_to_hms(download_pts))
+        log.debug('download_time: %dh:%02dm:%02ds' , self.pts_to_hms(download_pts))
         self.video_length = download_pts
         return download_pts
         
     def get_player_position(self):
-        player_pts = self.video_player.getCurrentPosition()
+        player_pts = self.video.getCurrentPosition()
         
         if player_pts is None:
-            debug('cannot retrieve player_position')
+            log.debug('cannot retrieve player_position')
             return None
         else:
-            #debug('player_position: %lu' % player_pts)
-            debug('player_time: %dh:%02dm:%02ds' % self.pts_to_hms(player_pts))
+            #log.debug('player_position: %lu' % player_pts)
+            log.debug('player_time: %dh:%02dm:%02ds' , self.pts_to_hms(player_pts))
             self.player_position = player_pts
             return player_pts
     
     def update_video_length(self):
         if self.download is None or self.download.downloaded:
-            if self.video_length == 0:
-                video_length = self.video_player.getCurrentLength()
-                if video_length is not None:
-                    self.video_length = video_length
+            if self.video_length is None:
+                if self.video_length_total is not None:
+                    self.video_length = self.video_length_total
         else:
             self.video_length = self.get_download_position()
             
@@ -208,50 +186,49 @@ class VideoPlayerController(object):
         
     
     def _update_info_bar(self):
-        debug('updating infobar')
+        log.debug('updating infobar')
+        if self.video_length is None:
+            buffer_slider_percent = 0
+        else:
+            buffer_slider_percent = int(float(self.video_length) / float(self.video_length_total) * 100)
+        info = {
+                    'buffer_percent':self.buffered_percent,
+                    'buffer_secondsleft':self.buffered_time,
+                    'buffer_size':self.buffer_time,
+                    'download_speed':self.download.status.speed,
+                    'buffer_slider':buffer_slider_percent,
+                    'bitrate':0
+                }
+        self.video_player.updateInfobar(info)
         
-        buffering = not self._buffered
-        buffered_percent = self.buffered_percent
-        buffered_time = self.buffered_time
-        buffered_video_length = self.video_length
-        downloading = self.download.running
-        download_speed = self.download.status.speed       
-        self.video_player.updateInfobar(downloading=downloading,
-                                        download_speed=download_speed,
-                                        buffering=buffering,
-                                        buffered_length=buffered_video_length,
-                                        buffer_percent=buffered_percent,
-                                        buffer_seconds=buffered_time
-                                        )
-        
-    # not sure why but original MP doSeek method does nothing, so I use on seeking only doSeekRelative
+    # not sure why but riginal MP doSeek method does nothing, so I use on seeking only doSeekRelative
     def _do_seek(self, pts):
-        debug('seeking to %dh:%02dm:%02ds' % self.pts_to_hms(pts))
+        log.debug('seeking to %dh:%02dm:%02ds' , self.pts_to_hms(pts))
         self.video_player.doSeek(pts)
     
     def _do_seek_relative(self, pts):
-        debug('seeking to %dh:%02dm:%02ds' % self.pts_to_hms(pts + self.player_position))
+        log.debug('seeking to %dh:%02dm:%02ds' , self.pts_to_hms(pts + self.player_position))
         self.video_player._doSeekRelative(pts)
         
     def _unpause_service(self):
-        debug('unpausing service')
+        log.debug('unpausing service')
         self.video_player._unPauseService()
         
     def _pause_service(self):
-        debug('pausing service')
+        log.debug('pausing service')
         self.video_player._pauseService()
     
     def _do_eof_internal(self, playing):
-        debug('stopping timers_eof')
+        log.debug('stopping timers_eof')
         if self.check_timer_running and hasattr(self, "check_timer"):
             self.check_timer.stop()
         if self.buffering_timer_running and hasattr(self, "buffering_timer"):
             self.buffering_timer.stop()
-        debug('do_eof_internal')
+        log.debug('do_eof_internal')
         self.video_player._doEofInternal(playing)
         
     def _exit_video_player(self):
-        debug('stopping timers_exit')
+        log.debug('stopping timers_exit')
         if self.check_timer_running:
             self.check_timer.stop()
         if self.buffering_timer_running:
@@ -259,7 +236,7 @@ class VideoPlayerController(object):
             
         del self.check_timer
         del self.buffering_timer
-        debug('exiting service')
+        log.debug('exiting service')
         self.video_player._exitVideoPlayer()
 
 #           Video Controller Actions called by Video Player
@@ -295,24 +272,24 @@ class VideoPlayerController(object):
                 else:
                     pts_reserve = pts + self.time_limit + self.seek_limit
                     if self.is_pts_available(pts_reserve):
-                        debug("position available")
+                        log.debug("position available")
                         self._do_seek_relative(relative_pts)
                     else:
                     #position is not yet available so seek where possible
-                        debug("position not available")
+                        log.debug("position not available")
                         if pts > self.video_length:
-                            debug("trying to seek where possible...")
+                            log.debug("trying to seek where possible...")
                             possible_seek = self.video_length - player_position - self.time_limit - self.seek_limit
                             if possible_seek > 0:
                                 self._do_seek_relative(possible_seek)
                             else:
                                 send_info_message(self.session, _("Cannot seek, not enough video is downloaded"), 2)
-                                debug("cannot seek, not enough video is downloaded")
+                                log.debug("cannot seek, not enough video is downloaded")
                         else:
                             self._do_seek_relative(-player_position)
             
             else:
-                debug('seeking without control')
+                log.debug('seeking without control')
                 self._do_seek_relative(relative_pts)
                 
     def pause_service(self):
@@ -350,6 +327,9 @@ class VideoPlayerController(object):
                 return
             
             download_position = self.get_download_position()
+            if download_position is None:
+                return
+            
             buffered_time = download_position - player_position - self.time_limit
             
             if buffered_time < 0:
@@ -364,7 +344,7 @@ class VideoPlayerController(object):
             
             # We have to wait, so pause video
             if self.buffered_percent < 5:
-                debug('buffering %d' % self.buffered_percent)
+                log.debug('buffering %d' , self.buffered_percent)
                 self._buffered = False
                 
                 if not self.is_video_paused():
@@ -378,7 +358,7 @@ class VideoPlayerController(object):
                     
             # We can unpause video
             elif self.buffered_percent > 90:
-                debug('buffered %d' % self.buffered_percent)
+                log.debug('buffered %d' , self.buffered_percent)
                 self._buffered = True
                 
                 if self.is_video_paused() and not self._user_pause:

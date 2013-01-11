@@ -8,55 +8,65 @@ from Components.Label import Label
 from Components.config import config
 from Plugins.Extensions.archivCZSK import _
 
-def debug(data):
-    if config.plugins.archivCZSK.debug.getValue():
-        print '[ArchivCZSK] Infobar:', data.encode('utf-8')
+def BtoKB(byte):
+    return int(float(byte) / float(1024))
+    
+def BtoMB(byte):
+    return float(float(byte) / float(1024 * 1024))
 
-class CustomPlayerInfobar(object):
+class ArchivCZSKMoviePlayerInfobar(object):
     def __init__(self):
         self["buffer_slider"] = ProgressBar()
-        self["buffer_percent"] = Label(_("N/A"))
+        self["buffer_size_label"] = Label(_("Buffer size"))
+        self["buffer_size"] = Label(_("0"))
         self["buffer_label"] = Label("Buffer")
+        self["buffer_state"] = Label(_("N/A"))
         self["download_label"] = Label(_("Speed"))
         self["download_speed"] = Label(_("N/A"))
-        self.onFirstExecBegin.append(self.resetBufferSlider) 
+        self["bitrate_label"] = Label(_("Bitrate"))
+        self["bitrate"] = Label(_(""))
+        self.onFirstExecBegin.append(self.__resetBufferSlider) 
         
-    def resetBufferSlider(self):
-        debug("reseting buffer slider")
+    def __resetBufferSlider(self):
         self["buffer_slider"].setValue(0)    
         
     def setBufferSliderRange(self, video_length):
-        debug('setting buffer slider range to 0-%lu' % video_length)
-        
         #doesnt work
-        self.bufferSlider.setRange([(0), (video_length)])
+        self["buffer_slider"].setRange([(0), (video_length)])
         
+    def __updateBufferSecondsLeft(self, seconds, limit=20):
+        if seconds <= limit:
+            self['buffer_state'].setText("%ss" % seconds)
+        else:
+            self['buffer_state'].setText(">%ss" % limit)
         
-    def BtoKB(self, byte):
-        return int(float(byte) / float(1024))
-    
-    def BtoMB(self, byte):
-        return int(float(byte) / float(1024 * 1024))
+    def __updateBufferPercent(self, percent):
+        self['buffer_state'].setText("%s%%" % percent)
         
-    def updateInfobar(self, downloading=False, download_speed=0, buffering=False, buffered_length=0, buffer_percent=0, buffer_seconds=0):
-            print self["buffer_slider"].getRange(), self["buffer_slider"].getValue()
-            debug("buffering: %s buffered %d buffered_video_length %lu downloading %s download_speed %lu" % \
-               (str(buffering), buffer_percent, buffered_length, str(downloading), download_speed))
-            if downloading:
-                self["download_label"].setText(_("Downloading"))
-                self["download_speed"].setText("%d KB/s" % self.BtoKB(download_speed))
-                if self.video_length == 0:
-                    buff = 0
-                else:
-                    buff = int(float(buffered_length) / float(self.video_length) * 100)
-                self["buffer_slider"].setValue(buff)
-            else:
-                self["download_label"].setText("")
-                self["download_speed"].setText("")
-            if buffer_seconds > 50:
-                self["buffer_percent"].setText(">50s")
-            elif buffer_seconds < 0:
-                self["buffer_percent"].setText("%ss" % 0)
-            else:
-                self["buffer_percent"].setText("%ss" % buffer_seconds)
-            #self["buffer_percent"].setText("%s %%" % buffer_percent)
+    def __updateBufferSize(self, size):
+        self['buffer_size'].setText("%d KB" % size)
+        
+    def __updateBufferSlider(self, percent):
+        self["buffer_slider"].setValue(percent)
+        
+    def __updateBitrate(self, value):
+        self["bitrate"].setText("%d KB/s" % BtoKB(value))
+        
+    def __updateDownloadSpeed(self, speed):
+        speedKB = BtoKB(speed)
+        if speedKB <= 1000 and speedKB > 0:
+            self['download_speed'].setText(("%d KB/s" % speedKB))
+        elif speedKB > 1000:
+            self['download_speed'].setText(("%.2f MB/s" % BtoMB(speed)))
+        else:
+            self['download_speed'].setText(("%d KB/s" % 0))
+        
+    def updateInfobar(self, info, bufferStateMode=0, limit=50):
+        if bufferStateMode == 0:
+            self.__updateBufferPercent(info['buffer_percent'])
+        else:
+            self.__updateBufferSecondsLeft(info['buffer_secondsleft'], limit)
+        self.__updateBufferSize(info['buffer_size'])
+        self.__updateDownloadSpeed(info['download_speed'])
+        self.__updateBitrate(info['bitrate'])
+        self.__updateBufferSlider(info['buffer_slider'])

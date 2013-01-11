@@ -5,13 +5,16 @@ Created on 20.3.2012
 @author: marko
 '''
 import os
-from subprocess import Popen, PIPE, STDOUT
 
-from enigma import  eServiceCenter, iServiceInformation, eServiceReference, iSeekableService, iPlayableService, iPlayableServicePtr, eTimer, eConsoleAppContainer
+from subprocess import Popen, PIPE, STDOUT
+from twisted.internet import defer
+
+from enigma import  eServiceCenter, iServiceInformation, eServiceReference, iSeekableService, iPlayableService, iPlayableServicePtr, eTimer, eConsoleAppContainer, getDesktop
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
 from Screens.InfoBar import MoviePlayer
 from Screens.HelpMenu import HelpableScreen
+from Screens.ChoiceBox import ChoiceBox
 
 from Screens.InfoBarGenerics import InfoBarShowHide, \
 	InfoBarSeek, InfoBarAudioSelection, InfoBarAdditionalInfo, InfoBarNotifications, \
@@ -21,223 +24,410 @@ from Screens.InfoBarGenerics import InfoBarShowHide, \
 from Components.ServiceEventTracker import ServiceEventTracker, InfoBarBase
 from Components.ActionMap import HelpableActionMap
 
+from Components.Sources.Boolean import Boolean
 from Components.ProgressBar import ProgressBar
 from Components.Label import Label
 from Components.ServiceEventTracker import ServiceEventTracker
 from Components.ActionMap import HelpableActionMap
 from Components.config import config, ConfigInteger, ConfigSubsection
 from Components.AVSwitch import AVSwitch
+from Components.Sources.StaticText import StaticText
 
 
 from subtitles.subtitles import SubsSupport
 from controller import VideoPlayerController
-from infobar import CustomPlayerInfobar
+from infobar import ArchivCZSKMoviePlayerInfobar
 
 from Plugins.Extensions.archivCZSK import _
+from Plugins.Extensions.archivCZSK import log
 from Plugins.Extensions.archivCZSK.engine.items import RtmpStream
 from Plugins.Extensions.archivCZSK.engine.tools import util
 from Plugins.Extensions.archivCZSK.engine.exceptions.archiveException import CustomInfoError, CustomError
 from Plugins.Extensions.archivCZSK.gui.base import BaseArchivCZSKScreen
 
-def debug(data):
-	if config.plugins.archivCZSK.debug.getValue():
-		print '[ArchivCZSK] Player:', data.encode('utf-8')
-
 RTMPGW_PATH = '/usr/bin/rtmpgw'
 NETSTAT_PATH = 'netstat'
 
-class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, CustomPlayerInfobar, InfoBarBase, InfoBarShowHide, \
+
+class Video(object):
+	def __init__(self, session, serviceTryLimit=20):
+		self.session = session
+		self.service = None
+		self.__serviceTimer = eTimer()
+		self.__serviceTimerTryDelay = 500 #ms
+		self.__serviceTryTime = 0
+		self.__serviceTryLimit = serviceTryLimit * 1000
+		self.__deferred = defer.Deferred()
+		
+
+		
+	def startService(self):
+		"""
+		get real start of service
+		@return: deferred, fires success when gets service or errback when dont get service in time limit
+		"""
+		
+		
+		def fireDeferred():
+			self.__deferred.callback(None)
+			self.__deferred = None
+			
+		def fireDeferredErr():
+			self.__deferred.errback(None)
+			self.__deferred = None
+			
+		def getService():
+			if self.__deferred is None:
+				return
+			
+			if self.service is None:
+				if self.__serviceTryTime < self.__serviceTryLimit:
+					self.__serviceTimer.start(self.__serviceTimerTryDelay, True)
+				else:
+					del self.__serviceTimer
+					fireDeferredErr()
+			else:
+				del self.__serviceTimer
+				fireDeferred()
+			return self.__deferred
+				
+		def setService():
+			self.__serviceTryTime += self.__serviceTimerTryDelay
+			self.service = self.session.nav.getCurrentService()
+			getService()
+		
+		self.__serviceTimer.callback.append(setService)
+		getService()
+		return self.__deferred	
+		
+	
+		
+	
+	def __getSeekable(self):
+		if self.service is None:
+			return None
+		return self.service.seek()
+	
+	def getCurrentPosition(self):
+		seek = self.__getSeekable()
+		if seek is None:
+			return None
+		r = seek.getPlayPosition()
+		if r[0]:
+			return None
+		return long(r[1])
+
+	def getCurrentLength(self):
+		seek = self.__getSeekable()
+		if seek is None:
+			return None
+		r = seek.getLength()
+		if r[0]:
+			return None
+		return long(r[1])
+	
+	def getName(self):
+		if self.service is None:
+			return ''
+		return self.session.nav.getCurrentlyPlayingServiceReference().getPath().split('/')[-1]
+		
+
+####################################################
+
+class ArchivCZSKMoviePlayerSummary(Screen):
+	skin = """
+	<screen position="0,0" size="132,64">
+    <widget source="item" render="Label" position="0,0" size="132,64" font="Regular;15" halign="center" valign="center" />
+	</screen>"""
+
+	def __init__(self, session, parent):
+		Screen.__init__(self, session)
+		self["item"] = StaticText("")
+
+	def updateOLED(self, what):
+		self["item"].setText(what)
+		
+class ArchivCZSKLCDScreen(Screen):
+	skin = (
+	"""<screen name="ArchivCZSKLCDScreen" position="0,0" size="132,64" id="1">
+		<widget name="text1" position="4,0" size="132,35" font="Regular;16"/>
+		<widget name="text3" position="4,36" size="132,14" font="Regular;10"/>
+		<widget name="text4" position="4,49" size="132,14" font="Regular;10"/>
+	</screen>""",
+	"""<screen name="ArchivCZSKLCDScreen" position="0,0" size="96,64" id="2">
+		<widget name="text1" position="0,0" size="96,35" font="Regular;14"/>
+		<widget name="text3" position="0,36" size="96,14" font="Regular;10"/>
+		<widget name="text4" position="0,49" size="96,14" font="Regular;10"/>
+	</screen>""")
+
+	def __init__(self, session, parent):
+		Screen.__init__(self, session)
+		self["text1"] = Label("ArchivCZSK")
+		self["text3"] = Label("")
+		self["text4"] = Label("")
+
+	def setText(self, text, line):
+		if len(text) > 10:
+			if text[-4:] == ".mp3":
+				text = text[:-4]
+		textleer = "    "
+		text = text + textleer * 10
+		if line == 1:
+			self["text1"].setText(text)
+		elif line == 3:
+			self["text3"].setText(text)
+		elif line == 4:
+			self["text4"].setText(text)
+		
+
+# some older e2 images dont have this infobar, source from taapat-enigma2-pli
+class InfoBarAspectSelection: 
+	STATE_HIDDEN = 0 
+	STATE_ASPECT = 1 
+	STATE_RESOLUTION = 2 
+	def __init__(self): 
+		self["AspectSelectionAction"] = HelpableActionMap(self, "InfobarAspectSelectionActions",
+ 			{ 
+ 				"aspectSelection": (self.ExGreen_toggleGreen, _("Aspect list...")),
+ 			}) 
+
+		self.__ExGreen_state = self.STATE_HIDDEN 
+
+	def ExGreen_doAspect(self): 
+		self.__ExGreen_state = self.STATE_ASPECT 
+		self.aspectSelection() 
+
+	def ExGreen_doResolution(self): 
+		self.__ExGreen_state = self.STATE_RESOLUTION 
+		self.resolutionSelection() 
+
+	def ExGreen_doHide(self): 
+		self.__ExGreen_state = self.STATE_HIDDEN 
+
+	def ExGreen_toggleGreen(self, arg=""): 
+		print self.__ExGreen_state 
+		if self.__ExGreen_state == self.STATE_HIDDEN: 
+			print "self.STATE_HIDDEN" 
+			self.ExGreen_doAspect() 
+		elif self.__ExGreen_state == self.STATE_ASPECT: 
+			print "self.STATE_ASPECT" 
+			self.ExGreen_doResolution() 
+		elif self.__ExGreen_state == self.STATE_RESOLUTION: 
+			print "self.STATE_RESOLUTION" 
+			self.ExGreen_doHide() 
+
+	def aspectSelection(self): 
+		selection = 0 
+		tlist = [] 
+		tlist.append(("Resolution", "resolution")) 
+		tlist.append(("", "")) 
+		tlist.append(("Letterbox", "letterbox")) 
+		tlist.append(("PanScan", "panscan")) 
+		tlist.append(("Non Linear", "non")) 
+		tlist.append(("Bestfit", "bestfit")) 
+
+		mode = open("/proc/stb/video/policy").read()[:-1] 
+		print mode 
+		for x in range(len(tlist)): 
+			if tlist[x][1] == mode: 
+				selection = x 
+
+		keys = ["green", "", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ] 
+
+
+		self.session.openWithCallback(self.aspectSelected, ChoiceBox, title=_("Please select an aspect ratio..."), list=tlist, selection=selection, keys=keys) 
+	def aspectSelected(self, aspect): 
+		if not aspect is None: 
+			if isinstance(aspect[1], str): 
+				if aspect[1] == "resolution":
+					self.ExGreen_toggleGreen()
+				else:
+					open("/proc/stb/video/policy", "w").write(aspect[1]) 
+					self.ExGreen_doHide()
+		return
+	
+	def resolutionSelection(self): 
+
+		xresString = open("/proc/stb/vmpeg/0/xres", "r").read()
+		yresString = open("/proc/stb/vmpeg/0/yres", "r").read()
+		fpsString = open("/proc/stb/vmpeg/0/framerate", "r").read()
+		xres = int(xresString, 16)
+		yres = int(yresString, 16)
+		fps = int(fpsString, 16)
+		fpsFloat = float(fps)
+		fpsFloat = fpsFloat / 1000
+
+
+		selection = 0 
+		tlist = [] 
+		tlist.append(("Exit", "exit")) 
+		tlist.append(("Auto(not available)", "auto")) 
+		tlist.append(("Video: " + str(xres) + "x" + str(yres) + "@" + str(fpsFloat) + "hz", "")) 
+		tlist.append(("--", "")) 
+		tlist.append(("576i", "576i50")) 
+		tlist.append(("576p", "576p50")) 
+		tlist.append(("720p", "720p50")) 
+		tlist.append(("1080i", "1080i50")) 
+		tlist.append(("1080p@23.976hz", "1080p23")) 
+		tlist.append(("1080p@24hz", "1080p24")) 
+		tlist.append(("1080p@25hz", "1080p25")) 
+		
+
+		keys = ["green", "yellow", "blue", "", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ] 
+
+		mode = open("/proc/stb/video/videomode").read()[:-1] 
+		print mode 
+		for x in range(len(tlist)): 
+			if tlist[x][1] == mode: 
+				selection = x 
+
+		self.session.openWithCallback(self.ResolutionSelected, ChoiceBox, title=_("Please select a resolution..."), list=tlist, selection=selection, keys=keys) 
+
+	def ResolutionSelected(self, Resolution): 
+		if not Resolution is None: 
+			if isinstance(Resolution[1], str): 
+				if Resolution[1] == "exit":
+					self.ExGreen_toggleGreen()
+				elif Resolution[1] != "auto":
+					open("/proc/stb/video/videomode", "w").write(Resolution[1]) 
+					from enigma import gFBDC
+					gFBDC.getInstance().setResolution(-1, -1)
+					self.ExGreen_toggleGreen()
+		return 
+
+
+class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePlayerInfobar, InfoBarBase, InfoBarShowHide, \
 		InfoBarSeek, InfoBarAudioSelection, HelpableScreen, InfoBarNotifications, \
 		InfoBarServiceNotifications, InfoBarPVRState, InfoBarCueSheetSupport, InfoBarSimpleEventView, \
 		InfoBarMoviePlayerSummarySupport, \
-		InfoBarServiceErrorPopupSupport):
+		InfoBarServiceErrorPopupSupport, InfoBarAspectSelection):
 	
-		ENABLE_RESUME_SUPPORT = True
-		ALLOW_SUSPEND = True
+	ENABLE_RESUME_SUPPORT = True
+	ALLOW_SUSPEND = True
 	
-		def __init__(self, session, service, subtitles, useCustomInfobar=False):
-			BaseArchivCZSKScreen.__init__(self, session)
-			if config.plugins.archivCZSK.videoPlayer.useDefaultSkin.getValue():
-				self.setSkinName("MoviePlayer")
+	def __init__(self, session, service, subtitles):
+		BaseArchivCZSKScreen.__init__(self, session)
+		self.videoPlayerSetting = config.plugins.archivCZSK.videoPlayer
+		if self.videoPlayerSetting.useDefaultSkin.getValue():
+			self.setSkinName("MoviePlayer")
+		else:
+			HD = getDesktop(0).size().width() == 1280
+			if HD:
+				self.setSkin("ArchivCZSKMoviePlayer_HD")
 			else:
-				if self.HD:
-					self.setSkin("ArchivCZSKMoviePlayer_HD")
-				else:
-					self.setSkin("ArchivCZSKMoviePlayer_SD")
+				self.setSkinName("MoviePlayer")
 			
-			CustomPlayerInfobar.__init__(self)
+		ArchivCZSKMoviePlayerInfobar.__init__(self)
 			
-			self["actions"] = HelpableActionMap(self, "ArchivCZSKMoviePlayerActions",
-            {
-                "aspectChange": (self.aspectratioSelection, _("changing aspect Ratio")),
-                "leavePlayer": (self.leavePlayer, _("leave player?"))
-            }, -3) 
+		self["actions"] = HelpableActionMap(self, "ArchivCZSKMoviePlayerActions",
+        	{
+         	"leavePlayer": (self.leavePlayer, _("leave player?"))
+          	}, -3) 
 			
-			self.__event_tracker = ServiceEventTracker(screen=self, eventmap=
-			{
-				iPlayableService.evStart: self.__serviceStarted,
-				iPlayableService.evUser + 10: self.__evAudioDecodeError,
-				iPlayableService.evUser + 11: self.__evVideoDecodeError,
-				iPlayableService.evUser + 12: self.__evPluginError
-			})
-			
-
-			for x in HelpableScreen, InfoBarShowHide, \
+		self.__event_tracker = ServiceEventTracker(screen=self, eventmap=
+		{
+			iPlayableService.evStart: self.__serviceStarted,
+			iPlayableService.evUser + 10: self.__evAudioDecodeError,
+			iPlayableService.evUser + 11: self.__evVideoDecodeError,
+			iPlayableService.evUser + 12: self.__evPluginError
+		})
+		
+		for x in HelpableScreen, InfoBarShowHide, \
 				InfoBarBase, InfoBarSeek, \
 				InfoBarAudioSelection, InfoBarNotifications, InfoBarSimpleEventView, \
 				InfoBarServiceNotifications, InfoBarPVRState, InfoBarCueSheetSupport, \
 				InfoBarMoviePlayerSummarySupport, \
-				InfoBarServiceErrorPopupSupport:
+				InfoBarServiceErrorPopupSupport, InfoBarAspectSelection:
 				x.__init__(self)
 				
-			SubsSupport.__init__(self, subPath=subtitles, defaultPath=config.plugins.archivCZSK.subtitlesPath.getValue(), forceDefaultPath=True)
-			
-			self.service = service
-				
-			self.returning = False
-			self.video_length = 0
-				
-			self.AVswitch = AVSwitch()
-			self.defaultAVmode = 1#self.getAspectRatioMode()
-			self.currentAVmode = self.defaultAVmode
-			
-			self.onClose.append(self._onClose)
+		SubsSupport.__init__(self, subPath=subtitles, defaultPath=config.plugins.archivCZSK.subtitlesPath.getValue(), forceDefaultPath=True)
+		self.sref = service	
+		self.returning = False
+		self.video_length = 0
+		self.video = Video(session)
+		self.onClose.append(self._onClose)
 		
-		
-		def getAspectRatioMode(self):
-			aspects = {'letterbox':0, 'panscan':1, 'bestfit':2, 'non':3, 'nonlinear':3}
-			mode = open("/proc/stb/video/policy").read()[:-1]
-			return aspects[mode]
-		
-		def _play(self):	
-			self.session.nav.playService(self.service)
-			
-		def __getSeekable(self):
-			service = self.session.nav.getCurrentService()
-			if service is None:
-				return None
-			return service.seek()
-		
-		def __evAudioDecodeError(self):
-			currPlay = self.session.nav.getCurrentService()
-			sAudioType = currPlay.info().getInfoString(iServiceInformation.sUser + 10)
-			print "[__evAudioDecodeError] audio-codec %s can't be decoded by hardware" % (sAudioType)
-			self.session.open(MessageBox, _("This Dreambox can't decode %s streams!") % sAudioType, type=MessageBox.TYPE_INFO, timeout=20)
+	
+	def __evAudioDecodeError(self):
+		currPlay = self.session.nav.getCurrentService()
+		sAudioType = currPlay.info().getInfoString(iServiceInformation.sUser + 10)
+		print "[__evAudioDecodeError] audio-codec %s can't be decoded by hardware" % (sAudioType)
+		self.session.open(MessageBox, _("This Dreambox can't decode %s streams!") % sAudioType, type=MessageBox.TYPE_INFO, timeout=20)
 
-		def __evVideoDecodeError(self):
-			currPlay = self.session.nav.getCurrentService()
-			sVideoType = currPlay.info().getInfoString(iServiceInformation.sVideoType)
-			print "[__evVideoDecodeError] video-codec %s can't be decoded by hardware" % (sVideoType)
-			self.session.open(MessageBox, _("This Dreambox can't decode %s streams!") % sVideoType, type=MessageBox.TYPE_INFO, timeout=20)
+	def __evVideoDecodeError(self):
+		currPlay = self.session.nav.getCurrentService()
+		sVideoType = currPlay.info().getInfoString(iServiceInformation.sVideoType)
+		print "[__evVideoDecodeError] video-codec %s can't be decoded by hardware" % (sVideoType)
+		self.session.open(MessageBox, _("This Dreambox can't decode %s streams!") % sVideoType, type=MessageBox.TYPE_INFO, timeout=20)
 
-		def __evPluginError(self):
-			currPlay = self.session.nav.getCurrentService()
-			message = currPlay.info().getInfoString(iServiceInformation.sUser + 12)
-			print "[__evPluginError]" , message
-			self.session.open(MessageBox, message, type=MessageBox.TYPE_INFO, timeout=20)
+	def __evPluginError(self):
+		currPlay = self.session.nav.getCurrentService()
+		message = currPlay.info().getInfoString(iServiceInformation.sUser + 12)
+		print "[__evPluginError]" , message
+		self.session.open(MessageBox, message, type=MessageBox.TYPE_INFO, timeout=20)
 		
-		def __serviceStarted(self):
-			if self.getCurrentLength() is not None:
-				self.video_length = self.getCurrentLength()
+	def __serviceStarted(self):
+		# we wait for service reference, and then trigger serviceStartedNow/setvice
+		d = self.video.startService()
+		d.addCallbacks(self._serviceStartedReal, self._serviceNotStarted)
+	
+	def _serviceStartedReal(self, callback=None):
+		serviceName = self.video.getName()
+		self.summaries.setText(serviceName, 3)
+		
+	def _serviceNotStarted(self, failure):
+		print 'cannot get service reference'
+		
+	def createSummary(self):
+		return ArchivCZSKLCDScreen
+						
+	def playService(self):
+		self.session.nav.playService(self.sref)
 
-		def getCurrentPosition(self):
-			seek = self.__getSeekable()
-			if seek is None:
-				return None
-			r = seek.getPlayPosition()
-			if r[0]:
-				return None
-			return long(r[1])
+	def leavePlayer(self):
+		self.handleLeave()
+		
+	def doEofInternal(self, playing):
+		log.debug("get EOF playing-%s execing %s" , playing, self.execing)
+		self.exitVideoPlayer()
+		
+	def handleLeave(self):
+		self.is_closing = True
+		self.session.openWithCallback(self.leavePlayerConfirmed, MessageBox, text=_("Stop playing this movie?"), type=MessageBox.TYPE_YESNO)
 
-		def getCurrentLength(self):
-			seek = self.__getSeekable()
-			if seek is None:
-				return None
-			r = seek.getLength()
-			if r[0]:
-				return None
-			return long(r[1])
-		
-		def leavePlayer(self):
-			self.handleLeave()
-		
-		def doEofInternal(self, playing):
-			if not self.execing:
-				return
-			if not playing :
-				return
+	def leavePlayerConfirmed(self, answer):
+		if answer:
 			self.exitVideoPlayer()
-			
-		
-		def handleLeave(self):
-			self.is_closing = True
-			from Screens.ChoiceBox import ChoiceBox
-			self.session.openWithCallback(self.leavePlayerConfirmed, MessageBox, text=_("Stop playing this movie?"), type=MessageBox.TYPE_YESNO)
-					
-		
-		def aspectratioSelection(self):
-			debug("aspect mode %d" % self.currentAVmode)
-			if self.currentAVmode == 1: #letterbox
-				self.AVswitch.setAspectRatio(0)
-				self.currentAVmode = 2
-			elif self.currentAVmode == 2: #panscan
-				self.AVswitch.setAspectRatio(4)
-				self.currentAVmode = 3
-			elif self.currentAVmode == 3: #bestfit
-				self.AVswitch.setAspectRatio(2)
-				self.currentAVmode = 4
-			elif self.currentAVmode == 4: #nonlinear
-				self.AVswitch.setAspectRatio(3)
-				self.currentAVmode = 1
 				
+	def exitVideoPlayer(self):
+		self.setSeekState(self.SEEK_STATE_PLAY) 
+		self.close()
 		
-		def leavePlayerConfirmed(self, answer):
-			if answer:
-				self.exitVideoPlayer()
-				
-		def exitVideoPlayer(self):
-			self.setSeekState(self.SEEK_STATE_PLAY) 
-			self.close()
-		
-		def _onClose(self):
-			pass
-			#self.AVswitch.setAspectRatio(self.defaultAVmode)
+	def _onClose(self):
+		pass
 
-
-class StandardVideoPlayer(SubsSupport, MoviePlayer):
+class StandardVideoPlayer(MoviePlayer):
 	"""Standard MoviePlayer without any modifications"""
 	def __init__(self, session, sref, controller, subtitles):
 		MoviePlayer.__init__(self, session, sref)
-		SubsSupport.__init__(self, subPath=subtitles, alreadyPlaying=True)
-		self.skinName = "MoviePlayer"   
-			
-		
+		#SubsSupport.__init__(self, subPath=subtitles, alreadyPlaying=True)
+		self.skinName = "MoviePlayer" 
+
+
 class CustomVideoPlayer(ArchivCZSKMoviePlayer):
-	def __init__(self, session, sref, videoPlayerController, useVideoController=False, playAndDownload=False, subtitles=None):
+	def __init__(self, session, sref, videoPlayerController, playAndDownload=False, subtitles=None):
 		ArchivCZSKMoviePlayer.__init__(self, session, sref, subtitles)
-		
 		self.videoPlayerController = videoPlayerController
-		self.useVideoController = useVideoController
+		self.useVideoController = config.plugins.archivCZSK.videoPlayer.useVideoController.getValue()
 		self.playAndDownload = playAndDownload
 	
-		self.__event_tracker = ServiceEventTracker(screen=self, eventmap=
-			{
-				iPlayableService.evStart: self.__serviceStarted,
-			})
-		self._play()
-		
-		#self.doSeekRelative = self.__doSeekRelative
-	
-	def __serviceStarted(self):
+	def _serviceStartedReal(self, callback=None):
+		super(CustomVideoPlayer, self)._serviceStartedReal(None)
 		if self.useVideoController:
-			self.videoPlayerController.set_video_player(self)
-			if self.playAndDownload:
-				self.videoPlayerController.start_video_check()
+			self.videoPlayerController.start(self, self.playAndDownload)
 			
 ##################  default MP methods ################
 
-	def __play(self):
-		super(CustomVideoPlayer, self)._play()
 		
 	def _doSeekRelative(self, pts):
 		super(CustomVideoPlayer, self).doSeekRelative(pts)
@@ -255,24 +445,14 @@ class CustomVideoPlayer(ArchivCZSKMoviePlayer):
 		super(CustomVideoPlayer, self).exitVideoPlayer()
 		
 #######################################################
-	
-	def play(self):
-		if self.useVideoController:
-			self.__play()
-		else:
-			self._play()
 		
 	def doSeekRelative(self, pts):
-		print 'dosee krelat ive'
 		if self.useVideoController:
-			print 'using video controller'
 			self.videoPlayerController.do_seek_relative(pts)
 		else:
-			print 'not using video controller'
 			self._doSeekRelative(pts)
 
 	def pauseService(self):
-		print 'pau sing'
 		if self.useVideoController:
 			self.videoPlayerController.pause_service()
 		else:
@@ -299,66 +479,121 @@ class CustomVideoPlayer(ArchivCZSKMoviePlayer):
 			self.videoPlayerController._exit_video_player()
 		else:
 			self._exitVideoPlayer()
-	
-	
 
-class MipselVideoPlayer(CustomVideoPlayer):
-	def __init__(self, session, sref, videoPlayerController, autoPlay, videoBuffer, useVideoController=False, playAndDownload=False, subtitles=None):
-		self.buffering = False
-		self.bufferSeconds = 0
-		self.bufferPercent = 0
-		self.bufferSecondsLeft = 0
-		self.videoBuffer = videoBuffer
-		self.autoPlay = autoPlay
 		
-		CustomVideoPlayer.__init__(self, session, sref, videoPlayerController, useVideoController, playAndDownload, subtitles)
+class GStreamerVideoPlayer(CustomVideoPlayer):
+	def __init__(self, session, sref, videoPlayerController, playAndDownload=False, subtitles=None):
+		CustomVideoPlayer.__init__(self, session, sref, videoPlayerController, playAndDownload, subtitles)
+		self.gstreamerSetting = self.videoPlayerSetting
+		self.useBufferControl = False
+		self.setBufferMode(int(self.gstreamerSetting.bufferMode.getValue()))
+		
 		self.__event_tracker = ServiceEventTracker(screen=self, eventmap=
             {
                 iPlayableService.evBuffering: self.__evUpdatedBufferInfo,
             })
-		streamed = self.session.nav.getCurrentService().streamed()
-		if not self.playAndDownload:
-			if streamed is not None:
-				print '[MipselPlayer] setting buffer size of %d' % self.videoBuffer
-				streamed.setBufferSize(self.videoBuffer)
-
-	#buffer management from airplayer	
+		self.playService()
+		
 	def __evUpdatedBufferInfo(self):
 		if self.playAndDownload:
 			return
-		bufferInfo = self.session.nav.getCurrentService().streamed().getBufferCharge()
-		if bufferInfo[2] != 0:
-			self.bufferSeconds = bufferInfo[4] / bufferInfo[2] #buffer size / avgOutRate
-		else:
-			self.bufferSeconds = 0
-		self.bufferPercent = bufferInfo[0]
-		self.bufferSecondsLeft = self.bufferSeconds * self.bufferPercent / 100
-		if(self.bufferPercent > 90):
+		streamed = self.session.nav.getCurrentService().streamed()
+		if streamed:
+			bufferSeconds = 0
+			bufferSecondsLeft = 0
+			bufferInfo = streamed.getBufferCharge()
+			bufferPercent = bufferInfo[0]
+			bufferSize = bufferInfo[4]
+			downloadSpeed = bufferInfo[1]
+			bitrate = bufferInfo[2]
+			if bitrate > 0:
+				bufferSeconds = bufferSize / bitrate
+				bufferSecondsLeft = bufferSeconds * bufferPercent / 100
+			
+			if(bufferPercent > 95):
 				self.bufferFull()
-		if(self.bufferPercent < 3):
+				
+			if(bufferPercent == 0 and (bufferInfo[1] != 0 and bufferInfo[2] != 0)):
 				self.bufferEmpty()
-		print "[MipselPlayer]", "Buffer", bufferInfo[4], "Info ", bufferInfo[0], "% filled ", bufferInfo[1], "/", bufferInfo[2], " buffered: ", self.bufferSecondsLeft, "s"
-		self.updateInfo()
+				
+			info = {
+					'bitrate':bitrate,
+				    'buffer_percent':bufferPercent,
+				    'buffer_secondsleft':bufferSecondsLeft,
+				    'buffer_size':bufferSize,
+				    'download_speed':downloadSpeed,
+				    'buffer_slider':0
+				   }
+			
+			log.debug("BufferPercent %d\nAvgInRate %d\nAvgOutRate %d\nBufferingLeft %d\nBufferSize %d" 
+					, bufferInfo[0], bufferInfo[1], bufferInfo[2], bufferInfo[3], bufferInfo[4])
+			self.updateInfobar(info)
+	
+	def _serviceStartedReal(self, callback=None):
+		super(GStreamerVideoPlayer, self)._serviceStartedReal(None)
+		bufferSize = int(self.gstreamerSetting.bufferSize.getValue())
+		if bufferSize > 0:
+			self.setBufferSize(bufferSize)
 		
-	
-	def updateInfo(self):
-		downloading = False
-		buffering = self.buffering
-		buffer_time = self.bufferSecondsLeft
-		self.updateInfobar(downloading=downloading, buffering=buffering, buffer_seconds=buffer_time)
-	
+	def setBufferMode(self, mode=None):
+		def createSref(name, path):
+			sref = eServiceReference(4097, 0, path)
+			sref.setName(name)
+			return sref
+		
+		if self.playAndDownload:
+			return
+		path = self.sref.getPath()
+		name = self.sref.getName()
+		# use prefill buffer
+		if mode == 1:
+			log.debug("use prefill buffer")
+			newpath = path + ' buffer=1'
+			self.sref = createSref(name, newpath)
+			
+		# progressive streaming
+		elif mode == 2:
+			log.debug("use progressive streaming")
+			newpath = path + ' buffer=2'
+			self.sref = createSref(name, newpath)
+			
+		elif mode == 3:
+			log.debug("manual control")
+			self.useBufferControl = True
+			
+	def setBufferSize(self, size):
+		# set buffer size for streams in Bytes
+		streamed = self.session.nav.getCurrentService().streamed()
+		if streamed:
+			log.debug("setting buffer size to %s KB", size)
+			size = long(size * 1024)
+			streamed.setBufferSize(size)
+		else:
+			log.debug("cannot set buffer size to %s, service is not streamed")
+			
 	def bufferFull(self):
-		self.buffering = False
-		if self.autoPlay:
+		if self.useBufferControl:
 			if self.seekstate != self.SEEK_STATE_PLAY :
+				log.debug("Buffer filled start playing")
 				self.setSeekState(self.SEEK_STATE_PLAY)
-
+				
 	def bufferEmpty(self):
-		self.buffering = True
-		if self.autoPlay:
+		if self.useBufferControl:
 			if self.seekstate != self.SEEK_STATE_PAUSE :
+				log.debug("Buffer drained pause")
 				self.setSeekState(self.SEEK_STATE_PAUSE)
 
+class EPlayer3VideoPlayer(CustomVideoPlayer):
+	def __init__(self, session, sref, videoPlayerController, playAndDownload=False, subtitles=None):
+		CustomVideoPlayer.__init__(self, session, sref, videoPlayerController, playAndDownload, subtitles) 
+		self.playService()
+		
+
+class EPlayer2VideoPlayer(CustomVideoPlayer):
+	def __init__(self, session, sref, videoPlayerController, playAndDownload=False, subtitles=None):
+		CustomVideoPlayer.__init__(self, session, sref, videoPlayerController, playAndDownload, subtitles) 
+		self.playService()
+	
 ##TO DO				
 class BaseStreamVideoPlayer(ArchivCZSKMoviePlayer):
 	instance = None
@@ -382,7 +617,7 @@ class BaseStreamVideoPlayer(ArchivCZSKMoviePlayer):
 
 			self.streamContentScreen.show()
 		else:
-			debug("cannot switch to stream_list, download is running")
+			log.debug("cannot switch to stream_list, download is running")
 			
 	def leavePlayer(self):
 		if not self.playAndDownload:
@@ -392,7 +627,7 @@ class BaseStreamVideoPlayer(ArchivCZSKMoviePlayer):
 			
 class StreamVideoPlayer():
 	def __init__(self, player):
-		self.player._play()
+		self.player.playService()
 		
 		
 class Player():
@@ -412,9 +647,8 @@ class Player():
 		self.pausable = True
 		
 		self.playDelay = int(config.plugins.archivCZSK.videoPlayer.playDelay.getValue())
-		self.autoPlay = config.plugins.archivCZSK.videoPlayer.mipselPlayer.autoPlay.getValue()
-		self.playerBuffer = int(config.plugins.archivCZSK.videoPlayer.mipselPlayer.buffer.getValue())
-		self.useVideoController = useVideoController 
+		self.autoPlay = config.plugins.archivCZSK.videoPlayer.autoPlay.getValue()
+		self.playerBuffer = int(config.plugins.archivCZSK.videoPlayer.bufferSize.getValue()) 
 			
 		self.it = None
 		self.name = u'unknown stream'
@@ -459,9 +693,6 @@ class Player():
 			if isinstance(self.stream, RtmpStream):
 				self.rtmpBuffer = int(self.stream.rtmpBuffer)
 		
-	def setSubtitles(self, subtitles_path):
-		self.subtitles = subtitles_path	
-		
 	def play(self):
 		"""starts playing video stream"""
 		if self.playUrl is not None:
@@ -487,14 +718,14 @@ class Player():
 			else:
 				self._playStream(str(self.playUrl), self.subtitles)
 		else:
-			debug("nothing to play. You need to set VideoItem first.")
+			log.info("Nothing to play. You need to set VideoItem first.")
 			
 			
 	def playAndDownload(self):
 		"""starts downloading and then playing after playDelay value"""
 		from Plugins.Extensions.archivCZSK.gui.download import DownloadManagerMessages
 		if self.content_provider is None:
-			debug('cannot download.. You need to set your content provider first')
+			log.info('Cannot download.. You need to set your content provider first')
 			return
 		try:
 			self.content_provider.download(self.it, self._showPlayDownloadDelay, DownloadManagerMessages.finishDownloadCB, playDownload=True)
@@ -509,22 +740,22 @@ class Player():
 			self.download = download
 			self._playAndDownloadCB()
 		else:
-			debug("provided download instance is None or not instance of Download")
+			log.info("Provided download instance is None or not instance of Download")
 			
 		
 	def _startRTMPGWProcess(self):
-		debug('starting rtmpgw process')
+		log.debug('starting rtmpgw process')
 		ret = util.check_program(RTMPGW_PATH)
 		if ret is None:
-			debug("Cannot found rtmpgw, make sure that you have installed it, or try to use Video player with internal rtmp support")
+			log.info("Cannot found rtmpgw, make sure that you have installed it, or try to use Video player with internal rtmp support")
 			raise CustomError(_("Cannot found rtmpgw, make sure that you have installed it, or try to use Video player with internal rtmp support"))
 		
 		netstat = Popen(NETSTAT_PATH + ' -tulna', stderr=STDOUT, stdout=PIPE, shell=True)
 		out, err = netstat.communicate()
 		if str(self.port) in out:
-			debug("Port %s is not free" % self.port)
+			log.debug("Port %s is not free" , self.port)
 			self.port = self.port + 1
-			debug('Changing port for rtmpgw to %d' % self.port)
+			log.debug('Changing port for rtmpgw to %d' , self.port)
 		
 		if self.stream is not None:
 			cmd = "%s %s --sport %d" % (RTMPGW_PATH, self.stream.getRtmpgwUrl(), self.port)	
@@ -538,7 +769,7 @@ class Player():
 			rtmpUrl = "'%s'" % urlList[0] + ' '.join(rtmp_url)
 				
 			cmd = '%s --quiet --rtmp %s --sport %d --buffer %d' % (RTMPGW_PATH, rtmpUrl, self.port, self.rtmpBuffer)		
-		debug('rtmpgw server streaming: %s' % cmd)
+		log.debug('rtmpgw server streaming: %s' , cmd)
 		
 		self.rtmpgwProcess = eConsoleAppContainer()
 		self.rtmpgwProcess.appClosed.append(self._exitRTMPGWProcess)
@@ -546,7 +777,7 @@ class Player():
 		
 
 	def _exitRTMPGWProcess(self, status):
-		debug('rtmpgw process exited with status %d' % status)
+		log.debug('rtmpgw process exited with status %d' , status)
 		self.rtmpgwProcess = None	
 								
 			
@@ -554,17 +785,18 @@ class Player():
 		if verifyLink:
 			ret = util.url_exist(streamURL, int(config.plugins.archivCZSK.linkVerificationTimeout.getValue()))
 			if ret is not None and not ret:
-				debug("Video url %s doesnt exist" % streamURL)
+				log.debug("Video url %s doesnt exist" , streamURL)
 				raise CustomInfoError(_("Video url doesnt exist, try to check it on web page of addon if it works."))
 		
 		self.session.nav.stopService()
 		if isinstance(streamURL, unicode):
 			streamURL = streamURL.encode('utf-8')
 		sref = eServiceReference(4097, 0, streamURL)
-		sref.setName(self.name.encode('utf-8'))
+		sref.setName(self.name.encode('utf-8', 'ignore'))
 		
 		videoPlayerSetting = config.plugins.archivCZSK.videoPlayer.type.getValue()
 		videoPlayerController = None
+		playerType = config.plugins.archivCZSK.videoPlayer.detectedType.getValue()
 		useVideoController = config.plugins.archivCZSK.videoPlayer.useVideoController.getValue()
 		
 		if useVideoController:
@@ -576,15 +808,16 @@ class Player():
 			self.session.openWithCallback(self.exit, StandardVideoPlayer, sref, videoPlayerController, subtitlesURL)
 		
 		elif videoPlayerSetting == 'custom':
-			self.session.openWithCallback(self.exit, CustomVideoPlayer, sref, videoPlayerController, \
-										 useVideoController, playAndDownload, subtitlesURL)
-		elif videoPlayerSetting == 'mipsel':
-			self.session.openWithCallback(self.exit, MipselVideoPlayer, sref, videoPlayerController, self.autoPlay, \
-										 self.playerBuffer, useVideoController, playAndDownload, subtitlesURL)
-		else:
-			debug("unknown videoplayer %s" % videoPlayerSetting)
-		
-			
+			if playerType == 'gstreamer':
+				self.session.openWithCallback(self.exit, GStreamerVideoPlayer, sref, videoPlayerController, \
+										 playAndDownload, subtitlesURL)
+			elif playerType == 'eplayer3':
+				self.session.openWithCallback(self.exit, EPlayer3VideoPlayer, sref, videoPlayerController, \
+										playAndDownload, subtitlesURL)
+			elif playerType == 'eplayer2':
+				self.session.openWithCallback(self.exit, EPlayer2VideoPlayer, sref, videoPlayerController, \
+										playAndDownload, subtitlesURL)
+				
 	def _playAndDownloadCB(self, callback=None):
 		#what is downloading is always seekable and pausable
 		self.seekable = True
@@ -607,7 +840,7 @@ class Player():
 		
 		# download is not running already, so we dont continue
 		if not self.download.downloaded and not self.download.running:
-			debug("download not started at all")
+			log.debug("download not started at all")
 			self.exit()
 		else:
 			self.session.openWithCallback(self._playAndDownloadCB, MessageBox, '%s %d %s' % (_('Video starts playing in'), \
@@ -621,12 +854,12 @@ class Player():
 				DownloadManager.getInstance().removeDownload(self.download)
 
 		if self.download.downloaded:
-			self.session.openWithCallback(saveDownload, MessageBox, _("Do you want to save") + ' ' + self.download.name.encode('utf-8')\
+			self.session.openWithCallback(saveDownload, MessageBox, _("Do you want to save") + ' ' + self.download.name.encode('utf-8', 'ignore')\
 										 + ' ' + _("to disk?"), type=MessageBox.TYPE_YESNO)
 			
 		elif not self.download.downloaded and self.download.running:
 			self.session.openWithCallback(saveDownload, MessageBox, _("Do you want to continue downloading") + ' '\
-										 + self.download.name.encode('utf-8') + ' ' + _("to disk?"), type=MessageBox.TYPE_YESNO)
+										 + self.download.name.encode('utf-8', 'ignore') + ' ' + _("to disk?"), type=MessageBox.TYPE_YESNO)
 		else:
 			saveDownload(False)
 
@@ -636,6 +869,7 @@ class Player():
 			self.rtmpgwProcess.sendCtrlC()
 		if self.download is not None:
 			self._askSaveDownloadCB()
+		self.content_provider = None
 		self.session.nav.playService(self.oldService)
 		if self.callback:
 			self.callback()
