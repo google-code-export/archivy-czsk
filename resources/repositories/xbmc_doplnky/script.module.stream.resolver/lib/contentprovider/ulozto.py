@@ -186,10 +186,10 @@ class UloztoContentProvider(ContentProvider):
             self.info('Captcha not provided, done')
             return
 
-        ts = re.search('<input type=\"hidden\" name=\"ts\".+?id=\"frmfreeDownloadForm-ts\".+?value=\"([^\"]+)"', page, re.IGNORECASE | re.DOTALL)
-        cid = re.search('<input type=\"hidden\" name=\"cid\".+?id=\"frmfreeDownloadForm-cid\".+?value=\"([^\"]+)"', page, re.IGNORECASE | re.DOTALL)
-        sign = re.search('<input type=\"hidden\" name=\"sign\".+?id=\"frmfreeDownloadForm-sign\".+?value=\"([^\"]+)"', page, re.IGNORECASE | re.DOTALL)
-        key = re.search('<input type=\"hidden\" name=\"captcha_key\".+?value=\"([^\"]+)"', page, re.IGNORECASE | re.DOTALL)
+        ts = re.search('<input type=\"hidden\" name=\"ts\".+?value=\"([^\"]+)"',page,re.IGNORECASE | re.DOTALL)
+        cid = re.search('<input type=\"hidden\" name=\"cid\".+?value=\"([^\"]+)"',page,re.IGNORECASE | re.DOTALL)
+        sign = re.search('<input type=\"hidden\" name=\"sign\".+?value=\"([^\"]+)"',page,re.IGNORECASE | re.DOTALL)
+        key = re.search('<input type=\"hidden\" name=\"captcha_key\".+?value=\"([^\"]+)"',page,re.IGNORECASE | re.DOTALL)
         if not (sign and ts and cid and key):
             util.error('[uloz.to] - unable to parse required params from page, plugin needs fix')
             return

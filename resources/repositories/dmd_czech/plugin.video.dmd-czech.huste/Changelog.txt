@@ -1,3 +1,5 @@
+2013-01-30:
+  * oprava doplnku
 2012-03-13:
  * pridana moznost prehravani LIVE sportovnich prenosu a zaznamu (netestovana BETA)  
 2011-07-22:

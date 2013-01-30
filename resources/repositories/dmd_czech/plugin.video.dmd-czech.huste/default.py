@@ -13,46 +13,22 @@ icon = os.path.join(home, 'icon.png')
 nexticon = os.path.join(home, 'nextpage.png') 
 
 def OBSAH():
-    addDir('Hudba','http://hudba.huste.tv',1,icon)
-    addDir('Šport','http://sport.huste.tv',4,icon)
-    addDir('Relálie a seriály','http://zabava.huste.tv',2,icon)    
-    addDir('Filmy','http://filmy.huste.tv',3,icon)
-    addDir('Hlášky','http://hlasky.huste.tv',4,icon)
-    addDir('Sport Live & Archiv(BETA)','http://www.huste.tv/services/CurrentLive.xml?nc=6946',11,icon)     
+    #addDir('Hudba','http://hudba.huste.tv',0,1,icon)
+    addDir2('Šport','http://sport.huste.tv',0,4,icon)
+    addDir2('Relácie a seriály','http://zabava.huste.tv',0,4,icon)    
+    addDir2('Filmy','http://filmy.huste.tv',0,4,icon)
+    addDir2('Hlášky','http://hlasky.huste.tv',0,4,icon)
+    addDir2('Sport Live & Archiv(BETA)','http://www.huste.tv/services/CurrentLive.xml?nc=6946',0,11,icon)     
 
-def OBSAH_HUDBA(url):
-    addDir('= Interpreti podle abecedy =','http://hudba.huste.tv',5,icon)
-    PROUZEK(url)
-
-def OBSAH_RELACE(url):
-    addDir('= Podle názvu =','http://zabava.huste.tv',6,icon)
-    PROUZEK(url)
-
-def OBSAH_FILMY(url):
-    addDir('= Filmy podle abecedy =','http://filmy.huste.tv',8,icon)
-    PROUZEK(url)
     
 def PROUZEK(url):
     doc = read_page(url)
-    items = doc.find('div', id='s-secondary')
-    for item in items.findAll('li'):
-        name = item.a['title'].encode('utf-8')
-        url = str(item.a['href']) 
-        addDir(name,url,7,icon)
+    items = doc.find('select', 'j-selectmenu')
+    for item in items.findAll('option'):
+        name = item.getText(" ").encode('utf-8')
+        url2 = url+str(item['value'])
+        addDir2(name,url2,0,7,icon)
 
-def ABC(url):
-    doc = read_page(url)
-    items = doc.find('div', 'b-wrap b-list-alphabet')
-    match = re.compile('<a href="(.+?)" title="(.+?)">').findall(str(items))
-    for link,name in match:
-        addDir(name,link,7,icon)
-
-def FILMY_ABC(url):
-    doc = read_page(url)
-    items = doc.find('div', 'b-wrap b-list-alphabet')
-    match = re.compile('<a href="(.+?)" title="(.+?)">').findall(str(items))
-    for link,name in match:
-        addDir(name,link,9,icon)
         
 def NAZEV(url):
     doc = read_page(url)
@@ -60,78 +36,29 @@ def NAZEV(url):
     for item in items.findAll('li'):
         name = item.a['title'].encode('utf-8')
         url = str(item.a['href']) 
-        addDir(name,url,7,icon)
+        addDir2(name,url,7,icon)
 
     
-def INDEX(url):
-    doc = read_page(url)
-    try:
-        items = doc.find('ul', 'l c')
-        for item in items.findAll('li','i'):
+def INDEX(url,page):
+    
+    doc = read_page(url+'?page='+str(page))
+    items = doc.find('div', 'b-body')
+    for item in items.findAll('li','i collapse'):
             title = item.a['title'].encode('utf-8')
             interpret = item.find('p')
             interpret = interpret.getText(" ").encode('utf-8')
-            url = str(item.a['href']) 
-            thumb = str(item.img['src'])   
-            #print name+interpret,url,thumb
-            name = title+' - '+interpret
-            addDir(name,url,10,thumb)
-    except:        
-        items = doc.find('div', 'b-wrap b-video')
-        items = items.find('ul', 'l c')
-        for item in items.findAll('li','i'):
-            name = item.a['title'].encode('utf-8')
-            interpret = item.find('p')
-            interpret = interpret.getText(" ").encode('utf-8')
-            url = str(item.a['href']) 
+            url2 = str(item.a['href']) 
             thumb = str(item.img['src'])   
             name = title+' - '+interpret
-            #print name+interpret,url,thumb
-            addDir(name,url,10,thumb)
-    try:
-        pager = doc.find('ul', 'j-center m-page')
-        act_page_a = pager.find('li', 'active')
-        act_page = act_page_a.getText(" ").encode('utf-8')
-        for item in pager.findAll('a'):
-            page_url = item['href'].encode('utf-8')
-            page_no = item.getText(" ").encode('utf-8')
-            #print page_url,page_no
-            next_label = '= Strana '+act_page+' >> Další '+page_no+' ='
-            if int(page_no) < int(act_page):
-                continue
-            addDir(next_label,page_url,7,nexticon)
-            #print next_label,page_url
-    except:
-        print 'STRÁNKOVÁNÍ NENALEZENO'
+            if re.search('http', url2, re.U):
+                addDir2(name,url2,0,10,thumb)
+            else:
+                cast_url = urlparse(url)
+                url2 = 'http://'+cast_url[1] + url2
+                addDir2(name,url2,0,10,thumb)
+    page = page + 1
+    addDir2('>> Další strana',url,page,7,nexticon)
 
-def FILMY_INDEX(url):
-    doc = read_page(url)
-    items = doc.find('div', 'b-wrap b-video')
-    items = items.find('ul', 'l c')
-    for item in items.findAll('li','i'):
-            name = item.a['title'].encode('utf-8')
-            interpret = item.find('p')
-            interpret = interpret.getText(" ").encode('utf-8')
-            url = str(item.a['href']) 
-            thumb = str(item.img['src'])   
-            name = name+' - '+interpret
-            #print name+interpret,url,thumb
-            addDir(name,url,10,thumb)
-    try:
-        pager = doc.find('ul', 'j-center m-page')
-        act_page_a = pager.find('li', 'active')
-        act_page = act_page_a.getText(" ").encode('utf-8')
-        for item in pager.findAll('a'):
-            page_url = item['href'].encode('utf-8')
-            page_no = item.getText(" ").encode('utf-8')
-            #print page_url,page_no
-            next_label = '= Strana '+act_page+' >> Další '+page_no+' ='
-            if int(page_no) < int(act_page):
-                continue
-            addDir(next_label,page_url,7,nexticon)
-            #print next_label,page_url
-    except:
-        print 'STRÁNKOVÁNÍ NENALEZENO'
 
 
 def LIVE(url):
@@ -201,14 +128,22 @@ def VIDEOLINK(url,name):
         rtmp_url = tcurl+' playpath='+cesta+' pageUrl='+url+' swfUrl='+swfurl+' swfVfy=true'  
         print name,rtmp_url,thumb[0]
         addLink(name,rtmp_url,thumb[0],name)
+        
+def addDir2(name,url,page,mode,iconimage):
+    addDir(name,url,mode,iconimage,page)
 
 url=None
+page=None
 name=None
 thumb=None
 mode=None
 
 try:
         url=urllib.unquote_plus(params["url"])
+except:
+        pass
+try:
+        page=int(params["page"])
 except:
         pass
 try:
@@ -222,23 +157,12 @@ except:
 
 print "Mode: "+str(mode)
 print "URL: "+str(url)
+print "Page: "+str(page)
 print "Name: "+str(name)
 
 if mode==None or url==None or len(url)<1:
         print ""
         OBSAH()
-       
-elif mode==1:
-        print ""+url
-        OBSAH_HUDBA(url)
-
-elif mode==2:
-        print ""+url
-        OBSAH_RELACE(url)
-
-elif mode==3:
-        print ""+url
-        OBSAH_FILMY(url)
 
 elif mode==4:
         print ""+url
@@ -254,15 +178,9 @@ elif mode==6:
 
 elif mode==7:
         print ""+url
-        INDEX(url)
+        print ""+str(page)
+        INDEX(url,page)
 
-elif mode==8:
-        print ""+url
-        FILMY_ABC(url)
-
-elif mode==9:
-        print ""+url
-        FILMY_INDEX(url)
 
 elif mode==11:
         print ""+url
