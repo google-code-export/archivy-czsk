@@ -50,12 +50,14 @@ class VideoPlayerInfo(object):
                 # some older e2 images not support rtmp
                 # even if there is this library
                 return None
-    def getPlayerName(self):
+    def getName(self):
         if self.type == 'gstreamer':
             return 'GStreamer'
         if self.type == 'eplayer3':
             return 'EPlayer3'
         if self.type == 'eplayer2':
             return 'Eplayer2'
+        
+videoPlayerInfo = VideoPlayerInfo()
             
             

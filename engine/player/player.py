@@ -45,6 +45,7 @@ from Plugins.Extensions.archivCZSK.engine.tools import util
 from Plugins.Extensions.archivCZSK.engine.exceptions.archiveException import CustomInfoError, CustomError
 from Plugins.Extensions.archivCZSK.gui.base import BaseArchivCZSKScreen
 
+SERVICEMP4_ID = 0x1011
 RTMPGW_PATH = '/usr/bin/rtmpgw'
 NETSTAT_PATH = 'netstat'
 
@@ -63,7 +64,7 @@ class Video(object):
 		
 	def startService(self):
 		"""
-		get real start of service
+		Get real start of service
 		@return: deferred, fires success when gets service or errback when dont get service in time limit
 		"""
 		
@@ -178,129 +179,50 @@ class ArchivCZSKLCDScreen(Screen):
 			self["text3"].setText(text)
 		elif line == 4:
 			self["text4"].setText(text)
-		
+			
 
-# some older e2 images dont have this infobar, source from taapat-enigma2-pli
-class InfoBarAspectSelection: 
-	STATE_HIDDEN = 0 
-	STATE_ASPECT = 1 
-	STATE_RESOLUTION = 2 
-	def __init__(self): 
-		self["AspectSelectionAction"] = HelpableActionMap(self, "InfobarAspectSelectionActions",
- 			{ 
- 				"aspectSelection": (self.ExGreen_toggleGreen, _("Aspect list...")),
- 			}) 
-
-		self.__ExGreen_state = self.STATE_HIDDEN 
-
-	def ExGreen_doAspect(self): 
-		self.__ExGreen_state = self.STATE_ASPECT 
-		self.aspectSelection() 
-
-	def ExGreen_doResolution(self): 
-		self.__ExGreen_state = self.STATE_RESOLUTION 
-		self.resolutionSelection() 
-
-	def ExGreen_doHide(self): 
-		self.__ExGreen_state = self.STATE_HIDDEN 
-
-	def ExGreen_toggleGreen(self, arg=""): 
-		print self.__ExGreen_state 
-		if self.__ExGreen_state == self.STATE_HIDDEN: 
-			print "self.STATE_HIDDEN" 
-			self.ExGreen_doAspect() 
-		elif self.__ExGreen_state == self.STATE_ASPECT: 
-			print "self.STATE_ASPECT" 
-			self.ExGreen_doResolution() 
-		elif self.__ExGreen_state == self.STATE_RESOLUTION: 
-			print "self.STATE_RESOLUTION" 
-			self.ExGreen_doHide() 
-
-	def aspectSelection(self): 
-		selection = 0 
-		tlist = [] 
-		tlist.append(("Resolution", "resolution")) 
-		tlist.append(("", "")) 
-		tlist.append(("Letterbox", "letterbox")) 
-		tlist.append(("PanScan", "panscan")) 
-		tlist.append(("Non Linear", "non")) 
-		tlist.append(("Bestfit", "bestfit")) 
-
-		mode = open("/proc/stb/video/policy").read()[:-1] 
-		print mode 
-		for x in range(len(tlist)): 
-			if tlist[x][1] == mode: 
-				selection = x 
-
-		keys = ["green", "", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ] 
-
-
-		self.session.openWithCallback(self.aspectSelected, ChoiceBox, title=_("Please select an aspect ratio..."), list=tlist, selection=selection, keys=keys) 
-	def aspectSelected(self, aspect): 
-		if not aspect is None: 
-			if isinstance(aspect[1], str): 
-				if aspect[1] == "resolution":
-					self.ExGreen_toggleGreen()
-				else:
-					open("/proc/stb/video/policy", "w").write(aspect[1]) 
-					self.ExGreen_doHide()
-		return
+class InfoBarAspectChange:
+	"""
+	Simple aspect ratio changer
+	"""
 	
-	def resolutionSelection(self): 
-
-		xresString = open("/proc/stb/vmpeg/0/xres", "r").read()
-		yresString = open("/proc/stb/vmpeg/0/yres", "r").read()
-		fpsString = open("/proc/stb/vmpeg/0/framerate", "r").read()
-		xres = int(xresString, 16)
-		yres = int(yresString, 16)
-		fps = int(fpsString, 16)
-		fpsFloat = float(fps)
-		fpsFloat = fpsFloat / 1000
-
-
-		selection = 0 
-		tlist = [] 
-		tlist.append(("Exit", "exit")) 
-		tlist.append(("Auto(not available)", "auto")) 
-		tlist.append(("Video: " + str(xres) + "x" + str(yres) + "@" + str(fpsFloat) + "hz", "")) 
-		tlist.append(("--", "")) 
-		tlist.append(("576i", "576i50")) 
-		tlist.append(("576p", "576p50")) 
-		tlist.append(("720p", "720p50")) 
-		tlist.append(("1080i", "1080i50")) 
-		tlist.append(("1080p@23.976hz", "1080p23")) 
-		tlist.append(("1080p@24hz", "1080p24")) 
-		tlist.append(("1080p@25hz", "1080p25")) 
+	def __init__(self):
+		self.AVswitch = AVSwitch()
+		self.defaultAVmode = 3
+		self.currentAVmode = self.defaultAVmode
+		self["aspectChangeActions"] = HelpableActionMap(self, "InfobarAspectChangeActions",
+        	{
+         	"aspectChange":(self.aspectChange, ("changing aspect"))
+          	}, -3)
 		
-
-		keys = ["green", "yellow", "blue", "", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ] 
-
-		mode = open("/proc/stb/video/videomode").read()[:-1] 
-		print mode 
-		for x in range(len(tlist)): 
-			if tlist[x][1] == mode: 
-				selection = x 
-
-		self.session.openWithCallback(self.ResolutionSelected, ChoiceBox, title=_("Please select a resolution..."), list=tlist, selection=selection, keys=keys) 
-
-	def ResolutionSelected(self, Resolution): 
-		if not Resolution is None: 
-			if isinstance(Resolution[1], str): 
-				if Resolution[1] == "exit":
-					self.ExGreen_toggleGreen()
-				elif Resolution[1] != "auto":
-					open("/proc/stb/video/videomode", "w").write(Resolution[1]) 
-					from enigma import gFBDC
-					gFBDC.getInstance().setResolution(-1, -1)
-					self.ExGreen_toggleGreen()
-		return 
+		self.onClose.append(self.__onClose)
+		
+	def aspectChange(self):
+		log.debug("aspect mode %d" , self.currentAVmode)
+		if self.currentAVmode == 1: #letterbox
+			self.AVswitch.setAspectRatio(0)
+			self.currentAVmode = 2
+		elif self.currentAVmode == 2: #panscan
+			self.AVswitch.setAspectRatio(4)
+			self.currentAVmode = 3
+		elif self.currentAVmode == 3: #bestfit
+			self.AVswitch.setAspectRatio(2)
+			self.currentAVmode = 4
+		elif self.currentAVmode == 4: #nonlinear
+			self.AVswitch.setAspectRatio(3)
+			self.currentAVmode = 1
+			
+	def __onClose(self):
+		self.AVswitch.setAspectRatio(2)
+		
+	
 
 
 class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePlayerInfobar, InfoBarBase, InfoBarShowHide, \
 		InfoBarSeek, InfoBarAudioSelection, HelpableScreen, InfoBarNotifications, \
 		InfoBarServiceNotifications, InfoBarPVRState, InfoBarCueSheetSupport, InfoBarSimpleEventView, \
-		InfoBarMoviePlayerSummarySupport, \
-		InfoBarServiceErrorPopupSupport, InfoBarAspectSelection):
+		InfoBarMoviePlayerSummarySupport, InfoBarAspectChange, \
+		InfoBarServiceErrorPopupSupport):
 	
 	ENABLE_RESUME_SUPPORT = True
 	ALLOW_SUSPEND = True
@@ -308,6 +230,9 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePl
 	def __init__(self, session, service, subtitles):
 		BaseArchivCZSKScreen.__init__(self, session)
 		self.videoPlayerSetting = config.plugins.archivCZSK.videoPlayer
+		
+		
+		## set default/non-default skin according to SD/HD mode
 		if self.videoPlayerSetting.useDefaultSkin.getValue():
 			self.setSkinName("MoviePlayer")
 		else:
@@ -316,14 +241,20 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePl
 				self.setSkin("ArchivCZSKMoviePlayer_HD")
 			else:
 				self.setSkinName("MoviePlayer")
-			
+				
+		
+		## init custom infobar (added info about download speed, buffer level..)
 		ArchivCZSKMoviePlayerInfobar.__init__(self)
-			
+		
+		
+		## custom actions for MP	
 		self["actions"] = HelpableActionMap(self, "ArchivCZSKMoviePlayerActions",
         	{
-         	"leavePlayer": (self.leavePlayer, _("leave player?"))
+         	"leavePlayer": (self.leavePlayer, _("leave player?")),
+         	"toggleShow": (self.toggleShow, _("show/hide infobar"))
           	}, -3) 
 			
+		## bindend some video events to functions
 		self.__event_tracker = ServiceEventTracker(screen=self, eventmap=
 		{
 			iPlayableService.evStart: self.__serviceStarted,
@@ -332,19 +263,23 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePl
 			iPlayableService.evUser + 12: self.__evPluginError
 		})
 		
+		# init of all inherited screens
 		for x in HelpableScreen, InfoBarShowHide, \
 				InfoBarBase, InfoBarSeek, \
 				InfoBarAudioSelection, InfoBarNotifications, InfoBarSimpleEventView, \
 				InfoBarServiceNotifications, InfoBarPVRState, InfoBarCueSheetSupport, \
-				InfoBarMoviePlayerSummarySupport, \
-				InfoBarServiceErrorPopupSupport, InfoBarAspectSelection:
+				InfoBarMoviePlayerSummarySupport, InfoBarAspectChange, \
+				InfoBarServiceErrorPopupSupport:
 				x.__init__(self)
-				
+		
+		# init subtitles		
 		SubsSupport.__init__(self, subPath=subtitles, defaultPath=config.plugins.archivCZSK.subtitlesPath.getValue(), forceDefaultPath=True)
+		
+		# to get real start of service, and for queries for video length/position
+		self.video = Video(session)
+		
 		self.sref = service	
 		self.returning = False
-		self.video_length = 0
-		self.video = Video(session)
 		self.onClose.append(self._onClose)
 		
 	
@@ -383,7 +318,7 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePl
 						
 	def playService(self):
 		self.session.nav.playService(self.sref)
-
+		
 	def leavePlayer(self):
 		self.handleLeave()
 		
@@ -537,32 +472,40 @@ class GStreamerVideoPlayer(CustomVideoPlayer):
 		
 	def setBufferMode(self, mode=None):
 		def createSref(name, path):
-			sref = eServiceReference(4097, 0, path)
+			if self.gstreamerSetting.servicemp4.getValue():
+				sref = eServiceReference(SERVICEMP4_ID, 0, path)
+			else:
+				sref = eServiceReference(4097, 0, path)
 			sref.setName(name)
 			return sref
 		
 		if self.playAndDownload:
 			return
-		path = self.sref.getPath()
-		name = self.sref.getName()
+		#path = self.sref.getPath()
+		#name = self.sref.getName()
 		# use prefill buffer
 		if mode == 1:
 			log.debug("use prefill buffer")
-			newpath = path + ' buffer=1'
-			self.sref = createSref(name, newpath)
+		#	newpath = path + ' buffer=1'
+		#	self.sref = createSref(name, newpath)
 			
 		# progressive streaming
 		elif mode == 2:
 			log.debug("use progressive streaming")
-			newpath = path + ' buffer=2'
-			self.sref = createSref(name, newpath)
+		#	newpath = path + ' buffer=2'
+		#	self.sref = createSref(name, newpath)
 			
-		elif mode == 3:
+		if mode == 3:
 			log.debug("manual control")
 			self.useBufferControl = True
 			
 	def setBufferSize(self, size):
 		# set buffer size for streams in Bytes
+		
+		# servicemp4 already set bufferSize
+		if self.gstreamerSetting.servicemp4.getValue():
+			return
+		
 		streamed = self.session.nav.getCurrentService().streamed()
 		if streamed:
 			log.debug("setting buffer size to %s KB", size)
@@ -635,6 +578,7 @@ class Player():
 	def __init__(self, session, callback=None, useVideoController=False, content_provider=None):
 		self.session = session
 		self.content_provider = content_provider
+		self.settings = config.plugins.archivCZSK.videoPlayer
 		self.port = 8902 # streaming port for rtmpgw
 		self.oldService = self.session.nav.getCurrentlyPlayingServiceReference()
 		
@@ -646,9 +590,9 @@ class Player():
 		self.seekable = True 
 		self.pausable = True
 		
-		self.playDelay = int(config.plugins.archivCZSK.videoPlayer.playDelay.getValue())
-		self.autoPlay = config.plugins.archivCZSK.videoPlayer.autoPlay.getValue()
-		self.playerBuffer = int(config.plugins.archivCZSK.videoPlayer.bufferSize.getValue()) 
+		self.playDelay = int(self.settings.playDelay.getValue())
+		self.autoPlay = self.settings.autoPlay.getValue()
+		self.playerBuffer = int(self.settings.bufferSize.getValue()) 
 			
 		self.it = None
 		self.name = u'unknown stream'
@@ -677,15 +621,17 @@ class Player():
 		
 		self.seekable = seekable
 		self.pausable = pausable
+		self.settings.download.setValue("False")
+		self.settings.download.save()
 		
 		if it.stream is not None:
 			self.stream = it.stream
 			
 		if self.stream is None and self.live:
-			self.rtmpBuffer = int(config.plugins.archivCZSK.videoPlayer.liveBuffer.getValue())
+			self.rtmpBuffer = int(self.settings.liveBuffer.getValue())
 			
 		elif self.stream is None and not self.live:
-			self.rtmpBuffer = int(config.plugins.archivCZSK.videoPlayer.archiveBuffer.getValue())
+			self.rtmpBuffer = int(self.settings.archiveBuffer.getValue())
 	
 		elif self.stream is not None:
 			self.playDelay = int(self.stream.playDelay)
@@ -700,12 +646,11 @@ class Player():
 			if self.playUrl.startswith('rtmp'):
 				
 				# internal player has rtmp support
-				if config.plugins.archivCZSK.videoPlayer.seeking.getValue():
+				if self.settings.seeking.getValue():
 					if self.stream is not None:
 						self._playStream(self.stream.getUrl(), self.subtitles, verifyLink=False)
 					else:
 						self._playStream(str(self.playUrl + ' buffer=' + str(self.rtmpBuffer)), self.subtitles, verifyLink=False)
-						
 				# internal player doesnt have rtmp support so we use rtmpgw
 				else:
 					#to make sure that rtmpgw is not running
@@ -724,6 +669,21 @@ class Player():
 	def playAndDownload(self):
 		"""starts downloading and then playing after playDelay value"""
 		from Plugins.Extensions.archivCZSK.gui.download import DownloadManagerMessages
+		#from Plugins.Extensions.archivCZSK.engine.downloader import getFileInfo
+		
+		# we use gstreamer to download stream
+		"""if self.settings.servicemp4.getValue():
+			self.settings.download.setValue("True")
+			self.settings.download.save()
+			filename, length = getFileInfo(self.it.url, self.it.filename)
+			path = os.path.join(self.content_provider.downloads_path, filename)
+			path = path.encode('ascii', 'ignore')
+			log.debug("Download path: %s", path)
+			self.settings.downloadPath.setValue(path)
+			self.settings.downloadPath.save()
+			self._playStream(self.playUrl, self.subtitles)
+			return"""
+		
 		if self.content_provider is None:
 			log.info('Cannot download.. You need to set your content provider first')
 			return
@@ -736,6 +696,7 @@ class Player():
 	def playDownload(self, download):
 		"""starts playing already downloading item"""
 		from Plugins.Extensions.archivCZSK.engine.downloader import Download
+		
 		if download is not None and isinstance(download, Download):
 			self.download = download
 			self._playAndDownloadCB()
@@ -786,24 +747,29 @@ class Player():
 			ret = util.url_exist(streamURL, int(config.plugins.archivCZSK.linkVerificationTimeout.getValue()))
 			if ret is not None and not ret:
 				log.debug("Video url %s doesnt exist" , streamURL)
-				raise CustomInfoError(_("Video url doesnt exist, try to check it on web page of addon if it works."))
+				raise CustomInfoError(_("Video url doesnt exist"))
 		
 		self.session.nav.stopService()
 		if isinstance(streamURL, unicode):
 			streamURL = streamURL.encode('utf-8')
-		sref = eServiceReference(4097, 0, streamURL)
+		
+		# using custom service handler
+		if self.settings.servicemp4.getValue():
+			sref = eServiceReference(SERVICEMP4_ID, 0, streamURL)
+		else:
+			sref = eServiceReference(4097, 0, streamURL)
 		sref.setName(self.name.encode('utf-8', 'ignore'))
 		
-		videoPlayerSetting = config.plugins.archivCZSK.videoPlayer.type.getValue()
+		videoPlayerSetting = self.settings.type.getValue()
 		videoPlayerController = None
-		playerType = config.plugins.archivCZSK.videoPlayer.detectedType.getValue()
-		useVideoController = config.plugins.archivCZSK.videoPlayer.useVideoController.getValue()
+		playerType = self.settings.detectedType.getValue()
+		useVideoController = self.settings.useVideoController.getValue()
 		
 		if useVideoController:
 			videoPlayerController = VideoPlayerController(self.session, download=self.download, \
 													 seekable=self.seekable, pausable=self.pausable)
 		
-		
+		print 'download value', self.settings.download.getValue()
 		if videoPlayerSetting == 'standard':
 			self.session.openWithCallback(self.exit, StandardVideoPlayer, sref, videoPlayerController, subtitlesURL)
 		

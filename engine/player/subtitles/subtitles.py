@@ -16,13 +16,9 @@
 #    
 #################################################################################
 
-import re
 import urllib2
 import os
-import time
 import traceback
-from string import split
-from copy import copy
 from re import compile as re_compile
 from os import path as os_path, listdir
 from twisted.internet import defer
@@ -181,7 +177,8 @@ subtitles_settings.color = ConfigSelection(default="white", choices=choicelist)
 
                       
 class SubsSupport(object):
-    """User class for subtitles
+    """
+    User class for subtitles
     
     @param session: set active session
     @param subPath: set path for subtitles to load
@@ -251,7 +248,9 @@ class SubsSupport(object):
 #########  Public methods ##################
     
     def loadSubs(self, subsPath, newService=True):
-        """loads subtitles from subsPath
+        """
+        loads subtitles from subsPath
+        
         @param subsPath: path to subtitles (http url supported)
         @param newService: set False if service remains the same  
         @return: True if subtitles was successfully loaded
@@ -726,7 +725,7 @@ class SubsEngine(object):
         self.pos = self.pos + 1
         self.skip_timer_running = True
         self.skip_timer.start(self.skip_timer_delay, True)
- 		
+ 
     def skipTimerStop(self):
         self.skip_timer_running = False
         
