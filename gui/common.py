@@ -16,18 +16,17 @@ from enigma import loadPNG, RT_HALIGN_RIGHT, RT_VALIGN_TOP, eSize, eListbox, ePo
 
 from Plugins.Extensions.archivCZSK import settings
 
-PNG_PATH = settings.IMAGE_PATH + '/'
-
 def toUTF8(text):
     if isinstance(text, unicode):
-        return text.encode('utf-8', 'ignore')
+        text = text.encode('utf-8', 'ignore')
     return text
-    
+
+PNG_PATH = settings.IMAGE_PATH + '/'
 
 class PanelList(MenuList):
     def __init__(self, list):
         MenuList.__init__(self, list, False, eListboxPythonMultiContent)
-        self.l.setItemHeight(26)
+        self.l.setItemHeight(28)
         self.l.setFont(0, gFont("Regular", 21))
             
 def PanelListEntryHD(name, idx, png=''):
@@ -81,8 +80,8 @@ class TipBar():
         if startOnShown:
             self.onFirstExecBegin.append(self.startTipTimer)
             
-        self.onStartWork.append(self.stop)
-        self.onStopWork.append(self.start)
+        self.onStartWork.append(self.__stop)
+        self.onStopWork.append(self.__start)
         
         self.onClose.append(self.__exit)
         
@@ -102,12 +101,12 @@ class TipBar():
             self["tip_label"].setText("")
             
             
-    def stop(self):
+    def __stop(self):
         self["tip_pixmap"].hide()
         self["tip_label"].hide()
         self.stopTipTimer()
         
-    def start(self):
+    def __start(self):
         self["tip_pixmap"].show()
         self["tip_label"].show()
         self.startTipTimer()

@@ -298,7 +298,7 @@ class ContentItemHandler(ItemHandler):
     def ask_add_shortcut(self, item):
         self.item = item
         self.session.openWithCallback(self.add_shortcut_cb, MessageBox,
-                                      text=_("Do you want to add") + " " + item.name.encode('utf-8','ignore') + " " + _("shortcut?"),
+                                      text=_("Do you want to add") + " " + item.name.encode('utf-8', 'ignore') + " " + _("shortcut?"),
                                       type=MessageBox.TYPE_YESNO)
         
     def add_shortcut_cb(self, cb=None):
@@ -560,9 +560,9 @@ class VideoAddonsContentScreen(BaseContentScreen, DownloadList, TipBar):
         it = self.getSelectedItem()
         if it is not None:
             self["image"].instance.setPixmap(it.image)
-            self["title"].setText(it.name.encode('utf-8','ignore'))
-            self["author"].setText(_("Author: ") + it.author.encode('utf-8','ignore'))
-            self["version"].setText(_("Version: ") + it.version.encode('utf-8','ignore'))
+            self["title"].setText(it.name.encode('utf-8', 'ignore'))
+            self["author"].setText(_("Author: ") + it.author.encode('utf-8', 'ignore'))
+            self["version"].setText(_("Version: ") + it.version.encode('utf-8', 'ignore'))
             self["about"].setText(it.description.encode('utf-8'))
         else:
             self["image"].instance.setPixmap(None)
@@ -642,8 +642,8 @@ class ContentScreen(BaseContentScreen, DownloadList, TipBar):
         self.onShown.append(self.setWindowTitle)
         
     def setWindowTitle(self):
-        print 'setwindowtitle'
-        self.setTitle(self.addon.name)
+        addon_name = self.addon.name.encode('utf-8')
+        self.setTitle(addon_name)
         
     def openAddonShortcuts(self):
         if not self.working:

@@ -212,13 +212,21 @@ class ArchiveCZSKConfigScreen(BaseArchivCZSKConfigScreen):
     def keyLeft(self):
         ConfigListScreen.keyLeft(self)
         current = self["config"].getCurrent()[1] 
-        if current in [config.plugins.archivCZSK.videoPlayer.type, config.plugins.archivCZSK.linkVerification]:
+        if current in [
+                       config.plugins.archivCZSK.videoPlayer.type,
+                        config.plugins.archivCZSK.linkVerification,
+                        config.plugins.archivCZSK.videoPlayer.servicemp4,
+                        config.plugins.archivCZSK.videoPlayer.bufferMode]:
             self.buildMenu()
 
     def keyRight(self):
         ConfigListScreen.keyRight(self)
         current = self["config"].getCurrent()[1] 
-        if current in [config.plugins.archivCZSK.videoPlayer.type, config.plugins.archivCZSK.linkVerification]:
+        if current in [
+                       config.plugins.archivCZSK.videoPlayer.type,
+                       config.plugins.archivCZSK.linkVerification,
+                       config.plugins.archivCZSK.videoPlayer.servicemp4,
+                       config.plugins.archivCZSK.videoPlayer.bufferMode]:
             self.buildMenu()
           
         
@@ -227,7 +235,7 @@ class AddonConfigScreen(BaseArchivCZSKConfigScreen):
     def __init__(self, session, addon):
         self.session = session
         self.addon = addon
-        self.setup_title = _("Settings of ") + addon.name.encode('utf-8','ignore')
+        self.setup_title = _("Settings of ") + addon.name.encode('utf-8', 'ignore')
         
         # to get addon config including global settings
         categories = addon_config.getArchiveConfigList(addon)
@@ -239,7 +247,7 @@ class AddonConfigScreen(BaseArchivCZSKConfigScreen):
         self.onLayoutFinish.append(self.layoutFinished)
 
     def layoutFinished(self):
-        self.setTitle(_("Settings of") + ' ' + self.addon.name.encode('utf-8','ignore'))
+        self.setTitle(_("Settings of") + ' ' + self.addon.name.encode('utf-8', 'ignore'))
             
     def changelog(self):
         info.showChangelog(self.session, self.addon.name, self.addon.changelog)
