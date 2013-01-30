@@ -18,6 +18,46 @@ WGET_PATH = 'wget'
 USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:14.0) Gecko/20100101 Firefox/14.0.1'
 VIDEO_EXTENSIONS = ('.avi', '.flv', '.mp4', '.mkv', '.mpeg', 'mpg', '.asf', '.wmv', '.divx')
 
+def resetUrllib2Opener():
+    opener = urllib2.build_opener()
+    urllib2.install_opener(opener)
+
+
+
+def getFileInfo(url, filename=None):
+    
+    req = urllib2.Request(url)
+    resp = urllib2.urlopen(req)
+    exttype = resp.info().get('Content-Type')
+    length = resp.info().get('Content-Length')
+    resp.close()
+            
+    if filename is not None:
+        if os.path.splitext(filename)[1] in VIDEO_EXTENSIONS:
+            pass
+        else:
+            ext = mimetypes.guess_extension(exttype)
+            if ext is not None:
+                if ext in VIDEO_EXTENSIONS:
+                    filename = filename + ext
+                else:
+                    url_ext = '.' + url.split('.')[-1]
+                    if url_ext in VIDEO_EXTENSIONS:
+                        filename = filename + url_ext
+                    else:
+                        # if identified extension is not video extension
+                        # then try to add custom video extension(mp4) to be able to play the file
+                        filename = filename + '.mp4'
+                        
+        filename = filename.replace(' ', '_')
+    else:
+        path = urlparse.urlparse(url).path
+        filename = os.path.basename(path)
+        
+    return filename, length
+    
+
+
 
 class DownloadManager(object):
     instance = None
@@ -85,32 +125,8 @@ class DownloadManager(object):
             return d
 
         elif url[0:4] == 'http':
-            req = urllib2.Request(url)
-            resp = urllib2.urlopen(req)
-            exttype = resp.info().get('Content-Type')
-            length = resp.info().get('Content-Length')
-            resp.close()
-            if filename is not None:
-                if os.path.splitext(filename)[1] in VIDEO_EXTENSIONS:
-                    pass
-                else:
-                    ext = mimetypes.guess_extension(exttype)
-                    if ext is not None:
-                        if ext in VIDEO_EXTENSIONS:
-                            filename = filename + ext
-                        else:
-                            url_ext = '.' + url.split('.')[-1]
-                            if url_ext in VIDEO_EXTENSIONS:
-                                filename = filename + url_ext
-                            else:
-                                # if identified extension is not video extension
-                                # then try to add custom video extension(mp4) to be able to play the file
-                                filename = filename + '.mp4'
-                        
-                filename = filename.replace(' ', '_')
-            else:
-                path = urlparse.urlparse(url).path
-                filename = os.path.basename(path)
+            resetUrllib2Opener()
+            filename, length = getFileInfo(url, filename)
             
             # When playing and downloading avi/mkv container then use HTTPTwistedDownload instead of wget
             # Reason is that when we use wget download, downloading file is progressively increasing its size, and ffmpeg isnt updating size of file accordingly
