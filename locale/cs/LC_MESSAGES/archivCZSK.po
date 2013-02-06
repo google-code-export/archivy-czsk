@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: archivCZSK 0.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-11-19 22:41+0100\n"
-"PO-Revision-Date: 2012-11-19 22:44+0100\n"
+"POT-Creation-Date: 2013-02-06 18:27+0100\n"
+"PO-Revision-Date: 2013-02-06 18:37+0100\n"
 "Last-Translator: mx3L <mxfitsat@gmail.com>\n"
 "Language-Team: mx3L\n"
 "MIME-Version: 1.0\n"
@@ -16,107 +16,147 @@ msgstr ""
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Poedit-SearchPath-0: .\n"
 
-#: archivczsk.py:105
+#: archivczsk.py:139
 msgid "Do you want to update"
 msgstr "Chcete aktualizovat"
 
-#: archivczsk.py:105
+#: archivczsk.py:139
 msgid "addons"
 msgstr "doplňky"
 
-#: archivczsk.py:116
+#: archivczsk.py:150
 msgid "Following addons were updated"
 msgstr "Následující doplňky byly úspěšně aktualizovány:"
 
-#: archivczsk.py:141
+#: archivczsk.py:175
 msgid "You need to restart E2. Do you want to restart it now?"
 msgstr "Změny se projeví po restartu E2. Chcete nyní restartovat E2?"
 
-#: settings.py:32
+#: settings.py:42
 msgid "standard player"
 msgstr "Standardní přehrávač"
 
-#: settings.py:32
+#: settings.py:43
 msgid "custom player (subtitle support)"
 msgstr "Upravený přehrávač (podpora titulků)"
 
-#: settings.py:32
-msgid "mipsel player"
-msgstr "Mipsel přehrávač"
+#: settings.py:76
+msgid "default"
+msgstr ""
 
-#: settings.py:88
+#: settings.py:76
+msgid "prefill"
+msgstr ""
+
+#: settings.py:76
+msgid "progressive (need HDD)"
+msgstr "progressive (potřeba HDD)"
+
+#: settings.py:76
+msgid "manual"
+msgstr "manuální"
+
+#: settings.py:116
+msgid "info"
+msgstr ""
+
+#: settings.py:116
+msgid "debug"
+msgstr ""
+
+#: settings.py:155
+msgid "Detected player"
+msgstr "Detekovaný přehrávač"
+
+#: settings.py:156
 msgid "Video player"
 msgstr "Video přehrávač"
 
-#: settings.py:90
+#: settings.py:158
 msgid "Use video controller"
 msgstr "Použít video kontrolér"
 
-#: settings.py:92
-msgid "Video player Buffer"
-msgstr "buffer video přehrávače"
-
-#: settings.py:93
-msgid "AutoPlay"
-msgstr "automaticky přehrávat"
-
-#: settings.py:94
-msgid "Video player with RTMP support"
-msgstr "Video přehrávač s RTMP podporou"
-
-#: settings.py:95
-msgid "TV archive rtmp buffer"
-msgstr "Buffer pro TV archivy"
-
-#: settings.py:96
-msgid "Default live rtmp streams buffer"
-msgstr "Buffer pro živé vysílání"
-
-#: settings.py:97
-msgid "Play after"
-msgstr "Přehrávat po"
-
-#: settings.py:98
+#: settings.py:159
 msgid "Use default skin"
 msgstr "Použi pôvodný skin"
 
-#: settings.py:103
+#: settings.py:161
+msgid "Buffer size"
+msgstr "Velikost bufferu"
+
+#: settings.py:164
+msgid "Use servicemp4"
+msgstr "Použít servicemp4"
+
+#: settings.py:166
+msgid "HTTP Timeout"
+msgstr "HTTP Timeout"
+
+#: settings.py:167
+msgid "Buffer Mode"
+msgstr "Tip Bufferingu"
+
+#: settings.py:168
+msgid "Buffer duration"
+msgstr ""
+
+#: settings.py:170
+msgid "Buffer size on HDD"
+msgstr "Velkost bufferu na HDD"
+
+#: settings.py:172
+msgid "Video player with RTMP support"
+msgstr "Video přehrávač s RTMP podporou"
+
+#: settings.py:173
+msgid "TV archive rtmp buffer"
+msgstr "Buffer pro TV archivy"
+
+#: settings.py:174
+msgid "Default live rtmp streams buffer"
+msgstr "Buffer pro živé vysílání"
+
+#: settings.py:176
+msgid "Play after"
+msgstr "Přehrávat po"
+
+#: settings.py:181
 msgid "Allow auto-update"
 msgstr "Povolit automatickou kontrolu aktualizací"
 
-#: settings.py:104
+#: settings.py:183
 msgid "Debug mode"
 msgstr "Debug mód"
 
-#: settings.py:105
+#: settings.py:184
 msgid "Add to extensions menu"
 msgstr "Přidat do menu rozšíření"
 
-#: settings.py:106
+#: settings.py:185
 msgid "Add to main menu"
 msgstr "Přidat do hlavního menu"
 
-#: settings.py:111
+#: settings.py:190
 msgid "Data path"
 msgstr "Data"
 
-#: settings.py:112
+#: settings.py:191
 msgid "Downloads path"
 msgstr "Stahování"
 
-#: settings.py:113
+#: settings.py:192
 msgid "Subtitles path"
 msgstr "Titulky"
 
-#: settings.py:118
+#: settings.py:197
 msgid "Convert captcha images to 8bit"
 msgstr "Konvertovat captcha obrázky"
 
-#: settings.py:120
+#: settings.py:200
 msgid "Use link verification"
 msgstr "Ověřovat video adresu"
 
-#: settings.py:122
+#: settings.py:202
 msgid "Verification timeout"
 msgstr "timeout ověřování"
 
@@ -128,477 +168,576 @@ msgstr "ArchivCZSK"
 msgid "Playing CZ/SK archives"
 msgstr "přehrávání CZ/SK archivů"
 
-#: engine/client.py:46
+#: client/seeker.py:58
+msgid "Cannot search, archivCZSK is not installed"
+msgstr "Nemohu vyhledávat, archivCZSK vyhledávaní právě probíhá"
+
+#: client/seeker.py:63
+msgid "unknown error"
+msgstr "Neznámá Chyba"
+
+#: client/seeker.py:86
+msgid "Error while trying to retrieve search list"
+msgstr "Chyba nemohu získat, vyhledávaný seznam"
+
+#: client/seeker.py:103
+msgid "You cannot search, archivCZSK Search is already running"
+msgstr "Nemúžete vyhledávat, ArchívCZSK vyhledávaní právě probíhá"
+
+#: client/seeker.py:113
+msgid "Cannot find searcher"
+msgstr "Nemohu najít vyhledávač"
+
+#: engine/client.py:49
 msgid "Please set your search expression"
 msgstr "Prosím vložte hledaný výraz"
 
-#: engine/contentprovider.py:97
+#: engine/contentprovider.py:94
 msgid "Cannot download"
 msgstr "Nemúžu stáhnout"
 
-#: engine/contentprovider.py:97
+#: engine/contentprovider.py:94
 msgid "not supported protocol"
 msgstr "nepodporovaný protokol"
 
-#: engine/player/controller.py:269
+#: engine/player/controller.py:249
 msgid "Its not possible to seek in this video"
 msgstr "Není možné přetáčet v tomhle videu"
 
-#: engine/player/controller.py:309
+#: engine/player/controller.py:289
 msgid "Cannot seek, not enough video is downloaded"
 msgstr "Nemohu přetáčet, nedostatek stáhnutého videa"
 
-#: engine/player/controller.py:320
+#: engine/player/controller.py:300
 msgid "Its not possible to pause this video"
 msgstr "Není možné pozastavit tohle video"
 
-#: engine/player/controller.py:327
+#: engine/player/controller.py:307
 msgid "Cannot unpause, Video is not buffered yet..."
 msgstr "Nemúžu odpauzovat, Nedostatek načteného videa"
 
-#: engine/player/infobar.py:18
 #: engine/player/infobar.py:21
+#: engine/player/subtitles/subtitles.py:141
+msgid "0"
+msgstr ""
+
+#: engine/player/infobar.py:23
+#: engine/player/infobar.py:25
 msgid "N/A"
 msgstr "N/A"
 
-#: engine/player/infobar.py:20
+#: engine/player/infobar.py:24
 msgid "Speed"
 msgstr "Rychlost"
 
-#: engine/player/infobar.py:46
-msgid "Downloading"
-msgstr "Stahování probíhá"
+#: engine/player/infobar.py:26
+msgid "Bitrate"
+msgstr ""
 
-#: engine/player/movieplayer.py:22
-#: engine/player/player.py:72
-#: engine/player/player.py:369
-msgid "changing aspect Ratio"
-msgstr "změna poměru stran"
-
-#: engine/player/movieplayer.py:23
-#: engine/player/player.py:370
-msgid "show/hide subtitles"
-msgstr "zobrazit/skrýt titulky"
-
-#: engine/player/movieplayer.py:24
-#: engine/player/player.py:73
-#: engine/player/player.py:371
+#: engine/player/player.py:221
+#: engine/player/player.py:498
 msgid "leave player?"
 msgstr "ukončit přehrávač?"
 
-#: engine/player/movieplayer.py:108
-msgid "Yes"
-msgstr "Ano"
+#: engine/player/player.py:222
+msgid "show/hide infobar"
+msgstr "zobrazit/skrýt infobar"
 
-#: engine/player/movieplayer.py:109
-msgid "No"
-msgstr "Ne"
-
-#: engine/player/movieplayer.py:112
-#: engine/player/player.py:175
-msgid "Stop playing this movie?"
-msgstr "Ukončit přehrávaní videa?"
-
-#: engine/player/player.py:125
-#: engine/player/player.py:131
+#: engine/player/player.py:258
+#: engine/player/player.py:264
 #, python-format
 msgid "This Dreambox can't decode %s streams!"
 msgstr ""
 
-#: engine/player/player.py:372
+#: engine/player/player.py:299
+msgid "Stop playing this movie?"
+msgstr "Ukončit přehrávaní videa?"
+
+#: engine/player/player.py:496
+msgid "changing aspect Ratio"
+msgstr "změna poměru stran"
+
+#: engine/player/player.py:497
+msgid "show/hide subtitles"
+msgstr "zobrazit/skrýt titulky"
+
+#: engine/player/player.py:499
 #, fuzzy
 msgid "list streams?"
 msgstr "Živé vysílání"
 
-#: engine/player/player.py:520
+#: engine/player/player.py:647
+msgid ""
+"Play and download mode is not supported by all video formats, \n"
+"\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t Player can start behave unexpectedly or not play video at all. \n"
+"\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t Do you want to continue?"
+msgstr ""
+"Mód přehrávaní a stahování není podporován všemi video formáty, \n"
+"Přehrávač se múže chovat abnormálne, nebo nebo nepřehraje video vúbec. \n"
+"Chcete přesto pokračovat?"
+
+#: engine/player/player.py:670
 msgid "Cannot found rtmpgw, make sure that you have installed it, or try to use Video player with internal rtmp support"
 msgstr "Nemôžem nájsť rtmpgw, uistite sa že ho máte nainštlovaný alebo použite video prehrávač s rtmp podporou. "
 
-#: engine/player/player.py:558
-msgid "Video url doesnt exist, try to check it on web page of addon if it works."
-msgstr "Video adresa nejestvuje, skuste ověřit funkčnost na stránce archívu."
+#: engine/player/player.py:708
+msgid "Video url doesnt exist"
+msgstr ""
 
-#: engine/player/player.py:613
+#: engine/player/player.py:773
 msgid "Video starts playing in"
 msgstr "Video se začne přehrávat o..."
 
-#: engine/player/player.py:614
+#: engine/player/player.py:774
 msgid "seconds."
 msgstr "sekúnd."
 
-#: engine/player/player.py:624
+#: engine/player/player.py:784
 msgid "Do you want to save"
 msgstr "Chcete uložit"
 
-#: engine/player/player.py:625
-#: engine/player/player.py:629
+#: engine/player/player.py:785
+#: engine/player/player.py:789
 msgid "to disk?"
 msgstr "na disk?"
 
-#: engine/player/player.py:628
+#: engine/player/player.py:788
 msgid "Do you want to continue downloading"
 msgstr "Chcete pokračovat v stahování"
 
-#: engine/player/subtitles/subtitles.py:67
-#: engine/player/subtitles/subtitles.py:120
+#: engine/player/subtitles/subtitles.py:72
+#: engine/player/subtitles/subtitles.py:146
 #, fuzzy
 msgid "Central and Eastern Europe"
 msgstr "Střední Evropa"
 
-#: engine/player/subtitles/subtitles.py:68
+#: engine/player/subtitles/subtitles.py:73
 #, fuzzy
 msgid "Western Europe"
 msgstr "Střední Evropa"
 
-#: engine/player/subtitles/subtitles.py:69
+#: engine/player/subtitles/subtitles.py:74
 msgid "Russia"
 msgstr ""
 
-#: engine/player/subtitles/subtitles.py:142
+#: engine/player/subtitles/subtitles.py:168
 msgid "red"
 msgstr "červená"
 
-#: engine/player/subtitles/subtitles.py:144
+#: engine/player/subtitles/subtitles.py:170
 msgid "green"
 msgstr "zelená"
 
-#: engine/player/subtitles/subtitles.py:145
+#: engine/player/subtitles/subtitles.py:171
 msgid "purple"
 msgstr "fialová"
 
-#: engine/player/subtitles/subtitles.py:146
+#: engine/player/subtitles/subtitles.py:172
 msgid "yellow"
 msgstr "žlutá"
 
-#: engine/player/subtitles/subtitles.py:147
+#: engine/player/subtitles/subtitles.py:173
 msgid "white"
 msgstr "bílá"
 
-#: engine/player/subtitles/subtitles.py:148
+#: engine/player/subtitles/subtitles.py:174
 msgid "blue"
 msgstr "modrá"
 
-#: engine/player/subtitles/subtitles.py:197
+#: engine/player/subtitles/subtitles.py:231
 #, fuzzy
 msgid "show subtitles menu"
 msgstr "Zobrazit titulky"
 
-#: engine/player/subtitles/subtitles.py:327
+#: engine/player/subtitles/subtitles.py:232
+#, fuzzy
+msgid "increase subtitles delay"
+msgstr "Vybrat titulky"
+
+#: engine/player/subtitles/subtitles.py:233
+#, fuzzy
+msgid "decrease subtitles delay"
+msgstr "Zobrazit titulky"
+
+#: engine/player/subtitles/subtitles.py:448
 msgid "Cannot decode subtitles. Try another encoding group"
 msgstr ""
 
-#: engine/player/subtitles/subtitles.py:336
+#: engine/player/subtitles/subtitles.py:464
 #, fuzzy
 msgid "Cannot parse subtitles"
 msgstr "Vybrat titulky"
 
-#: engine/player/subtitles/subtitles.py:707
+#: engine/player/subtitles/subtitles.py:476
+msgid "Uknown error when processing subtitles"
+msgstr ""
+
+#: engine/player/subtitles/subtitles.py:1024
 msgid "Currently choosed subtitles"
 msgstr "Momentálně vybrané titulky"
 
-#: engine/player/subtitles/subtitles.py:714
+#: engine/player/subtitles/subtitles.py:1031
 msgid "encoding"
 msgstr "kódovaní"
 
-#: engine/player/subtitles/subtitles.py:718
+#: engine/player/subtitles/subtitles.py:1035
 #, fuzzy
 msgid "cannot decode"
 msgstr "Nemúžu stáhnout"
 
-#: engine/player/subtitles/subtitles.py:720
+#: engine/player/subtitles/subtitles.py:1037
 msgid "None"
 msgstr "Žádné"
 
-#: engine/player/subtitles/subtitles.py:722
+#: engine/player/subtitles/subtitles.py:1039
 msgid "Subtitles"
 msgstr "Titulky"
 
-#: engine/player/subtitles/subtitles.py:723
+#: engine/player/subtitles/subtitles.py:1040
 msgid "Choose subtitles"
 msgstr "Vybrat titulky"
 
-#: engine/player/subtitles/subtitles.py:724
+#: engine/player/subtitles/subtitles.py:1041
 msgid "Subtitles settings"
 msgstr "Nastavení titulků"
 
-#: engine/player/subtitles/subtitles.py:726
+#: engine/player/subtitles/subtitles.py:1043
 msgid "Change encoding"
 msgstr "změnit kódovaní?"
 
-#: engine/player/subtitles/subtitles.py:820
-#: engine/player/subtitles/subtitles.py:839
+#: engine/player/subtitles/subtitles.py:1136
+#: engine/player/subtitles/subtitles.py:1155
 msgid "Subtitles setting"
 msgstr "Nastavení titulků"
 
-#: engine/player/subtitles/subtitles.py:830
+#: engine/player/subtitles/subtitles.py:1146
 msgid "Save"
 msgstr "Uložit"
 
-#: engine/player/subtitles/subtitles.py:831
+#: engine/player/subtitles/subtitles.py:1147
 msgid "Cancel"
 msgstr "Zrušit"
 
-#: engine/player/subtitles/subtitles.py:843
+#: engine/player/subtitles/subtitles.py:1159
 msgid "Show subtitles"
 msgstr "Zobrazit titulky"
 
-#: engine/player/subtitles/subtitles.py:844
+#: engine/player/subtitles/subtitles.py:1160
 msgid "Font type"
 msgstr "Font"
 
-#: engine/player/subtitles/subtitles.py:845
+#: engine/player/subtitles/subtitles.py:1161
 msgid "Font size"
 msgstr "Velikost písma"
 
-#: engine/player/subtitles/subtitles.py:846
+#: engine/player/subtitles/subtitles.py:1162
 msgid "Position"
 msgstr "Pozice"
 
-#: engine/player/subtitles/subtitles.py:847
+#: engine/player/subtitles/subtitles.py:1163
 msgid "Color"
 msgstr "Barva"
 
-#: engine/player/subtitles/subtitles.py:848
+#: engine/player/subtitles/subtitles.py:1164
 msgid "Encoding"
 msgstr "kódovaní"
 
-#: engine/player/subtitles/subtitles.py:950
+#: engine/player/subtitles/subtitles.py:1266
 msgid "List of Storage Devices"
 msgstr ""
 
-#: engine/player/subtitles/subtitles.py:952
+#: engine/player/subtitles/subtitles.py:1268
 #, fuzzy
 msgid "Parent Directory"
 msgstr "Vyberte adresář"
 
-#: engine/player/subtitles/subtitles.py:1015
+#: engine/player/subtitles/subtitles.py:1331
 msgid "Choose Subtitles"
 msgstr "Vybrat titulky"
 
-#: gui/base.py:209
-#: gui/base.py:211
+#: gui/base.py:208
+#: gui/base.py:210
 msgid "Error in loading"
 msgstr "Chyba načítaní"
 
-#: gui/base.py:209
+#: gui/base.py:208
 msgid "HTTP Error"
 msgstr "HTTP Chyba"
 
-#: gui/base.py:211
+#: gui/base.py:210
 msgid "URL Error"
 msgstr "URL Chyba"
 
-#: gui/base.py:219
-msgid "Unknown Error"
-msgstr "Neznámá Chyba"
+#: gui/base.py:218
+msgid "Script error, author of this addon needs to update it"
+msgstr ""
 
 #: gui/captcha.py:63
 msgid "Type text of picture"
 msgstr "Opište text obrázku"
 
-#: gui/common.py:49
+#: gui/common.py:58
+#: gui/common.py:75
 msgid "finished"
 msgstr "hotovo"
 
-#: gui/common.py:51
+#: gui/common.py:61
+#: gui/common.py:78
 msgid "finished with errors"
 msgstr "hotovo s chybami"
 
-#: gui/common.py:53
+#: gui/common.py:64
+#: gui/common.py:81
 msgid "downloading"
 msgstr "stahuju..."
 
-#: gui/content.py:116
-#: gui/content.py:517
-#: gui/content.py:626
+#: gui/content.py:114
+#: gui/content.py:523
+#: gui/content.py:637
 msgid "Settings"
 msgstr "Nastavení"
 
-#: gui/content.py:117
+#: gui/content.py:115
 msgid "Changelog"
 msgstr "Změny"
 
-#: gui/content.py:118
-#: gui/content.py:624
-#: gui/content.py:712
+#: gui/content.py:116
+#: gui/content.py:635
+#: gui/content.py:723
 msgid "Downloads"
 msgstr "Stáhnuté soubory"
 
-#: gui/content.py:230
-#: gui/content.py:352
+#: gui/content.py:117
+#: gui/content.py:636
+msgid "Shortcuts"
+msgstr "Záložky"
+
+#: gui/content.py:229
+#: gui/content.py:359
 msgid "Not implemented yet"
 msgstr "Tahle funkce není zatím implementovaná"
 
-#: gui/content.py:258
-#: gui/content.py:342
+#: gui/content.py:257
+#: gui/content.py:345
 msgid "Open"
 msgstr "Otevřít položku"
 
-#: gui/content.py:259
+#: gui/content.py:258
 msgid "Add Shortcut"
 msgstr "Přidat záložku"
 
-#: gui/content.py:262
-#: gui/content.py:345
-#: gui/download.py:132
+#: gui/content.py:261
+#: gui/content.py:348
+#: gui/download.py:251
 msgid "Play"
 msgstr "Přehrát"
 
-#: gui/content.py:263
-#: gui/content.py:346
+#: gui/content.py:262
+#: gui/content.py:349
 msgid "Play and Download"
 msgstr "Přehraj a stahuj"
 
 #: gui/content.py:264
-#: gui/content.py:347
-msgid "Download"
-msgstr "Stáhnout"
+#: gui/content.py:351
+msgid "Download (wget)"
+msgstr "Stáhnout (wget)"
 
-#: gui/content.py:304
+#: gui/content.py:265
+#: gui/content.py:352
+msgid "Download (Twisted)"
+msgstr "Stáhnout (Twisted)"
+
+#: gui/content.py:267
+#: gui/content.py:354
+msgid "Download (rtmpdump)"
+msgstr "Stáhnout (rtmpdump)"
+
+#: gui/content.py:307
 msgid "Do you want to add"
 msgstr "Chcete přidat"
 
-#: gui/content.py:304
+#: gui/content.py:307
 msgid "shortcut?"
 msgstr "záložku?"
 
-#: gui/content.py:348
-#: gui/content.py:711
-#: gui/download.py:133
-#: gui/download.py:232
+#: gui/content.py:355
+#: gui/content.py:722
+#: gui/download.py:252
+#: gui/download.py:352
 msgid "Remove"
 msgstr "Odstranit"
 
-#: gui/content.py:383
+#: gui/content.py:390
 msgid "Loading"
 msgstr "Načítavam..."
 
-#: gui/content.py:486
+#: gui/content.py:493
 msgid "show menu of current addon"
 msgstr "zobrazí informace o doplňku"
 
-#: gui/content.py:514
+#: gui/content.py:520
 msgid "TV archives"
 msgstr "TV archivy"
 
-#: gui/content.py:515
+#: gui/content.py:521
 msgid "Video archives"
 msgstr "Video archivy"
 
-#: gui/content.py:516
+#: gui/content.py:522
 msgid "Live streams"
 msgstr "Živé vysílání"
 
-#: gui/content.py:562
+#: gui/content.py:574
 msgid "Author: "
 msgstr "Autor:"
 
-#: gui/content.py:563
+#: gui/content.py:575
 msgid "Version: "
 msgstr "Verze:"
 
-#: gui/content.py:591
+#: gui/content.py:603
 msgid "Do you want to exit ArchivCZSK?"
 msgstr "Chcete ukončiť archivCZSK?"
 
-#: gui/content.py:605
+#: gui/content.py:616
 msgid "show info in CSFD"
 msgstr "zobrazit informace v CSFD doplňku"
 
-#: gui/content.py:606
+#: gui/content.py:617
 msgid "show additional info"
 msgstr "zobrazit informace"
 
-#: gui/content.py:607
-#: gui/content.py:696
+#: gui/content.py:618
+#: gui/content.py:707
 msgid "show menu of current item"
 msgstr "zobrazí informace o vybrané položce"
 
-#: gui/content.py:625
-msgid "Shortcuts"
-msgstr "Záložky"
-
-#: gui/content.py:716
+#: gui/content.py:727
 msgid "Stream player"
 msgstr "Přehrávač streamú"
 
-#: gui/content.py:717
+#: gui/content.py:728
 msgid "Path Label"
 msgstr "Cesta"
 
-#: gui/content.py:718
+#: gui/content.py:729
 msgid "STREAM INFO"
 msgstr "Informace o streamu"
 
-#: gui/content.py:720
+#: gui/content.py:731
 msgid "PROTOCOL:"
 msgstr "Protokol:"
 
-#: gui/content.py:722
+#: gui/content.py:733
 msgid "PLAY DELAY:"
 msgstr "Přehrávat po:"
 
-#: gui/content.py:725
+#: gui/content.py:736
 msgid "RTMP BUFFER:"
 msgstr "RTMP buffer:"
 
-#: gui/content.py:727
+#: gui/content.py:738
 msgid "PLAYER BUFFER:"
 msgstr "Buffer přehrávače:"
 
-#: gui/download.py:44
-#: gui/download.py:48
-#: gui/download.py:54
+#: gui/download.py:55
+#: gui/download.py:59
+#: gui/download.py:65
 msgid "ArchivCZSK - Download:"
 msgstr "ArchivCZSK - Stahování:"
 
-#: gui/download.py:45
+#: gui/download.py:56
 msgid "successfully finished."
 msgstr "úspěšně dokončeno."
 
-#: gui/download.py:49
+#: gui/download.py:60
 msgid "finished with errors."
 msgstr "skončeno s chybami."
 
-#: gui/download.py:55
+#: gui/download.py:66
 msgid "started."
 msgstr "začalo."
 
-#: gui/download.py:68
-#: gui/download.py:198
+#: gui/download.py:79
+#: gui/download.py:318
 msgid "The file"
 msgstr "Soubor"
 
-#: gui/download.py:79
-msgid "Download Status"
-msgstr "Pruběh stahování"
+#: gui/download.py:88
+msgid "Download progress"
+msgstr "Prúběh stahování"
 
-#: gui/download.py:107
-msgid "Execution Progress:"
-msgstr "Průběh Vykonání:"
+#: gui/download.py:91
+msgid "Size:"
+msgstr "Velikost:"
 
-#: gui/download.py:119
+#: gui/download.py:93
+msgid "Path:"
+msgstr "Cesta:"
+
+#: gui/download.py:95
+msgid "Start time:"
+msgstr "Začátek stahování:"
+
+#: gui/download.py:97
+msgid "Finish time:"
+msgstr "Konec stahování:"
+
+#: gui/download.py:99
+msgid "State:"
+msgstr "Stav:"
+
+#: gui/download.py:101
+msgid "Speed:"
+msgstr "Rychlost:"
+
+#: gui/download.py:168
+msgid "Download succesfully finished"
+msgstr "stahování úspěšně skončilo"
+
+#: gui/download.py:171
+msgid "Download finished with errors"
+msgstr "stahování skončilo s chybami"
+
+#: gui/download.py:174
+msgid "Download running"
+msgstr "stahování probíhá..."
+
+#: gui/download.py:179
+msgid "not finished"
+msgstr ""
+
+#: gui/download.py:204
+msgid "unknown"
+msgstr "??? MB"
+
+#: gui/download.py:204
+#: gui/download.py:206
+msgid "downloaded"
+msgstr "stáhnuto"
+
+#: gui/download.py:238
 msgid "show download list"
 msgstr "zobrazit aktuálně stahované soubory"
 
-#: gui/download.py:140
+#: gui/download.py:259
 msgid "Recent downloads"
 msgstr "Stahované soubory"
 
-#: gui/download.py:170
+#: gui/download.py:290
 msgid "Do you want to cancel"
 msgstr "Chcete zrušit"
 
-#: gui/download.py:182
-#: gui/download.py:262
+#: gui/download.py:302
+#: gui/download.py:381
 msgid "Do you want to remove"
 msgstr "Chcete odstranit"
 
-#: gui/download.py:198
+#: gui/download.py:318
 msgid "is not downloaded yet. Do you want to play it anyway?"
 msgstr "zatím není stažen. Chcete i přesto spustit přehrávaní?"
 
-#: gui/download.py:238
+#: gui/download.py:358
 msgid "downloads"
 msgstr "Stažené soubory"
 
@@ -650,61 +789,121 @@ msgstr "Rùzní"
 msgid "Configuration of ArchivCZSK"
 msgstr "Konfigurace ArchivCZSK"
 
-#: gui/menu.py:230
+#: gui/menu.py:238
 msgid "Settings of "
 msgstr "Nastavení"
 
-#: gui/menu.py:242
+#: gui/menu.py:250
 msgid "Settings of"
 msgstr "Nastavení"
 
-#: gui/menu.py:286
+#: gui/menu.py:294
 msgid "OK"
 msgstr "OK"
 
-#: gui/menu.py:290
+#: gui/menu.py:298
 msgid "Select directory"
 msgstr "Vyberte adresář"
 
-#: gui/menu.py:324
+#: gui/menu.py:332
 msgid "Invalid Location"
 msgstr "Nesprávné umístění"
 
-#: gui/shortcuts.py:27
+#: gui/shortcuts.py:26
 msgid "Shortcut"
 msgstr "Záložky"
 
-#: gui/shortcuts.py:29
+#: gui/shortcuts.py:28
 msgid "Remove shortcut"
 msgstr "Odstranit záložku"
 
-#: gui/shortcuts.py:51
+#: gui/shortcuts.py:50
 msgid "Do you want to delete"
 msgstr "Chcete smazat"
 
-#: resources/repositories/config.py:12
+#: repositories/config.py:12
 msgid "playing"
 msgstr "přehrávaní"
 
-#: resources/repositories/config.py:14
+#: repositories/config.py:14
 msgid "seekable"
 msgstr "video je možné přetáčet"
 
-#: resources/repositories/config.py:15
+#: repositories/config.py:15
 msgid "pausable"
 msgstr "video je možné zastavovat"
 
-#: resources/repositories/config.py:18
+#: repositories/config.py:18
+#, fuzzy
 msgid "download"
-msgstr "Stahování"
+msgstr "Stažené soubory"
 
-#: resources/repositories/config.py:20
+#: repositories/config.py:20
 msgid "download path"
 msgstr "Stahovat do"
 
 #: test/mponline/ta3/default.py:62
 msgid "Live"
 msgstr "živý stream"
+
+#: test/tmp/repository_test/script.module.stream.resolver/lib/contentprovider/doplnkyprovider.py:75
+#, fuzzy
+msgid "New Search"
+msgstr "Nové vyhledávání"
+
+#: test/tmp/repository_test/script.module.stream.resolver/lib/contentprovider/doplnkyprovider.py:87
+#, fuzzy
+msgid "Set your search expression"
+msgstr "Prosím vložte hledaný výraz"
+
+#: test/tmp/repository_test/script.module.stream.resolver/lib/contentprovider/doplnkyprovider.py:103
+msgid "Search"
+msgstr "Hledat"
+
+#: test/tmp/repository_test/script.module.stream.resolver/lib/contentprovider/doplnkyprovider.py:135
+msgid "Previous"
+msgstr "Předcházející"
+
+#: test/tmp/repository_test/script.module.stream.resolver/lib/contentprovider/doplnkyprovider.py:138
+msgid "New"
+msgstr ""
+
+#: test/tmp/repository_test/script.module.stream.resolver/lib/contentprovider/doplnkyprovider.py:141
+msgid "Top"
+msgstr ""
+
+#: test/tmp/repository_test/script.module.stream.resolver/lib/contentprovider/doplnkyprovider.py:210
+#: test/tmp/repository_test/script.module.stream.resolver/lib/contentprovider/doplnkyprovider.py:241
+msgid "Cannot login, incorrect login data"
+msgstr ""
+
+#: test/tmp/repository_test/script.module.stream.resolver/lib/contentprovider/doplnkyprovider.py:228
+#, fuzzy
+msgid "Do you want to use vip account"
+msgstr "Chcete aktualizovat"
+
+#~ msgid "mipsel player"
+#~ msgstr "Mipsel přehrávač"
+
+#~ msgid "Video player Buffer"
+#~ msgstr "buffer video přehrávače"
+
+#~ msgid "AutoPlay"
+#~ msgstr "automaticky přehrávat"
+
+#~ msgid "Yes"
+#~ msgstr "Ano"
+
+#~ msgid "No"
+#~ msgstr "Ne"
+
+#~ msgid ""
+#~ "Video url doesnt exist, try to check it on web page of addon if it works."
+#~ msgstr ""
+#~ "Video adresa nejestvuje, skuste ověřit funkčnost na stránce archívu."
+
+#~ msgid "Execution Progress:"
+#~ msgstr "Průběh Vykonání:"
 
 #~ msgid "Free memory after exit"
 #~ msgstr "Uvolnit paměť po ukončení"
@@ -814,9 +1013,6 @@ msgstr "živý stream"
 #~ msgid "Plugin to play TV video archive http://www.b-tv.cz"
 #~ msgstr "Plugin pro přehrávání videí z archívu http://www.b-tv.cz"
 
-#~ msgid "Search"
-#~ msgstr "Hledat"
-
 #~ msgid "Plugin to play TV video archive Huste.tv"
 #~ msgstr "Plugin pro přehrávání videí z archívu Huste.tv"
 
@@ -876,12 +1072,6 @@ msgstr "živý stream"
 
 #~ msgid "Limit for downloading slots was exceeded, please try again later"
 #~ msgstr "Byl překročen limit volných slotů na stahování, zkuste později"
-
-#~ msgid "New search"
-#~ msgstr "Nové vyhledávání"
-
-#~ msgid "Previous"
-#~ msgstr "Předcházející"
 
 #~ msgid "By date"
 #~ msgstr "Dle datumu"
