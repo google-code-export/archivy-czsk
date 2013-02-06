@@ -109,11 +109,13 @@ class VideoAddonItemHandler(ItemHandler):
     
     def menu_item(self, item):
         self.item = item
+        addon = item.addon
         #item.add_context_menu_item(_("Update"), action=item.addon.update)
-        item.add_context_menu_item(_("Settings"), action=item.addon.open_settings, params={'session':self.session})
-        item.add_context_menu_item(_("Changelog"), action=item.addon.open_changelog, params={'session':self.session})
-        item.add_context_menu_item(_("Downloads"), action=item.addon.open_downloads, params={'session':self.session, 'cb':self.content_screen.workingFinished})
-        context.showContextMenu(self.session, item.context, self.menu_item_cb)
+        item.add_context_menu_item(_("Settings"), action=addon.open_settings, params={'session':self.session})
+        item.add_context_menu_item(_("Changelog"), action=addon.open_changelog, params={'session':self.session})
+        item.add_context_menu_item(_("Downloads"), action=addon.open_downloads, params={'session':self.session, 'cb':self.content_screen.workingFinished})
+        item.add_context_menu_item(_("Shortcuts"), action=addon.open_shortcuts, params={'session':self.session, 'cb':self.content_screen.workingFinished})
+        context.showContextMenu(self.session, item.name, item.thumb, item.context, self.menu_item_cb)
         
     def menu_item_cb(self, idx):
         if idx is not None:
@@ -258,9 +260,13 @@ class ContentItemHandler(ItemHandler):
         if self.is_video(item):
             item.add_context_menu_item(_("Play"), action=self.play_item, params={'item':item})
             item.add_context_menu_item(_("Play and Download"), action=self.play_item, params={'item':item, 'mode':'play_and_download'})
-            item.add_context_menu_item(_("Download"), action=self.download_item, params={'item':item})
+            if item.url.startswith('http'):
+                item.add_context_menu_item(_("Download (wget)"), action=self.download_item, params={'item':item,'mode':'wget'})
+                item.add_context_menu_item(_("Download (Twisted)"), action=self.download_item, params={'item':item,'mode':'twisted'})
+            elif item.url.startswith('rtmp'):
+                item.add_context_menu_item(_("Download (rtmpdump)"), action=self.download_item, params={'item':item,'mode':'rtmpdump'})
     
-        context.showContextMenu(self.session, item.context, self.menu_item_cb)
+        context.showContextMenu(self.session, item.name, item.thumb, item.context, self.menu_item_cb)
         
         
     def run_item(self, item):
@@ -285,10 +291,10 @@ class ContentItemHandler(ItemHandler):
         self.content_provider.get_content(self.session, item.get_params(), run_item_success_cb, run_item_error_cb)
         
     
-    def download_item(self, item):
+    def download_item(self, item, mode=""):
         startCB = DownloadManagerMessages.startDownloadCB
         finishCB = DownloadManagerMessages.finishDownloadCB
-        self.content_provider.download(item, startCB=startCB, finishCB=finishCB)
+        self.content_provider.download(item, startCB=startCB, finishCB=finishCB, mode=mode)
         
     
     def menu_item_cb(self, idx=None):
@@ -341,9 +347,13 @@ class StreamContentItemHandler(ContentItemHandler):
         if self.is_video(item):
             item.add_context_menu_item(_("Play"), action=self.play_item, params={'item':item})
             item.add_context_menu_item(_("Play and Download"), action=self.play_item, params={'item':item, 'mode':'play_and_download'})
-            item.add_context_menu_item(_("Download"), action=self.download_item, params={'item':item})
+            if item.url.startswith('http'):
+                item.add_context_menu_item(_("Download (wget)"), action=self.download_item, params={'item':item,'mode':'wget'})
+                item.add_context_menu_item(_("Download (Twisted)"), action=self.download_item, params={'item':item,'mode':'twisted'})
+            elif item.url.startswith('rtmp'):
+                item.add_context_menu_item(_("Download (rtmpdump)"), action=self.download_item, params={'item':item,'mode':'rtmpdump'})
             item.add_context_menu_item(_("Remove"), action=self.ask_remove_stream, params={'item':item})
-        context.showContextMenu(self.session, item.context, self.menu_item_cb)    
+        context.showContextMenu(self.session, item.name, item.thumb, item.context, self.menu_item_cb)    
         
     def ask_remove_stream(self, item):
         self.content_screen.showInfo(_('Not implemented yet'))

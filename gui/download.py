@@ -4,19 +4,24 @@ Created on 28.4.2012
 
 @author: marko
 '''
+import time
+import os
+
+from enigma import eTimer
+
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
 from Components.ActionMap import ActionMap, NumberActionMap
 from Components.ScrollLabel import ScrollLabel
 from Components.ActionMap import ActionMap, HelpableActionMap
 from Components.Button import Button
-from Components.Label import Label
+from Components.Label import Label, MultiColorLabel
 
 from Plugins.Extensions.archivCZSK import _
 from Plugins.Extensions.archivCZSK.engine.downloader import DownloadManager
 
-from base import  BaseArchivCZSKMenuListScreen
-from common import PanelListEntryHD, PanelListDownloadEntry
+from base import  BaseArchivCZSKScreen, BaseArchivCZSKMenuListScreen
+from common import PanelListEntryHD, PanelListDownloadEntry,MultiLabelWidget
 PanelListEntry = PanelListEntryHD
 
 
@@ -30,6 +35,12 @@ def openAddonDownloads(session, addon, cb):
 def setGlobalSession(session):
     DownloadManagerMessages.session = session
     
+def BtoKB(byte):
+    return int(float(byte) / float(1024))
+    
+def BtoMB(byte):
+    return float(float(byte) / float(1024 * 1024))
+
 
 class DownloadManagerMessages(object):
     session = None
@@ -42,17 +53,17 @@ class DownloadManagerMessages(object):
                 DownloadListScreen.instance.refreshList()
         if download.downloaded:
             session.openWithCallback(updateDownloadList, MessageBox, _("ArchivCZSK - Download:") + ' ' + \
-                                      download.name.encode('utf-8','ignore') + ' ' + _("successfully finished."), \
+                                      download.name.encode('utf-8', 'ignore') + ' ' + _("successfully finished."), \
                                       type=MessageBox.TYPE_INFO, timeout=5)
         else:
             session.openWithCallback(updateDownloadList, MessageBox, _("ArchivCZSK - Download:") + ' ' + \
-                                      download.name.encode('utf-8','ignore') + ' ' + _("finished with errors."), \
+                                      download.name.encode('utf-8', 'ignore') + ' ' + _("finished with errors."), \
                                       type=MessageBox.TYPE_ERROR, timeout=5)  
     @staticmethod
     def startDownloadCB(download):
         session = DownloadManagerMessages.session
         session.open(MessageBox, _("ArchivCZSK - Download:") + ' ' + \
-                     download.name.encode('utf-8','ignore') + ' ' + _("started."), \
+                     download.name.encode('utf-8', 'ignore') + ' ' + _("started."), \
                      type=MessageBox.TYPE_INFO, timeout=5)
         
     @staticmethod
@@ -66,50 +77,158 @@ class DownloadManagerMessages(object):
                 pass
         if download is not None:
             session.openWithCallback(DownloadManagerMessages.saveDownload, MessageBox, _("The file")\
-                                      + download.name.encode('utf-8','ignore') + "already exist. Do you want to override?" , \
+                                      + download.name.encode('utf-8', 'ignore') + "already exist. Do you want to override?" , \
                                        type=MessageBox.TYPE_YESNO)  
 
 
-class DownloadStatusScreen(Screen):
-    skin = """
-        <screen position="center,center" size="550,400" title="Status..." >
-            <widget name="text" position="0,0" size="550,400" font="Console;14" />
-        </screen>"""
-
-    def __init__(self, session, download, title=_("Download Status")):
-        Screen.__init__(self, session)
-
-        self.download = download
-        self.download.outputCB = self.outputCallback
-
-        self["text"] = ScrollLabel("")
+class DownloadStatusScreen(BaseArchivCZSKScreen):
+    
+    def __init__(self, session, download):
+        BaseArchivCZSKScreen.__init__(self, session)
+        self.title = _("Download progress")
+                    
+        self["filename"] = Label("")
+        self["size_label"] = Label(_("Size:"))
+        self["size"] = Label("")
+        self["path_label"] = Label(_("Path:"))
+        self["path"] = Label("")
+        self["start_label"] = Label(_("Start time:"))
+        self["start"] = Label("")
+        self["finish_label"] = Label(_("Finish time:"))
+        self["finish"] = Label("")
+        self["state_label"] = Label(_("State:"))
+        self["state"] = MultiColorLabel("")
+        self["speed_label"] = Label(_("Speed:"))
+        self["speed"] = Label("0 KB/s")
+        self["status"] = Label("")
+        
         self["actions"] = ActionMap(["WizardActions", "DirectionActions"],
         {
             "ok": self.cancel,
             "back": self.cancel,
-            "up": self["text"].pageUp,
-            "down": self["text"].pageDown
         }, -1)
-        self.newtitle = title
-
-        self.onShown.append(self.updateTitle)
-
-        self.run = 0
+        
+        self._download = download
+        
+        self._download.onOutputCB.append(self.outputCallback)
+        self._download.onFinishCB.append(self.updateState)
+        self._download.onFinishCB.append(self.updateFinishTime)
+        self._download.onFinishCB.append(self.stopTimer)
+        
+        self.timer = eTimer()
+        self.timer_running = False
+        self.timer_interval = 3000
+        self.timer.callback.append(self.updateStatus)
+        
+        self.onShown.append(self.updateStaticInfo)
+        self.onShown.append(self.updateState)
+        self.onShown.append(self.updateFinishTime)
+        self.onShown.append(self.startTimer)
+        
         self.onLayoutFinish.append(self.startRun) # dont start before gui is finished
-
-    def updateTitle(self):
-        self.setTitle(self.newtitle)
-
+        self.onLayoutFinish.append(self.updateGUI)
+        
+        
+        
+        self.onClose.append(self.__onClose)
+        
+    def updateGUI(self):
+        MultiLabelWidget(self['size_label'],self['size'])
+        MultiLabelWidget(self['path_label'],self['path'])
+        MultiLabelWidget(self['speed_label'],self['speed'])
+        MultiLabelWidget(self['start_label'],self['start'])
+        MultiLabelWidget(self['finish_label'],self['finish'])
+        MultiLabelWidget(self['state_label'],self['state'])
+        
+        
+    def startTimer(self):
+        self.timer.start(self.timer_interval)
+        self.timer_running = True
+        
+    def stopTimer(self, cb=None):
+        if self.timer_running:
+            self.timer.stop()
+            self.timer_running = False 
+        
+        
+    def updateStaticInfo(self):
+        download = self._download
+        filename = download.filename
+        start_time = time.strftime("%b %d %Y %H:%M:%S", time.localtime(download.start_time))
+        path = os.path.split(download.local)[0]
+        
+        self["filename"].setText(filename.encode('utf-8', 'ignore'))
+        self["path"].setText(path.encode('utf-8', 'ignore'))
+        self["start"].setText(start_time)
+        
+        
+    def updateState(self, cb=None):
+        download = self._download
+        if download.downloaded and not download.running:
+            self["state"].setText(_("Download succesfully finished"))
+            self["state"].setForegroundColorNum(0)
+        elif not download.downloaded and not download.running:
+            self["state"].setText(_("Download finished with errors"))
+            self["state"].setForegroundColorNum(1)
+        else:
+            self["state"].setText(_("Download running"))
+            self["state"].setForegroundColorNum(2)
+            
+    def updateFinishTime(self, cb=None):
+        download = self._download
+        finish_time = _("not finished")
+        if download.finish_time is not None:
+            finish_time = time.strftime("%b %d %Y %H:%M:%S", time.localtime(download.finish_time))
+        self["finish"].setText(finish_time)
+            
+    def updateStatus(self):
+        download = self._download
+        status = download.status
+        
+        status.update(self.timer_interval / 1000)
+        
+        speed = status.speed
+        speedKB = BtoKB(speed)
+        
+        if speedKB <= 1000 and speedKB > 0:
+            self['speed'].setText(("%d KB/s" % speedKB))
+        elif speedKB > 1000:
+            self['speed'].setText(("%.2f MB/s" % BtoMB(speed)))
+        else:
+            self['speed'].setText(("%d KB/s" % 0))
+        
+        
+        currentLength = status.currentLength
+        totalLength = status.totalLength
+        
+        size = "%s (%2.f MB %s)" % (_("unknown"), BtoMB(currentLength), _("downloaded"))
+        if totalLength > 0:
+            size = "%2.f MB (%2.f MB %s)" % (BtoMB(totalLength), BtoMB(currentLength), _("downloaded"))
+        self["size"].setText(size)
+        
+        if not download.running:
+            self.stopTimer()
+        
+        
     def outputCallback(self, output):
-        self["text"].setText(output)
+        self["status"].setText(output)
 
     def startRun(self):
-        self["text"].setText(_("Execution Progress:") + "\n\n")
-        self.download.showOutput = True
+        #self["status"].setText(_("Execution Progress:") + "\n\n")
+        self._download.showOutput = True
 
     def cancel(self):
-        self.download.showOutput = False
+        self._download.showOutput = False
         self.close()
+        
+    def __onClose(self):
+        self._download.onOutputCB.remove(self.outputCallback)
+        self._download.onFinishCB.remove(self.updateState)
+        self._download.onFinishCB.remove(self.updateFinishTime)
+        self._download.onFinishCB.remove(self.stopTimer)
+        
+        self.stopTimer()
+        del self.timer
 
 
 class DownloadList:
@@ -169,7 +288,7 @@ class DownloadListScreen(BaseArchivCZSKMenuListScreen):
         if len(self.lst_items) > 0:
             download = self.getSelectedItem()
             self.session.openWithCallback(self.cancelDownload, MessageBox, _('Do you want to cancel') + ' '\
-                                           + download.name.encode('utf-8','ignore') + ' ?', type=MessageBox.TYPE_YESNO)    
+                                           + download.name.encode('utf-8', 'ignore') + ' ?', type=MessageBox.TYPE_YESNO)    
     
     def cancelDownload(self, callback=None):
         if callback:
@@ -181,7 +300,7 @@ class DownloadListScreen(BaseArchivCZSKMenuListScreen):
         if len(self.lst_items) > 0:
             download = self.getSelectedItem()
             self.session.openWithCallback(self.removeDownload, MessageBox, _('Do you want to remove') + ' '\
-                                           + download.name.encode('utf-8','ígnore') + ' ?', type=MessageBox.TYPE_YESNO)    
+                                           + download.name.encode('utf-8', 'ígnore') + ' ?', type=MessageBox.TYPE_YESNO)    
     
     def removeDownload(self, callback=None):
         if callback:
@@ -196,7 +315,7 @@ class DownloadListScreen(BaseArchivCZSKMenuListScreen):
             if download.downloaded or not download.running:
                 self.playDownload(True)
             else:
-                message = '%s %s %s' % (_("The file"), download.name.encode('utf-8','ígnore'), _('is not downloaded yet. Do you want to play it anyway?'))
+                message = '%s %s %s' % (_("The file"), download.name.encode('utf-8', 'ígnore'), _('is not downloaded yet. Do you want to play it anyway?'))
                 self.session.openWithCallback(self.playDownload, MessageBox, message, type=MessageBox.TYPE_YESNO)
     
             
@@ -236,7 +355,7 @@ class DownloadsScreen(BaseArchivCZSKMenuListScreen, DownloadList):
         self["key_blue"] = Button("")
         
         self.lst_items = self.content_provider.get_downloads()
-        self.title = self.name.encode('utf-8','ignore') + ' ' + (_("downloads"))
+        self.title = self.name.encode('utf-8', 'ignore') + ' ' + (_("downloads"))
 
         self["actions"] = NumberActionMap(["archivCZSKActions"],
             {
@@ -260,7 +379,7 @@ class DownloadsScreen(BaseArchivCZSKMenuListScreen, DownloadList):
         if len(self.lst_items) > 0:
             download = self.getSelectedItem()
             self.session.openWithCallback(self.removeDownload, MessageBox, _('Do you want to remove') \
-                                          + ' ' + download.name.encode('utf-8','ignore') + ' ?', type=MessageBox.TYPE_YESNO)    
+                                          + ' ' + download.name.encode('utf-8', 'ignore') + ' ?', type=MessageBox.TYPE_YESNO)    
     
     def removeDownload(self, callback=None):
         if callback:

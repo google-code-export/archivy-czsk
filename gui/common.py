@@ -28,6 +28,8 @@ class PanelList(MenuList):
         MenuList.__init__(self, list, False, eListboxPythonMultiContent)
         self.l.setItemHeight(28)
         self.l.setFont(0, gFont("Regular", 21))
+        self.l.setFont(1, gFont("Regular", 23))
+        self.l.setFont(2, gFont("Regular", 18))
             
 def PanelListEntryHD(name, idx, png=''):
     res = [(name)]
@@ -47,15 +49,36 @@ def PanelListEntrySD(name, idx, png=''):
         res.append(MultiContentEntryText(pos=(5, 5), size=(330, 30), font=0, flags=RT_VALIGN_TOP, text=toUTF8(name)))
     return res
 
+
+def PanelListDownloadEntry_SD(name, download):
+    res = [(name)]
+    res.append(MultiContentEntryText(pos=(0, 5), size=(610, 30), font=0, flags=RT_HALIGN_LEFT, text=toUTF8(name)))
+    #res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_LEFT, text=toUTF8(download.startTime)))
+    if download.downloaded and not download.running:
+        res.append(MultiContentEntryText(pos=(0, 5), size=(570, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('finished'), color=0x00FF00))
+        #res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_LEFT, text=toUTF8(download.startTime)))
+    elif not download.downloaded and not download.running:
+        res.append(MultiContentEntryText(pos=(0, 5), size=(570, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('finished with errors'), color=0xff0000))
+        #res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_RIGHT, text=toUTF8(download.finishTime)))
+    else:
+        res.append(MultiContentEntryText(pos=(0, 5), size=(570, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('downloading')))
+    return res 
+
+
+
+
 def PanelListDownloadEntry(name, download):
     res = [(name)]
-    res.append(MultiContentEntryText(pos=(0, 5), size=(400, 30), font=0, flags=RT_VALIGN_TOP, text=toUTF8(name)))
+    res.append(MultiContentEntryText(pos=(0, 5), size=(900, 30), font=0, flags=RT_HALIGN_LEFT, text=toUTF8(name)))
+    #res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_LEFT, text=toUTF8(download.startTime)))
     if download.downloaded and not download.running:
-        res.append(MultiContentEntryText(pos=(420, 5), size=(180, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('finished'), color=0x00FF00))
+        res.append(MultiContentEntryText(pos=(0, 5), size=(850, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('finished'), color=0x00FF00))
+        #res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_LEFT, text=toUTF8(download.startTime)))
     elif not download.downloaded and not download.running:
-        res.append(MultiContentEntryText(pos=(420, 5), size=(180, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('finished with errors'), color=0xff0000))
+        res.append(MultiContentEntryText(pos=(0, 5), size=(850, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('finished with errors'), color=0xff0000))
+        #res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_RIGHT, text=toUTF8(download.finishTime)))
     else:
-        res.append(MultiContentEntryText(pos=(420, 5), size=(180, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('downloading'))) 
+        res.append(MultiContentEntryText(pos=(0, 5), size=(850, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('downloading')))
     return res 
 
 
@@ -163,9 +186,15 @@ class LoadingScreen(Screen):
             self.curr = 0
         png = LoadPixmap(cached=True, path=PNG_PATH + str(self.curr) + ".png")
         self["spinner"].instance.setPixmap(png)
+              
+        
+class MultiLabelWidget():
+    def __init__(self, widget1, widget2):
+        position = widget1.position
+        size1 = widget1.instance.calculateSize()
+        widget2.instance.move(ePoint(position[0] + size1.width() + 10, position[1]))
         
         
-
 class CategoryWidget():
     color_black = "#000000"
     color_white = "#ffffff"
