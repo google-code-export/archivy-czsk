@@ -73,14 +73,17 @@ class ContentProvider(object):
             log.info('cannot remove item %s from disk, not PDownload instance', str(item))
             
         
-    def download(self, item, startCB, finishCB, playDownload=False):
+    def download(self, item, startCB, finishCB, playDownload=False,mode=""):
         """Downloads item PVideo itemem calls startCB when download starts and finishCB when download finishes"""
         
         quiet = False
+        headers = item.download['headers']
+        log.debug("Download headers %s", headers)
         downloadManager = DownloadManager.getInstance()
+        
         d = downloadManager.createDownload(name=item.name, url=item.url, stream=item.stream, filename=item.filename,
                                            live=item.live, destination=self.downloads_path,
-                                           startCB=startCB, finishCB=finishCB, quiet=quiet, playDownload=playDownload)
+                                           startCB=startCB, finishCB=finishCB, quiet=quiet, playDownload=playDownload, headers=headers,mode=mode)
         if item.subs is not None and item.subs != '':
             log.debug('subtitles link: %s' , item.subs)
             subs_file_path = os.path.join(self.downloads_path, os.path.splitext(d.filename)[0] + '.srt')

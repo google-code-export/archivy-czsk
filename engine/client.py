@@ -17,12 +17,18 @@ from Plugins.Extensions.archivCZSK.engine.tools.task import callFromThread, Task
 from Plugins.Extensions.archivCZSK.engine.exceptions.archiveException import CustomInfoError, CustomWarningError, CustomError, ArchiveThreadException
 from Plugins.Extensions.archivCZSK.engine.items import PFolder, PVideo, PNotSupportedVideo, PSearch, PSearchItem, PContextMenuItem, Stream
 
+
+
+
 GItem_lst = VideoAddonContentProvider.gui_item_list
 
+def getVersion():
+    return "1.0"
+
 def decode_string(string):
-    if isinstance(string,unicode):
+    if isinstance(string, unicode):
         return _(string)
-    elif isinstance(string,str):
+    elif isinstance(string, str):
         string = unicode(string, 'utf-8', 'ignore')
         return _(string)
 
@@ -30,7 +36,7 @@ def decode_string(string):
 @callFromThread
 def getTextInput(session, text):
     def getTextInputCB(word):
-        print "textinput: %s" % word
+        log.debug("textinput: %s", word)
         if word is None:
             d.callback('')
         else:
@@ -147,7 +153,7 @@ def add_dir(name, params={}, image=None, infoLabels={}, menuItems={}, search_fol
     GItem_lst[0].append(it)
 
 
-def add_video(name, url, subs=None, image=None, infoLabels={}, menuItems={}, filename=None, live=False, stream=None):
+def add_video(name, url, subs=None, image=None, infoLabels={}, menuItems={}, filename=None, live=False, stream=None, downloadSettings=None):
     
     """
     adds video item to content screen
@@ -164,8 +170,9 @@ def add_video(name, url, subs=None, image=None, infoLabels={}, menuItems={}, fil
     if task and task._aborted:
         raise ArchiveThreadException
     
-    if util.isSupportedVideo(url): it = PVideo()
-    else: it = PNotSupportedVideo()
+    #if util.isSupportedVideo(url): it = PVideo()
+    #else: it = PNotSupportedVideo()
+    it = PVideo()
     
     if isinstance(name, str): it.name = unicode(name, 'utf-8', 'ignore')
     else: it.name = name 
@@ -211,8 +218,10 @@ def add_video(name, url, subs=None, image=None, infoLabels={}, menuItems={}, fil
     if stream is not None and isinstance(Stream):
         it.add_stream(stream)
         
-    GItem_lst[0].append(it)
+    if downloadSettings is not None:
+        it.download = downloadSettings
     
+    GItem_lst[0].append(it)
     
         
         

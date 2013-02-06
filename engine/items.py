@@ -69,7 +69,7 @@ class PFolder(PItem):
 class PVideo(PItem):
     def __init__(self):
         PItem.__init__(self)
-        self.url = u''
+        self.url = ""
         self.thumb = PNG_PATH + '/movie.png'
         self.live = False 
         self.filename = None
@@ -77,6 +77,8 @@ class PVideo(PItem):
         self.picon = None
         #stream object, can be stream/rtmp stream
         self.stream = None
+        #download object, provides additional info for downloading
+        self.download = {"headers":{}}
         
     def get_protocol(self):
         return self.url[:self.url.find('://')].upper()
@@ -109,7 +111,6 @@ class PSearchItem(PFolder):
     def __init__(self):
         PFolder.__init__(self)
         self.thumb = PNG_PATH + '/search.png'
-    
 
 class Stream():
     """Additional parameters for streams"""

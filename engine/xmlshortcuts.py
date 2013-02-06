@@ -72,12 +72,12 @@ class ShortcutXML(mainXML):
             return False
         else:
             shortcut = Element('shortcut')
-            shortcut.set('id', id_sc)
+            shortcut.set('id', str(id_sc))
             name = SubElement(shortcut, 'name')
             name.text = shortcut_it.name
             params = SubElement(shortcut, 'params')
             for key, value in shortcut_it.params.iteritems():
-                params.set(key, value)
+                params.set(str(key), str(value))
             shortcuts.append(shortcut)
         return True
 

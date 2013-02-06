@@ -4,6 +4,7 @@ Created on 8.5.2012
 @author: marko
 '''
 import os, time, mimetypes
+from urlparse import urlsplit
 from twisted.python import failure
 from twisted.web import client
 from twisted.internet import reactor
@@ -13,50 +14,55 @@ try:
 except ImportError:
     pass
 
+
 RTMP_DUMP_PATH = '/usr/bin/rtmpdump'
 WGET_PATH = 'wget'
 USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:14.0) Gecko/20100101 Firefox/14.0.1'
 VIDEO_EXTENSIONS = ('.avi', '.flv', '.mp4', '.mkv', '.mpeg', 'mpg', '.asf', '.wmv', '.divx')
 
+
+def toUTF8(text):
+    if isinstance(text, unicode):
+        text = text.encode('utf-8', 'ignore')
+    return text
+
 def resetUrllib2Opener():
     opener = urllib2.build_opener()
     urllib2.install_opener(opener)
+ 
+def url2name(url):
+    return os.path.basename(urlsplit(url)[2])
 
-
-
-def getFileInfo(url, filename=None):
-    
-    req = urllib2.Request(url)
+def getFileInfo(url, localFileName=None, headers={}):
+    localName = url2name(url)
+    req = urllib2.Request(url, headers=headers)
     resp = urllib2.urlopen(req)
     exttype = resp.info().get('Content-Type')
     length = resp.info().get('Content-Length')
+    if resp.info().has_key('Content-Disposition'):
+        # If the response has Content-Disposition, we take file name from it
+        localName = resp.info()['Content-Disposition'].split('filename=')[1]
+        if localName[0] == '"' or localName[0] == "'":
+            localName = localName[1:-1]
+    elif resp.url != url: 
+        # if we were redirected, the real file name we take from the final URL
+        localName = url2name(resp.url)
+    if localFileName: 
+        # we can force to save the file as specified name
+        localName = localFileName
     resp.close()
-            
-    if filename is not None:
-        if os.path.splitext(filename)[1] in VIDEO_EXTENSIONS:
-            pass
-        else:
-            ext = mimetypes.guess_extension(exttype)
-            if ext is not None:
-                if ext in VIDEO_EXTENSIONS:
-                    filename = filename + ext
-                else:
-                    url_ext = '.' + url.split('.')[-1]
-                    if url_ext in VIDEO_EXTENSIONS:
-                        filename = filename + url_ext
-                    else:
-                        # if identified extension is not video extension
-                        # then try to add custom video extension(mp4) to be able to play the file
-                        filename = filename + '.mp4'
-                        
-        filename = filename.replace(' ', '_')
-    else:
-        path = urlparse.urlparse(url).path
-        filename = os.path.basename(path)
-        
-    return filename, length
     
-
+    if os.path.splitext(localName)[1] == "":
+        ext = mimetypes.guess_extension(exttype)
+        if ext is not None:
+            localName = localName + ext
+        else:
+            url_ext = '.' + url.split('.')[-1]
+            localName = localName + url_ext
+            
+    localName = localName.replace(' ', '_')
+        
+    return localName, length
 
 
 class DownloadManager(object):
@@ -102,8 +108,9 @@ class DownloadManager(object):
                 return download
         return None
     
-    def createDownload(self, name, url, destination, filename=None, live=False, startCB=None, finishCB=None, quiet=False, stream=None, playDownload=False):
+    def createDownload(self, name, url, destination, filename=None, live=False, startCB=None, finishCB=None, quiet=False, stream=None, playDownload=False, headers={}, mode=""):
         d = None
+        url = toUTF8(url)
         if not os.path.exists(destination):
             os.makedirs(destination)
 
@@ -120,30 +127,34 @@ class DownloadManager(object):
                 url = "'%s'" % urlList[0] + ' '.join(rtmp_url)
 
             d = RTMPDownloadE2(url=url, name=name, destDir=destination, live=live, quiet=quiet)
-            d.startCB = startCB
-            d.finishCB = finishCB
+            d.onStartCB.append(startCB)
+            d.onFinishCB.append(finishCB)
+            d.status = DownloadStatus(d)
             return d
 
         elif url[0:4] == 'http':
             resetUrllib2Opener()
-            filename, length = getFileInfo(url, filename)
-            
+            filename, length = getFileInfo(url, filename, headers)
+            # only for EPLAYER3
             # When playing and downloading avi/mkv container then use HTTPTwistedDownload instead of wget
             # Reason is that when we use wget download, downloading file is progressively increasing its size, and ffmpeg isnt updating size of file accordingly
             # so when video gets to place what ffmpeg read in start, playing prematurely stops because of EOF. 
             # When we use HTTPDownloadTwisted, we firstly create the file of length of the downloading file, and then download to it, so ffmpeg reads
             # full length filesize.
             # Its not nice fix but its working ...
-                 
-            if os.path.splitext(filename)[1] in ('.avi', '.mkv') and playDownload:
-                d = HTTPDownloadTwisted(name=filename, url=url, filename=filename, destDir=destination, quiet=quiet)
-                d.startCB = startCB
-                d.finishCB = finishCB
-
+            if mode == "":
+                if os.path.splitext(filename)[1] in ('.avi', '.mkv') and playDownload:
+                    d = HTTPDownloadTwisted(name=filename, url=url, filename=filename, destDir=destination, quiet=quiet, headers=headers)
+                else:
+                    d = HTTPDownloadE2(name=filename, url=url, filename=filename, destDir=destination, quiet=quiet, headers=headers)
+                    
+            elif mode == "wget":
+                d = HTTPDownloadE2(name=filename, url=url, filename=filename, destDir=destination, quiet=quiet, headers=headers)
             else:
-                d = HTTPDownloadE2(name=filename, url=url, filename=filename, destDir=destination, quiet=quiet)
-                d.startCB = startCB
-                d.finishCB = finishCB
+                d = HTTPDownloadTwisted(name=filename, url=url, filename=filename, destDir=destination, quiet=quiet, headers=headers)
+                
+            d.onStartCB.append(startCB)
+            d.onFinishCB.append(finishCB)
             d.length = long(length)
             d.status = DownloadStatus(d)
             return d
@@ -160,6 +171,7 @@ class DownloadStatus():
         self.speed = 0
         self.percent = -1
         self.eta = -1
+        self.ignoreFirstUpdate = True
         
                       
     def update(self, refreshTime):
@@ -173,7 +185,8 @@ class DownloadStatus():
             
             # download just started
             if tempLength == 0:
-                speedB = long(float(currentLength) / float(refreshTime))
+                if not self.ignoreFirstUpdate:
+                    speedB = long(float(currentLength) / float(refreshTime))
                     
             elif tempLength > 0:
                 speedB = long(float(currentLength - tempLength) / float(refreshTime))
@@ -185,7 +198,7 @@ class DownloadStatus():
                 self.percent = float(totalLength - currentLength) / float(totalLength) * 100
             self.currentLength = currentLength
             
-            print '[DownloadStatus] update: speed %s' % self.speed
+            #print '[DownloadStatus] update: speed %s' % self.speed
             
         else:
             print "[Downloader] status: cannot update, file doesnt exist"
@@ -198,7 +211,7 @@ class DownloadStatus():
 
 class Download(object):
     def __init__(self, name, url, destDir, filename, quiet):
-        self.init_time = time.time()
+        self.start_time = time.time()
         self.finish_time = None
         self.url = url
         self.name = name
@@ -212,10 +225,26 @@ class Download(object):
         self.paused = False
         self.downloaded = False
         self.showOutput = False
-        self.outputCB = None
-        self.startCB = None
-        self.finishCB = None
+        self.outputCB = self.__runOutputCB
+        self.onOutputCB = []
+        self.startCB = self.__runStartCB
+        self.onStartCB = []
+        self.finishCB = self.__runFinishCB
+        self.onFinishCB = []
         self.pp = None
+        
+    def __runFinishCB(self, download):
+        for f in self.onFinishCB:
+            f(self)
+            
+    def __runStartCB(self, download):
+        for f in self.onStartCB:
+            f(self)
+            
+    def __runOutputCB(self, data):
+        for f in self.onOutputCB:
+            f(data)
+        
 
     def remove(self, callback=None):
         """removes download"""
@@ -230,7 +259,7 @@ class Download(object):
         currentLength = 0
         if os.path.isfile(self.local):
             currentLength = long(os.path.getsize(self.local))
-            print "Name=%s  downloaded: [%lu B/ %lu B]" % (self.name, currentLength, self.length)
+            #print "Name=%s  downloaded: [%lu B/ %lu B]" % (self.name, currentLength, self.length)
         return currentLength
         
 
@@ -312,7 +341,8 @@ class RTMPDownloadE2(Download):
 
 
 class HTTPDownloadE2(Download):
-    def __init__(self, name, url, destDir, filename=None, quiet=False):
+    """Downloads file with wget"""
+    def __init__(self, name, url, destDir, filename=None, quiet=False, headers={}):
         if filename is None:
             path = urlparse.urlparse(url).path
             filename = os.path.basename(path)
@@ -321,6 +351,9 @@ class HTTPDownloadE2(Download):
         #self.pp.dataAvail.append(self.__startCB)
         self.pp.stderrAvail.append(self.__outputCB)
         self.pp.appClosed.append(self.__finishCB)
+        if len(headers) > 0:
+            self.headers = '--header ' + ' --header '.join([("'" + key + ': ' + value + "'") for key, value in headers.iteritems()])
+        else: self.headers = ""
 
     def __startCB(self):
         self.running = True
@@ -347,7 +380,7 @@ class HTTPDownloadE2(Download):
             self.pp.kill()
 
     def start(self):
-        cmd = WGET_PATH + ' "' + self.url + '"' + ' -O ' + '"' + self.local + '"' ' -U ' + '"' + USER_AGENT + '"'
+        cmd = WGET_PATH + ' "' + self.url + '"' + ' -O ' + '"' + self.local + '"' ' -U ' + '"' + USER_AGENT + '" ' + self.headers
         cmd = cmd.encode('utf-8')
         print cmd
         if self.quiet:
@@ -363,13 +396,13 @@ class HTTPDownloadE2(Download):
         
 class HTTPProgressDownloader(client.HTTPDownloader):
     
-    def __init__(self, url, fileOrName, updateCurrentLength, writeToEmptyFile=False, outputCB=None, *args, **kwargs):
+    def __init__(self, url, fileOrName, updateCurrentLength, writeToEmptyFile=False, outputCB=None, headers={}, *args, **kwargs):
         self.writeToEmptyFile = writeToEmptyFile
         self.outputCB = outputCB
         self.updateCurrentLength = updateCurrentLength
         self.totalLength = 0
         self.currentLength = 0
-        client.HTTPDownloader.__init__(self, url, fileOrName, *args, **kwargs)
+        client.HTTPDownloader.__init__(self, url, fileOrName, headers=headers, *args, **kwargs)
         
 
     def gotHeaders(self, headers):
@@ -433,13 +466,14 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
 
 class HTTPDownloadTwisted(Download):
-    def __init__(self, name, url, destDir, filename=None, quiet=False):
+    def __init__(self, name, url, destDir, filename=None, quiet=False, headers={}):
         if filename is None:
             path = urlparse.urlparse(url).path
             filename = os.path.basename(path)
         Download.__init__(self, name, url, destDir, filename, quiet)
         self.connector = None
         self.currentLength = 0
+        self.headers = headers
 
     def __startCB(self):
         self.running = True
@@ -468,7 +502,7 @@ class HTTPDownloadTwisted(Download):
     
     def start(self):
         self.__startCB()
-        self.defer = self.downloadWithProgress(self.url, self.local, writeToEmptyFile=True, outputCB=self.__outputCB).addCallback(self.__finishCB).addErrback(self.downloadError)
+        self.defer = self.downloadWithProgress(self.url, self.local, writeToEmptyFile=True, outputCB=self.__outputCB, headers=self.headers).addCallback(self.__finishCB).addErrback(self.downloadError)
 
     def cancel(self):
         if self.running and self.connector is not None:
