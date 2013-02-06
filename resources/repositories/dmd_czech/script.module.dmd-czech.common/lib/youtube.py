@@ -1,14 +1,6 @@
 # -*- coding: utf-8 -*-
-# Author: Ricardo Garcia Gonzalez
-# Author: Danny Colligan
-# Author: Benjamin Johnson
-# Author: Vasyl' Vavrychuk
-# Author: Witold Baryluk
-# Author: Paweł Paprota
-# Author: Gergely Imreh
-# License: Public domain code
 #
-# Modify: 2011-08-17, Ivo Brhel
+# https://github.com/rg3/youtube-dl
 #
 
 import urllib2,urllib,re
@@ -18,30 +10,62 @@ from urlparse import parse_qs, parse_qsl
 
 
 
+_VALID_URL = r"""^
+                     (
+                         (?:https?://)?                                       # http(s):// (optional)
+                         (?:youtu\.be/|(?:\w+\.)?youtube(?:-nocookie)?\.com/|
+                            tube\.majestyc\.net/)                             # the various hostnames, with wildcard subdomains
+                         (?:.*?\#/)?                                          # handle anchor (#/) redirect urls
+                         (?!view_play_list|my_playlists|artist|playlist)      # ignore playlist URLs
+                         (?:                                                  # the various things that can precede the ID:
+                             (?:(?:v|embed|e)/)                               # v/ or embed/ or e/
+                             |(?:                                             # or the v= param in all its forms
+                                 (?:watch(?:_popup)?(?:\.php)?)?              # preceding watch(_popup|.php) or nothing (like /?v=xxxx)
+                                 (?:\?|\#!?)                                  # the params delimiter ? or # or #!
+                                 (?:.*?&)?                                    # any other preceding param (like /?s=tuff&v=xxxx)
+                                 v=
+                             )
+                         )?                                                   # optional -> youtube.com/xxxx is OK
+                     )?                                                       # all until now is optional -> you can pass the naked ID
+                     ([0-9A-Za-z_-]+)                                         # here is it! the YouTube video ID
+                     (?(1).+)?                                                # if we found the ID, everything can follow
+                     $"""
+#_LANG_URL = r'http://www.youtube.com/?hl=en&persist_hl=1&gl=US&persist_gl=1&opt_out_ackd=1'
+_NEXT_URL_RE = r'[\?&]next_url=([^&]+)'
 
-std_headers = {
-	'User-Agent': 'Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.2.7) Gecko/20100720 Firefox/3.6.7',
-	'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.7',
-	'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-	'Accept-Language': 'en-us,en;q=0.5',
-	}
 
 
-_VALID_URL = r'^((?:https?://)?(?:youtu\.be/|(?:\w+\.)?youtube(?:-nocookie)?\.com/)(?:(?:(?:v|embed|e)/)|(?:(?:watch(?:_popup)?(?:\.php)?)?(?:\?|#!?)(?:.+&)?v=)))?([0-9A-Za-z_-]+)(?(1).+)?$'
-
-_LANG_URL = r'http://www.youtube.com/?hl=en&persist_hl=1&gl=US&persist_gl=1&opt_out_ackd=1'
 # Listed in order of quality
-_available_formats = ['38', '37', '22', '45', '35', '34', '43', '18', '6', '5', '17', '13']
+_available_formats = ['38', '37', '46', '22', '45', '35', '44', '34', '18', '43', '6', '5', '17', '13']
 _video_extensions = {
-	'13': '3gp',
-	'17': 'mp4',
-	'18': 'mp4',
-	'22': 'mp4',
-	'37': 'mp4',
-	'38': 'video', # You actually don't know if this will be MOV, AVI or whatever
-	'43': 'webm',
-	'45': 'webm',
-}
+        '13': '3gp',
+        '17': 'mp4',
+        '18': 'mp4',
+        '22': 'mp4',
+        '37': 'mp4',
+        '38': 'video', # You actually don't know if this will be MOV, AVI or whatever
+        '43': 'webm',
+        '44': 'webm',
+        '45': 'webm',
+        '46': 'webm',
+    }
+_video_dimensions = {
+        '5': '240x400',
+        '6': '???',
+        '13': '???',
+        '17': '144x176',
+        '18': '360x640',
+        '22': '720x1280',
+        '34': '360x640',
+        '35': '480x854',
+        '37': '1080x1920',
+        '38': '3072x4096',
+        '43': '360x640',
+        '44': '480x854',
+        '45': '720x1280',
+        '46': '1080x1920',
+    }
+
 
 def report_video_webpage_download( video_id):
 	"""Report attempt to download video webpage."""
@@ -51,12 +75,16 @@ def report_video_info_webpage_download( video_id):
 	"""Report attempt to download video info webpage."""
 	print(u'[youtube] %s: Downloading video info webpage' % video_id)
 	
-	
 
 
 def getURL(url):
+	
+        mobj = re.search(_NEXT_URL_RE, url)
+        if mobj:
+            url = 'http://www.youtube.com/' + urllib.unquote(mobj.group(1)).lstrip('/')
+	
 	# Extract video id from URL
-	mobj = re.match(_VALID_URL, url)
+	mobj = re.match(_VALID_URL, url, re.VERBOSE)
 	if mobj is None:
 		print(u'ERROR: invalid URL: %s' % url)
 		return
@@ -77,7 +105,7 @@ def getURL(url):
 		player_url = re.sub(r'\\(.)', r'\1', mobj.group(1))
 	else:
 		player_url = None
-
+		
 	# Get video info
 	#report_video_info_webpage_download(video_id)
 	for el_type in ['&el=embedded', '&el=detailpage', '&el=vevo', '']:
@@ -100,41 +128,30 @@ def getURL(url):
 		return
 
 	
-	if 'url_encoded_fmt_stream_map' in video_info and len(video_info['url_encoded_fmt_stream_map']) >= 1:
+	if 'conn' in video_info and video_info['conn'][0].startswith('rtmp'):
+		#self.report_rtmp_download()
+		video_url_list = [(None, video_info['conn'][0])]
+        
+	elif 'url_encoded_fmt_stream_map' in video_info and len(video_info['url_encoded_fmt_stream_map']) >= 1:
 		url_data_strs = video_info['url_encoded_fmt_stream_map'][0].split(',')
-		url_data = [dict(pairStr.split('=') for pairStr in uds.split('&')) for uds in url_data_strs]
-		url_map = dict((ud['itag'], urllib.unquote(ud['url'])) for ud in url_data)
+		url_data = [parse_qs(uds) for uds in url_data_strs]
+		url_data = [ud for ud in url_data if 'itag' in ud and 'url' in ud]
+		url_map = dict((ud['itag'][0], ud['url'][0] + '&signature=' + ud['sig'][0]) for ud in url_data)
 		#format_limit = params.get('format_limit', None)
 		format_list = _available_formats
 		existing_formats = [x for x in format_list if x in url_map]
 		if len(existing_formats) == 0:
 			print(u'ERROR: no known formats available for video')
 			return
-		#if req_format is None:
+			
 		video_url_list = [(existing_formats[0], url_map[existing_formats[0]])] # Best quality
-		#elif req_format == '-1':
-		#	video_url_list = [(f, url_map[f]) for f in existing_formats] # All formats
-		#else:
-		#	# Specific format
-		#	if req_format not in url_map:
-		#		print(u'ERROR: requested format not available')
-		#		return
-		#	video_url_list = [(req_format, url_map[req_format])] # Specific format
-
-	elif 'conn' in video_info and video_info['conn'][0].startswith('rtmp'):
-		#self.report_rtmp_download()
-		video_url_list = [(None, video_info['conn'][0])]
 
 	else:
 		print(u'ERROR: no fmt_url_map or conn information found in video info')
 		return
 
-
-	
-	
 	for format_param, video_real_url in video_url_list:
-		# At this point we have a new video
-		#self._downloader.increment_downloads()
 		return video_real_url.decode('utf-8')
+	
 
 		

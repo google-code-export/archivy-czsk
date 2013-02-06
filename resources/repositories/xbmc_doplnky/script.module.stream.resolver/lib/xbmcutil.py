@@ -205,7 +205,15 @@ def add_play(title, provider_name, quality, url, subs=None, filename=None, image
 	name = '%s - %s[%s]' % (decode_html(title), decode_html(provider_name), decode_html(quality))
 	if not 'title' in infoLabels:
 		infoLabels['title'] = name
-	client.add_video(name, url, subs=subs, filename=filename, image=image, infoLabels=infoLabels, menuItems=menuItems)
+		
+	downloadSettings = None
+	if url.find('munkvideo') > 0:
+		downloadSettings = {"headers":{"Referer":"me"}}
+		
+	if hasattr(client, "getVersion"):
+		client.add_video(name, url, subs=subs, filename=filename, image=image, infoLabels=infoLabels, menuItems=menuItems, downloadSettings=downloadSettings)
+	else:
+		client.add_video(name, url, subs=subs, filename=filename, image=image, infoLabels=infoLabels, menuItems=menuItems)
 
 _diacritic_replace = {u'\u00f3':'o',
 u'\u0213':'-',

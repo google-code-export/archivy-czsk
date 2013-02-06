@@ -2,7 +2,7 @@
 import urllib2, urllib, re, os, time, datetime
 from parseutils import *
 from urlparse import urlparse
-from util import addDir, addLink
+from util import addDir, addLink, addSearch, getSearch
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
 #import json
 import simplejson as json
@@ -12,7 +12,8 @@ import simplejson as json
 __baseurl__ = 'http://www.ceskatelevize.cz/ivysilani'
 #__dmdbase__ = 'http://iamm.netuje.cz/xbmc/stream/'
 _UserAgent_ = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'
-swfurl = 'http://img8.ceskatelevize.cz/libraries/player/flashPlayer.swf?version=1.43'
+#swfurl = 'http://img8.ceskatelevize.cz/libraries/player/flashPlayer.swf?version=1.43'
+swfurl = 'http://img.ceskatelevize.cz/libraries/player/flashPlayer.swf?version=1.45.5'
 __settings__ = ArchivCZSK.get_addon('plugin.video.dmd-czech.ivysilani')
 home = __settings__.get_info('path')
 icon = os.path.join(home, 'icon.png')
@@ -28,6 +29,7 @@ RE_DATE = re.compile('(\d{1,2}\.\s*\d{1,2}\.\s*\d{4})')
 
 
 def OBSAH():
+    addSearch('Vyhledat...(beta)', __baseurl__, 13, None)
     addDir('Nejnovější pořady', __baseurl__ + '/?nejnovejsi=vsechny-porady', 12, icon)
     addDir('Nejsledovanější videa týdne', __baseurl__ + '/?nejsledovanejsi=tyden', 11, icon)
     addDir('Podle data', __baseurl__ + '/podle-data-vysilani/', 5, icon)
@@ -284,6 +286,36 @@ def BONUSY(link):
         addDir(next_label, 'http://www.ceskatelevize.cz' + next_url, 7, nexticon)
     except:
         print 'STRANKOVANI NENALEZENO!'
+        
+def HLEDAT():
+    #https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=filtered_cse&num=20&hl=cs&prettyPrint=false&source=gcsc&gss=.cz&sig=981037b0e11ff304c7b2bfd67d56a506&cx=000499866030418304096:fg4vt0wcjv0&q=vypravej+tv&googlehost=www.google.com&callback=google.search.Search.apiary6680&nocache=1360011801862
+    #https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=filtered_cse&num=20&start=20&hl=cs&prettyPrint=false&source=gcsc&gss=.cz&sig=981037b0e11ff304c7b2bfd67d56a506&cx=000499866030418304096:fg4vt0wcjv0&q=vypravej+tv&googlehost=www.google.com&callback=google.search.Search.apiary6680&nocache=1360011801862
+                        what = getSearch(session)
+                        what = re.sub(' ', '+', what)
+                        url = 'http://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=filtered_cse&num=20&hl=cs&prettyPrint=false&source=gcsc&gss=.cz&sig=981037b0e11ff304c7b2bfd67d56a506&cx=000499866030418304096:fg4vt0wcjv0&q=' + what + '&googlehost=www.google.com&callback=google.search.Search.apiary6680&nocache=1360011801862'
+                        req = urllib2.Request(url)
+                        req.add_header('User-Agent', _UserAgent_)
+                        response = urllib2.urlopen(req)
+                        httpdata = response.read()
+                        response.close()
+                        match = re.compile('google.search.Search.apiary6680\((.*)\)').findall(httpdata)
+                        items = json.loads(match[0])[u'results']
+                        for item in items:
+                            name = item[u'titleNoFormatting']
+                            name = name.encode('utf-8')
+                            url = item[u'url']
+                            url = url.encode('utf-8')
+                            try:
+                                image = item[u'richSnippet'][u'cseImage'][u'src']
+                                image = image.encode('utf-8')
+                            except:
+                                image = icon
+                            if re.search('diskuse', url, re.U):
+                                continue
+                            #if not re.search('([0-9]{15}-)', url, re.U):
+                            #continue
+                            addDir(name, url, 10, image)
+
 
 
                 
@@ -460,3 +492,7 @@ elif mode == 11:
 elif mode == 12:
         print "" + url
         NEWEST(url)
+        
+elif mode == 13:
+        HLEDAT()
+
