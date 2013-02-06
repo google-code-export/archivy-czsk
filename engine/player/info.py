@@ -21,8 +21,8 @@ class VideoPlayerInfo(object):
             print 'found eplayer3'
             self.type = 'eplayer3'
         elif os.path.isfile(EPLAYER2_PATH):
-            print 'found eplayer3'
-            self.type = 'eplayer3'
+            print 'found eplayer2'
+            self.type = 'eplayer2'
             
     def isRTMPSupported(self):
         """

@@ -73,10 +73,13 @@ class VideoPlayerController(object):
     def __repr__(self):
         return "downloading: %s, video_check_interval:%ss buffer_time: %s seekable: %s pausable: %s autoplay: %s" % \
                 (self.download is not None, self.video_check_interval, self.buffer_time, self.seekable, self.pausable, self.autoplay)
-        
-    def start(self, video_player, play_and_download):
+                
+                
+    def set_video_player(self,video_player):
         self.video_player = video_player
-        self.video = video_player.video
+        
+    def start(self, play_and_download):
+        self.video = self.video_player.video
         
         self.video_length_total = self.video.getCurrentLength()
         self.update_video_length()

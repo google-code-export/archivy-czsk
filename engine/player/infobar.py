@@ -24,7 +24,7 @@ class ArchivCZSKMoviePlayerInfobar(object):
         self["download_label"] = Label(_("Speed"))
         self["download_speed"] = Label(_("N/A"))
         self["bitrate_label"] = Label(_("Bitrate"))
-        self["bitrate"] = Label(_(""))
+        self["bitrate"] = Label("")
         self.onFirstExecBegin.append(self.__resetBufferSlider) 
         
     def __resetBufferSlider(self):

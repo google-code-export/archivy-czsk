@@ -37,6 +37,7 @@ from Components.Sources.StaticText import StaticText
 from subtitles.subtitles import SubsSupport
 from controller import VideoPlayerController
 from infobar import ArchivCZSKMoviePlayerInfobar
+import setting
 
 from Plugins.Extensions.archivCZSK import _
 from Plugins.Extensions.archivCZSK import log
@@ -61,7 +62,6 @@ class Video(object):
 		self.__deferred = defer.Deferred()
 		
 
-		
 	def startService(self):
 		"""
 		Get real start of service
@@ -130,7 +130,7 @@ class Video(object):
 	def getName(self):
 		if self.service is None:
 			return ''
-		return self.session.nav.getCurrentlyPlayingServiceReference().getPath().split('/')[-1]
+		return self.session.nav.getCurrentlyPlayingServiceReference().getName()
 		
 
 ####################################################
@@ -147,38 +147,6 @@ class ArchivCZSKMoviePlayerSummary(Screen):
 
 	def updateOLED(self, what):
 		self["item"].setText(what)
-		
-class ArchivCZSKLCDScreen(Screen):
-	skin = (
-	"""<screen name="ArchivCZSKLCDScreen" position="0,0" size="132,64" id="1">
-		<widget name="text1" position="4,0" size="132,35" font="Regular;16"/>
-		<widget name="text3" position="4,36" size="132,14" font="Regular;10"/>
-		<widget name="text4" position="4,49" size="132,14" font="Regular;10"/>
-	</screen>""",
-	"""<screen name="ArchivCZSKLCDScreen" position="0,0" size="96,64" id="2">
-		<widget name="text1" position="0,0" size="96,35" font="Regular;14"/>
-		<widget name="text3" position="0,36" size="96,14" font="Regular;10"/>
-		<widget name="text4" position="0,49" size="96,14" font="Regular;10"/>
-	</screen>""")
-
-	def __init__(self, session, parent):
-		Screen.__init__(self, session)
-		self["text1"] = Label("ArchivCZSK")
-		self["text3"] = Label("")
-		self["text4"] = Label("")
-
-	def setText(self, text, line):
-		if len(text) > 10:
-			if text[-4:] == ".mp3":
-				text = text[:-4]
-		textleer = "    "
-		text = text + textleer * 10
-		if line == 1:
-			self["text1"].setText(text)
-		elif line == 3:
-			self["text3"].setText(text)
-		elif line == 4:
-			self["text4"].setText(text)
 			
 
 class InfoBarAspectChange:
@@ -308,13 +276,13 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePl
 	
 	def _serviceStartedReal(self, callback=None):
 		serviceName = self.video.getName()
-		self.summaries.setText(serviceName, 3)
+		self.summaries.updateOLED(serviceName)
 		
 	def _serviceNotStarted(self, failure):
-		print 'cannot get service reference'
+		log.info('cannot get service reference')
 		
 	def createSummary(self):
-		return ArchivCZSKLCDScreen
+		return ArchivCZSKMoviePlayerSummary
 						
 	def playService(self):
 		self.session.nav.playService(self.sref)
@@ -355,11 +323,13 @@ class CustomVideoPlayer(ArchivCZSKMoviePlayer):
 		self.videoPlayerController = videoPlayerController
 		self.useVideoController = config.plugins.archivCZSK.videoPlayer.useVideoController.getValue()
 		self.playAndDownload = playAndDownload
+		if self.useVideoController:
+			self.videoPlayerController.set_video_player(self)
 	
 	def _serviceStartedReal(self, callback=None):
 		super(CustomVideoPlayer, self)._serviceStartedReal(None)
 		if self.useVideoController:
-			self.videoPlayerController.start(self, self.playAndDownload)
+			self.videoPlayerController.start(self.playAndDownload)
 			
 ##################  default MP methods ################
 
@@ -471,36 +441,15 @@ class GStreamerVideoPlayer(CustomVideoPlayer):
 			self.setBufferSize(bufferSize)
 		
 	def setBufferMode(self, mode=None):
-		def createSref(name, path):
-			if self.gstreamerSetting.servicemp4.getValue():
-				sref = eServiceReference(SERVICEMP4_ID, 0, path)
-			else:
-				sref = eServiceReference(4097, 0, path)
-			sref.setName(name)
-			return sref
-		
 		if self.playAndDownload:
 			return
-		#path = self.sref.getPath()
-		#name = self.sref.getName()
-		# use prefill buffer
-		if mode == 1:
-			log.debug("use prefill buffer")
-		#	newpath = path + ' buffer=1'
-		#	self.sref = createSref(name, newpath)
-			
-		# progressive streaming
-		elif mode == 2:
-			log.debug("use progressive streaming")
-		#	newpath = path + ' buffer=2'
-		#	self.sref = createSref(name, newpath)
 			
 		if mode == 3:
 			log.debug("manual control")
 			self.useBufferControl = True
 			
 	def setBufferSize(self, size):
-		# set buffer size for streams in Bytes
+		""" set buffer size for streams in Bytes """
 		
 		# servicemp4 already set bufferSize
 		if self.gstreamerSetting.servicemp4.getValue():
@@ -642,22 +591,24 @@ class Player():
 	def play(self):
 		"""starts playing video stream"""
 		if self.playUrl is not None:
+			verifyLink = config.plugins.archivCZSK.linkVerification.getValue()
+			
 			# rtmp stream
 			if self.playUrl.startswith('rtmp'):
 				
 				# internal player has rtmp support
 				if self.settings.seeking.getValue():
 					if self.stream is not None:
-						self._playStream(self.stream.getUrl(), self.subtitles, verifyLink=False)
+						self._playStream(self.stream.getUrl(), self.subtitles, verifyLink=verifyLink)
 					else:
-						self._playStream(str(self.playUrl + ' buffer=' + str(self.rtmpBuffer)), self.subtitles, verifyLink=False)
+						self._playStream(str(self.playUrl + ' buffer=' + str(self.rtmpBuffer)), self.subtitles, verifyLink= verifyLink)
 				# internal player doesnt have rtmp support so we use rtmpgw
 				else:
 					#to make sure that rtmpgw is not running
 					os.system('killall rtmpgw')
 					self.seekable = False
 					self._startRTMPGWProcess()
-					self._playStream('http://0.0.0.0:' + str(self.port), self.subtitles, verifyLink=False)
+					self._playStream('http://0.0.0.0:' + str(self.port), self.subtitles, verifyLink=verifyLink)
 			
 			# not a rtmp stream
 			else:
@@ -668,6 +619,11 @@ class Player():
 			
 	def playAndDownload(self):
 		"""starts downloading and then playing after playDelay value"""
+		
+		def playNDownload(callback=None):
+			if callback:
+				self.content_provider.download(self.it, self._showPlayDownloadDelay, DownloadManagerMessages.finishDownloadCB, playDownload=True)
+		
 		from Plugins.Extensions.archivCZSK.gui.download import DownloadManagerMessages
 		#from Plugins.Extensions.archivCZSK.engine.downloader import getFileInfo
 		
@@ -688,7 +644,9 @@ class Player():
 			log.info('Cannot download.. You need to set your content provider first')
 			return
 		try:
-			self.content_provider.download(self.it, self._showPlayDownloadDelay, DownloadManagerMessages.finishDownloadCB, playDownload=True)
+			self.session.openWithCallback(playNDownload, MessageBox, _("""Play and download mode is not supported by all video formats, 
+																		 Player can start behave unexpectedly or not play video at all. 
+																		 Do you want to continue?""") , type=MessageBox.TYPE_YESNO)
 		except CustomInfoError as er:
 			self.session.open(MessageBox, er, type=MessageBox.TYPE_ERROR, timeout=3)		
 		
@@ -742,7 +700,7 @@ class Player():
 		self.rtmpgwProcess = None	
 								
 			
-	def _playStream(self, streamURL, subtitlesURL, playAndDownload=False, verifyLink=config.plugins.archivCZSK.linkVerification.getValue()):
+	def _playStream(self, streamURL, subtitlesURL, playAndDownload=False, verifyLink=False):
 		if verifyLink:
 			ret = util.url_exist(streamURL, int(config.plugins.archivCZSK.linkVerificationTimeout.getValue()))
 			if ret is not None and not ret:
@@ -760,8 +718,12 @@ class Player():
 			sref = eServiceReference(4097, 0, streamURL)
 		sref.setName(self.name.encode('utf-8', 'ignore'))
 		
+		# load settings according url
+		setting.loadSettings(streamURL)
+		
 		videoPlayerSetting = self.settings.type.getValue()
 		videoPlayerController = None
+		
 		playerType = self.settings.detectedType.getValue()
 		useVideoController = self.settings.useVideoController.getValue()
 		
@@ -769,7 +731,6 @@ class Player():
 			videoPlayerController = VideoPlayerController(self.session, download=self.download, \
 													 seekable=self.seekable, pausable=self.pausable)
 		
-		print 'download value', self.settings.download.getValue()
 		if videoPlayerSetting == 'standard':
 			self.session.openWithCallback(self.exit, StandardVideoPlayer, sref, videoPlayerController, subtitlesURL)
 		
@@ -835,6 +796,7 @@ class Player():
 			self.rtmpgwProcess.sendCtrlC()
 		if self.download is not None:
 			self._askSaveDownloadCB()
+		setting.resetSettings()
 		self.content_provider = None
 		self.session.nav.playService(self.oldService)
 		if self.callback:
