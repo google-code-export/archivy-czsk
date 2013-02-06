@@ -31,6 +31,7 @@ STREAM_PATH = os.path.join(PLUGIN_PATH, 'streams/streams.xml')
 ############ Updater Paths #############
 
 TMP_PATH = '/tmp/archivCZSK/'
+USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:18.0) Gecko/20100101 Firefox/18.0'
 
 config.plugins.archivCZSK = ConfigSubsection()
 config.plugins.archivCZSK.archives = ConfigSubsection()
@@ -49,21 +50,28 @@ else:
     config.plugins.archivCZSK.videoPlayer.seeking = ConfigYesNo(default=False)
 config.plugins.archivCZSK.videoPlayer.type = ConfigSelection(default="custom", choices=choicelist)
 config.plugins.archivCZSK.videoPlayer.useVideoController = ConfigYesNo(default=True)             
-config.plugins.archivCZSK.videoPlayer.useDefaultSkin = ConfigYesNo(default=False)
+config.plugins.archivCZSK.videoPlayer.useDefaultSkin = ConfigYesNo(default=True)
 config.plugins.archivCZSK.videoPlayer.autoPlay = ConfigYesNo(default=True)
+
 if SERVICEMP4:
     config.plugins.archivCZSK.videoPlayer.servicemp4 = ConfigYesNo(default=True)
 else:
     config.plugins.archivCZSK.videoPlayer.servicemp4 = ConfigYesNo(default=False)
+    
 
-# downloading flag and path for servicemp4
+# downloading flag, headers, userAgent for servicemp4
 config.plugins.archivCZSK.videoPlayer.download = ConfigText(default="False")
 config.plugins.archivCZSK.videoPlayer.download.setValue("False")
 config.plugins.archivCZSK.videoPlayer.download.save()
 
+config.plugins.archivCZSK.videoPlayer.extraHeaders = ConfigText(default="")
+config.plugins.archivCZSK.videoPlayer.userAgent = ConfigText(default="")
+
+
+
 for i in range(5, 120, 1):
     choicelist.append(("%d" % i, "%d s" % i))
-config.plugins.archivCZSK.videoPlayer.httpTimeout = ConfigSelection(default="20", choices=choicelist)
+config.plugins.archivCZSK.videoPlayer.httpTimeout = ConfigSelection(default="40", choices=choicelist)
 
 choicelist = [("0", _("default")), ("1", _("prefill")), ("2", _("progressive (need HDD)")), ("3", _("manual"))]
 config.plugins.archivCZSK.videoPlayer.bufferMode = ConfigSelection(default="0", choices=choicelist)
@@ -90,12 +98,12 @@ config.plugins.archivCZSK.videoPlayer.playDelay = ConfigSelection(default="20", 
 choicelist = []
 for i in range(1000, 50000, 1000):
     choicelist.append(("%d" % i, "%d ms" % i))
-config.plugins.archivCZSK.videoPlayer.archiveBuffer = ConfigSelection(default="14000", choices=choicelist)
+config.plugins.archivCZSK.videoPlayer.archiveBuffer = ConfigSelection(default="6000", choices=choicelist)
 
 choicelist = []
 for i in range(1000, 50000, 1000):
     choicelist.append(("%d" % i, "%d ms" % i))
-config.plugins.archivCZSK.videoPlayer.liveBuffer = ConfigSelection(default="14000", choices=choicelist)
+config.plugins.archivCZSK.videoPlayer.liveBuffer = ConfigSelection(default="6000", choices=choicelist)
 
 
 ############ Main config #################
@@ -124,7 +132,10 @@ config.plugins.archivCZSK.subtitlesPath = ConfigDirectory(default="/tmp")
 config.plugins.archivCZSK.convertPNG = ConfigYesNo(default=True)
 config.plugins.archivCZSK.clearMemory = ConfigYesNo(default=False)
 if not (videoPlayerInfo.type == 'gstreamer'):
+    # to override previous defaults
     config.plugins.archivCZSK.linkVerification = ConfigYesNo(default=False)
+    config.plugins.archivCZSK.linkVerification.setValue(False)
+    config.plugins.archivCZSK.linkVerification.save()
 else:
     config.plugins.archivCZSK.linkVerification = ConfigYesNo(default=True)
     
@@ -157,8 +168,8 @@ def get_player_settings():
                     list.append(getConfigListEntry(_("Buffer duration"), config.plugins.archivCZSK.videoPlayer.bufferDuration))
                     if buffer_mode == "2":
                         list.append(getConfigListEntry(_("Buffer size on HDD"), config.plugins.archivCZSK.videoPlayer.downloadBufferSize))
-    if not videoPlayerInfo.isRTMPSupported():
-        list.append(getConfigListEntry(_("Video player with RTMP support"), config.plugins.archivCZSK.videoPlayer.seeking))
+
+    list.append(getConfigListEntry(_("Video player with RTMP support"), config.plugins.archivCZSK.videoPlayer.seeking))
     list.append(getConfigListEntry(_("TV archive rtmp buffer"), config.plugins.archivCZSK.videoPlayer.archiveBuffer))                                                 
     list.append(getConfigListEntry(_("Default live rtmp streams buffer"), config.plugins.archivCZSK.videoPlayer.liveBuffer))
     if not (videoPlayerInfo.type == 'gstreamer'):                                
