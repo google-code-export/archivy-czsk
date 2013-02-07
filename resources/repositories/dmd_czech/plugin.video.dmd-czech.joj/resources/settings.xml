@@ -1,3 +1,0 @@
-<settings>
-   <setting id="stream_server" type="bool" label="Vynucený stream server" default="false"/>
-</settings>

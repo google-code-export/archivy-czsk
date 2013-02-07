@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<settings>
-	<setting label="30000" id="video-listing" type="enum" lvalues="30001|30002|30003|30004" default="0" />
-	<setting label="30005" id="fix-rtmp-url" type="bool" default="true" />
-</settings>
