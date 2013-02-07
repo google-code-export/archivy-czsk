@@ -43,7 +43,7 @@ class VideoPlayerSettingsProvider(object):
                 config.mediaplayer.alternateUserAgent.save()
             else:
                 config.mediaplayer.useAlternateUserAgent.setValue(False)
-                config.mediaplayer.useAlternateUserAgent.save(False)
+                config.mediaplayer.useAlternateUserAgent.save()
         
     def setDownloadMode(self, mode=False):
         if mode:
