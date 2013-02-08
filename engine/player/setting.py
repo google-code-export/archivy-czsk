@@ -36,6 +36,13 @@ class VideoPlayerSettingsProvider(object):
                 self.__config.userAgent.setValue(agent)
                 self.__config.userAgent.save()
         else:
+            if not hasattr(config,'mediaplayer'):
+                return
+            if not hasattr(config.mediaplayer,'useAlternateUserAgent'):
+                return
+            if not hasattr(config.mediaplayer,'alternateUserAgent'):
+                return
+                 
             if agent != "":
                 config.mediaplayer.useAlternateUserAgent.setValue(True)
                 config.mediaplayer.useAlternateUserAgent.save()
