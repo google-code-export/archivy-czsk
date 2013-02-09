@@ -233,7 +233,7 @@ DownloadStatusScreen = """
             <widget name="speed" position="10,241" size="606,21" font="Regular; 19" />
             <widget name="state_label" position="10,289" size="606,21" foregroundColor="#e5b243"  font="Regular; 19"/>
             <widget name="state" position="10,289" size="606,21" foregroundColors="#00b837,#ff2b39,#024dd9" font="Regular; 19"/>
-            <widget name="status" position="10,330" scrollbarMode="showOnDemand" size="606,89" font="Console; 14" />
+            <widget name="status" position="10,330" size="606,89" font="Console; 14" />
         </screen>"""
 
 CaptchaDialog = """
