@@ -218,10 +218,10 @@ class DownloadStatusScreen(BaseArchivCZSKScreen):
         self._download.showOutput = True
 
     def cancel(self):
-        self._download.showOutput = False
         self.close()
         
     def __onClose(self):
+        self._download.showOutput = False
         self._download.onOutputCB.remove(self.outputCallback)
         self._download.onFinishCB.remove(self.updateState)
         self._download.onFinishCB.remove(self.updateFinishTime)

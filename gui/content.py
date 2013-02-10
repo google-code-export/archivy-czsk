@@ -292,9 +292,13 @@ class ContentItemHandler(ItemHandler):
         
     
     def download_item(self, item, mode=""):
+        @self.content_screen.exception_dec
+        def start_download():
+            self.content_provider.download(item, startCB=startCB, finishCB=finishCB, mode=mode)
+            
         startCB = DownloadManagerMessages.startDownloadCB
         finishCB = DownloadManagerMessages.finishDownloadCB
-        self.content_provider.download(item, startCB=startCB, finishCB=finishCB, mode=mode)
+        start_download()
         
     
     def menu_item_cb(self, idx=None):

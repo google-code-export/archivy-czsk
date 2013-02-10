@@ -9,6 +9,7 @@ from twisted.python import failure
 from twisted.web import client
 from twisted.internet import reactor
 import urlparse, urllib2
+
 try:
     from enigma import eConsoleAppContainer
 except ImportError:
@@ -19,6 +20,9 @@ RTMP_DUMP_PATH = '/usr/bin/rtmpdump'
 WGET_PATH = 'wget'
 USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:14.0) Gecko/20100101 Firefox/14.0.1'
 VIDEO_EXTENSIONS = ('.avi', '.flv', '.mp4', '.mkv', '.mpeg', 'mpg', '.asf', '.wmv', '.divx')
+
+class NotSupportedProtocolException(Exception):
+    pass
 
 
 def toUTF8(text):
@@ -134,7 +138,11 @@ class DownloadManager(object):
 
         elif url[0:4] == 'http':
             resetUrllib2Opener()
-            filename, length = getFileInfo(url, filename, headers)
+            try:
+                filename, length = getFileInfo(url, filename, headers)
+            except (urllib2.HTTPError,urllib2.URLError) as e:
+                print "[Downloader] cannot create download %s - %s error"%(toUTF8(filename),str(e))
+                raise
             # only for EPLAYER3
             # When playing and downloading avi/mkv container then use HTTPTwistedDownload instead of wget
             # Reason is that when we use wget download, downloading file is progressively increasing its size, and ffmpeg isnt updating size of file accordingly
@@ -160,8 +168,8 @@ class DownloadManager(object):
             return d
             
         else:
-            print 'Cannot download file', url, 'not supported protocol'
-            return None
+            print '[Downloader] cannot create download %s - not supported protocol'%toUTF8(filename)
+            raise NotSupportedProtocolException()
         
 class DownloadStatus():
     def __init__(self, download):
