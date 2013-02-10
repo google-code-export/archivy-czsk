@@ -59,7 +59,6 @@ def load_xml(xml_file):
             xml.flush()
     except IOError, e:
         print "I/O error(%d): %s" % (e.errno, e.strerror)
-        pass
     finally:
         if xml:xml.close()
         
@@ -328,13 +327,15 @@ def url_exist(url, timeout=20):
     
     if os.path.isfile(url):
         return True
-    
-    if not url.startswith('rtmp') and not url.startswith('mms') and not url.startswith('http') and not url.startswith('rtsp'):
-        return False
-    
     # for now we cannot determine existence of url in rtmp or mms protocol
-    if url.startswith('rtmp') or url.startswith('mms') or url.startswith('rtsp'):
+    if url.startswith('rtmp') or \
+        url.startswith('mms') or \
+        url.startswith('rtsp') or \
+        url.startswith('rtp'): 
         return None
+    
+    if not url.startswith('http'):
+        return False
     
     if url == '' or url.find(' ') != -1:
         return False 
@@ -376,26 +377,6 @@ def check_seekable_url(video_url):
         return True
     else:
         return False
-    
-def chckCpu():
-    what = "mipsel"
-    try:
-        cpu = open("/proc/cpuinfo", "r").read()
-        if cpu.find("sh4") != -1:
-            what = "sh4"
-    except: pass
-    return what
-
-def getPlayer():
-    if os.path.isdir('usr/lib/gstreamer-0.10'):
-        print '[ArchivCZSK] founded gstreamer'
-        return 'gstreamer'
-    else:
-        if os.path.isfile('/lib/libeplayer2.so') or os.path.isfile('/lib/libeplayer3.so'):
-            print '[ArchivCZSK] founded eplayer'
-            return 'eplayer'
-        print '[ArchivCZKS] cannot found player libraries, assuming gstreamer'
-        return 'gstreamer'
     
 def check_program(program):
     

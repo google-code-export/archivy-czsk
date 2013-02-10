@@ -156,8 +156,9 @@ class InfoBarAspectChange:
 	
 	def __init__(self):
 		self.AVswitch = AVSwitch()
-		self.defaultAVmode = 3
-		self.currentAVmode = self.defaultAVmode
+		self.aspectChanged=False
+		self.defaultAVmode = self.AVswitch.getAspectRatioSetting()
+		self.currentAVmode = 3
 		self["aspectChangeActions"] = HelpableActionMap(self, "InfobarAspectChangeActions",
         	{
          	"aspectChange":(self.aspectChange, ("changing aspect"))
@@ -167,6 +168,7 @@ class InfoBarAspectChange:
 		
 	def aspectChange(self):
 		log.debug("aspect mode %d" , self.currentAVmode)
+		self.aspectChanged = True
 		if self.currentAVmode == 1: #letterbox
 			self.AVswitch.setAspectRatio(0)
 			self.currentAVmode = 2
@@ -180,8 +182,11 @@ class InfoBarAspectChange:
 			self.AVswitch.setAspectRatio(3)
 			self.currentAVmode = 1
 			
+			
 	def __onClose(self):
-		self.AVswitch.setAspectRatio(2)
+		if self.aspectChanged:
+			self.AVswitch.setAspectRatio(self.defaultAVmode)
+		#self.AVswitch.setAspectRatio(2)
 		
 	
 
@@ -303,7 +308,14 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePl
 			self.exitVideoPlayer()
 				
 	def exitVideoPlayer(self):
-		self.setSeekState(self.SEEK_STATE_PLAY) 
+		# from tdt duckbox
+		# make sure that playback is unpaused otherwise the  
+		# player driver might stop working 
+		
+		# disabled because on gstreamer freezes e2 after stoping live rtmp stream
+		
+		#self.setSeekState(self.SEEK_STATE_PLAY) 
+		
 		self.close()
 		
 	def _onClose(self):

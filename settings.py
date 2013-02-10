@@ -14,8 +14,8 @@ SERVICEMP4 = False
 try:
     import engine.player.servicemp4
     SERVICEMP4 = True
-except Exception:
-    print '[ArchivCZSK] error in importing custom servicemp4'
+except ImportError:
+    print '[ArchivCZSK] error in importing servicemp4'
     SERVICEMP4 = False
  
 LANGUAGE_SETTINGS_ID = language.getLanguage()[:2]
@@ -131,8 +131,9 @@ config.plugins.archivCZSK.subtitlesPath = ConfigDirectory(default="/tmp")
 
 config.plugins.archivCZSK.convertPNG = ConfigYesNo(default=True)
 config.plugins.archivCZSK.clearMemory = ConfigYesNo(default=False)
-if not (videoPlayerInfo.type == 'gstreamer'):
-    # to override previous defaults
+
+# we dont need linkVerification with gstreamer
+if videoPlayerInfo.type == 'gstreamer':
     config.plugins.archivCZSK.linkVerification = ConfigYesNo(default=False)
     config.plugins.archivCZSK.linkVerification.setValue(False)
     config.plugins.archivCZSK.linkVerification.save()

@@ -133,12 +133,12 @@ class RtmpStream(Stream):
         
     def getUrl(self):
         url = []
-        url.append("'%s'" % self.url)
-        if self.live: url.append("live=0")
-        else: url.append("live=1")
-        if self.swfUrl != "":url.append("swfUrl='%s'" % self.swfUrl)
-        if self.pageUrl != "":url.append("pageUrl='%s'" % self.pageUrl)
-        if self.playpath != "":url.append("playpath='%s'" % self.playpath)
+        url.append("%s" % self.url)
+        if self.live: url.append("live=1")
+        else: url.append("live=0")
+        if self.swfUrl != "":url.append("swfUrl=%s" % self.swfUrl)
+        if self.pageUrl != "":url.append("pageUrl=%s" % self.pageUrl)
+        if self.playpath != "":url.append("playpath=%s" % self.playpath)
         url.append("buffer=%d" % self.rtmpBuffer)
         url.append(self.advanced)
         return ' '.join(url)
