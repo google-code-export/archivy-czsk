@@ -228,6 +228,7 @@ class Download(object):
         self.local = os.path.join(destDir, filename).encode('ascii', 'ignore')
         self.length = 0
         self.quiet = quiet
+        self.wantSave = False
         self.running = False
         self.killed = False
         self.paused = False

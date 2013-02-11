@@ -204,6 +204,12 @@ class VideoPlayerController(object):
                 }
         self.video_player.updateInfobar(info)
         
+    def _seek_back(self):
+        self.video_player._seekBack()
+        
+    def _seek_fwd(self):
+        self.video_player._seekFwd()
+        
     # not sure why but riginal MP doSeek method does nothing, so I use on seeking only doSeekRelative
     def _do_seek(self, pts):
         log.debug('seeking to %dh:%02dm:%02ds' , self.pts_to_hms(pts))
@@ -243,7 +249,25 @@ class VideoPlayerController(object):
         self.video_player._exitVideoPlayer()
 
 #           Video Controller Actions called by Video Player
-#####################################################################    
+#####################################################################
+    def seek_fwd(self):
+        if not self.seekable:
+            send_info_message(self.session, _("Its not possible to seek in this video"), 3)
+        elif self.download is not None and self.download.running:
+            send_info_message(self.session, _("Its not possible to use trick seek in downloading video "), 3)
+        else:
+            self._seek_fwd()
+            
+
+    def seek_back(self):
+        if not self.seekable:
+            send_info_message(self.session, _("Its not possible to seek in this video"), 3)
+        elif self.download is not None and self.download.running:
+            send_info_message(self.session, _("Its not possible to use trick seek in downloading video "), 3)
+        else:
+            self._seek_back()
+            
+    
     def do_seek_relative(self, relative_pts):
         if not self.seekable:
             send_info_message(self.session, _("Its not possible to seek in this video"), 3)

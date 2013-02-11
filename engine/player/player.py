@@ -156,7 +156,7 @@ class InfoBarAspectChange:
 	
 	def __init__(self):
 		self.AVswitch = AVSwitch()
-		self.aspectChanged=False
+		self.aspectChanged = False
 		self.defaultAVmode = self.AVswitch.getAspectRatioSetting()
 		self.currentAVmode = 3
 		self["aspectChangeActions"] = HelpableActionMap(self, "InfobarAspectChangeActions",
@@ -193,9 +193,8 @@ class InfoBarAspectChange:
 
 class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePlayerInfobar, InfoBarBase, InfoBarShowHide, \
 		InfoBarSeek, InfoBarAudioSelection, HelpableScreen, InfoBarNotifications, \
-		InfoBarServiceNotifications, InfoBarPVRState, InfoBarCueSheetSupport, InfoBarSimpleEventView, \
-		InfoBarMoviePlayerSummarySupport, InfoBarAspectChange, \
-		InfoBarServiceErrorPopupSupport):
+		InfoBarServiceNotifications, InfoBarPVRState, InfoBarCueSheetSupport, \
+		InfoBarAspectChange, InfoBarServiceErrorPopupSupport):
 	
 	ENABLE_RESUME_SUPPORT = True
 	ALLOW_SUSPEND = True
@@ -236,13 +235,12 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePl
 			iPlayableService.evUser + 12: self.__evPluginError
 		})
 		
+		InfoBarBase.__init__(self,steal_current_service=True)
 		# init of all inherited screens
 		for x in HelpableScreen, InfoBarShowHide, \
-				InfoBarBase, InfoBarSeek, \
-				InfoBarAudioSelection, InfoBarNotifications, InfoBarSimpleEventView, \
-				InfoBarServiceNotifications, InfoBarPVRState, InfoBarCueSheetSupport, \
-				InfoBarMoviePlayerSummarySupport, InfoBarAspectChange, \
-				InfoBarServiceErrorPopupSupport:
+			    InfoBarSeek, InfoBarAudioSelection, InfoBarNotifications, \
+				InfoBarServiceNotifications, HelpableScreen, InfoBarPVRState, InfoBarCueSheetSupport, \
+				InfoBarAspectChange, InfoBarServiceErrorPopupSupport:
 				x.__init__(self)
 		
 		# init subtitles		
@@ -344,7 +342,11 @@ class CustomVideoPlayer(ArchivCZSKMoviePlayer):
 			self.videoPlayerController.start(self.playAndDownload)
 			
 ##################  default MP methods ################
-
+	def _seekFwd(self):
+		super(CustomVideoPlayer, self).seekFwd()
+		
+	def _seekBack(self):
+		super(CustomVideoPlayer, self).seekBack()
 		
 	def _doSeekRelative(self, pts):
 		super(CustomVideoPlayer, self).doSeekRelative(pts)
@@ -362,6 +364,18 @@ class CustomVideoPlayer(ArchivCZSKMoviePlayer):
 		super(CustomVideoPlayer, self).exitVideoPlayer()
 		
 #######################################################
+
+	def seekFwd(self):
+		if self.useVideoController:
+			self.videoPlayerController.seek_fwd()
+		else:
+			self._seekFwd()
+			
+	def seekBack(self):
+		if self.useVideoController:
+			self.videoPlayerController.seek_fwd()
+		else:
+			self._seekBack()
 		
 	def doSeekRelative(self, pts):
 		if self.useVideoController:
@@ -613,7 +627,7 @@ class Player():
 					if self.stream is not None:
 						self._playStream(self.stream.getUrl(), self.subtitles, verifyLink=verifyLink)
 					else:
-						self._playStream(str(self.playUrl + ' buffer=' + str(self.rtmpBuffer)), self.subtitles, verifyLink= verifyLink)
+						self._playStream(str(self.playUrl + ' buffer=' + str(self.rtmpBuffer)), self.subtitles, verifyLink=verifyLink)
 				# internal player doesnt have rtmp support so we use rtmpgw
 				else:
 					#to make sure that rtmpgw is not running
@@ -709,7 +723,15 @@ class Player():
 
 	def _exitRTMPGWProcess(self, status):
 		log.debug('rtmpgw process exited with status %d' , status)
-		self.rtmpgwProcess = None	
+		self.rtmpgwProcess = None
+		
+	def _createServiceRef(self, streamURL):
+		if self.settings.servicemp4.getValue():
+			sref = eServiceReference(SERVICEMP4_ID, 0, streamURL)
+		else:
+			sref = eServiceReference(4097, 0, streamURL)
+		sref.setName(self.name.encode('utf-8', 'ignore'))
+		return sref	
 								
 			
 	def _playStream(self, streamURL, subtitlesURL, playAndDownload=False, verifyLink=False):
@@ -722,13 +744,8 @@ class Player():
 		self.session.nav.stopService()
 		if isinstance(streamURL, unicode):
 			streamURL = streamURL.encode('utf-8')
-		
-		# using custom service handler
-		if self.settings.servicemp4.getValue():
-			sref = eServiceReference(SERVICEMP4_ID, 0, streamURL)
-		else:
-			sref = eServiceReference(4097, 0, streamURL)
-		sref.setName(self.name.encode('utf-8', 'ignore'))
+			
+		sref = self._createServiceRef(streamURL)
 		
 		# load settings according url
 		setting.loadSettings(streamURL)
@@ -791,11 +808,15 @@ class Player():
 			if not callback:
 				from Plugins.Extensions.archivCZSK.engine.downloader import DownloadManager             
 				DownloadManager.getInstance().removeDownload(self.download)
+			else:
+				self.download.wantSave = True
 
-		if self.download.downloaded:
+		if self.download.downloaded and not self.download.wantSave:
 			self.session.openWithCallback(saveDownload, MessageBox, _("Do you want to save") + ' ' + self.download.name.encode('utf-8', 'ignore')\
 										 + ' ' + _("to disk?"), type=MessageBox.TYPE_YESNO)
-			
+		elif self.download.downloaded and self.download.wantSave:
+			pass
+		
 		elif not self.download.downloaded and self.download.running:
 			self.session.openWithCallback(saveDownload, MessageBox, _("Do you want to continue downloading") + ' '\
 										 + self.download.name.encode('utf-8', 'ignore') + ' ' + _("to disk?"), type=MessageBox.TYPE_YESNO)
