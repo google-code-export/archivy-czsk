@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-import urllib2, urllib, re, os
+import urllib2, urllib, re, os, traceback
 from parseutils import *
-from util import addDir, addLink,addSearch, getSearch
+from util import addDir, addLink, addSearch, getSearch
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
 import vk, novamov, videobb
 import videonet, youtube
@@ -18,7 +18,7 @@ nexticon = os.path.join(home, 'nextpage.png')
 
 #==========================================================================
 def OBSAH():
-    addSearch('Hledat ...', __baseurl__, 4, icon)
+    addDir('Hledat ...', __baseurl__, 4, icon)
     addDir('Podle kategorie', __baseurl__, 1, icon)
     addDir('Serialy', __baseurl__ + '/serialy/1-online', 5, icon)
     addDir('Filmy', __baseurl__ + '/', 2, icon)
@@ -53,33 +53,33 @@ def KATEGORIE():
 #==========================================================================
 searchurl = __baseurl__ + '/component/search/'
 def SEARCH():
-        	search = getSearch(session)
-	        encode = urllib.quote(search)
-		values = {'searchword': encode, 'Submit': 'Search', 'searchphrase': 'all', 'limit': '15', 'ordering': 'newest'}
-	        user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
-	        headers = { 'User-Agent' : user_agent }
-	        data = urllib.urlencode(values)
-	        req = urllib2.Request(searchurl, data, headers)
-	        req.add_header('User-Agent', _UserAgent_)
-	        response = urllib2.urlopen(req)
-	        data = response.read()
-	        response.close()
-		match = re.compile("<dt class=\"result-title\">[\s|\S]*?<a href=\"(.+?)\">[\s]*?(.+?)</a>[\s]+</dt").findall(data) 
-		for item in match:
-			name = item[1].replace('\t', '')
-            		addDir(name, __baseurl__ + item[0], 3, icon)
-            		
+                search = getSearch(session)
+                encode = urllib.quote(search)
+                values = {'searchword': encode, 'Submit': 'Search', 'searchphrase': 'all', 'limit': '15', 'ordering': 'newest'}
+                user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'
+                headers = { 'User-Agent' : user_agent }
+                data = urllib.urlencode(values)
+                req = urllib2.Request(searchurl, data, headers)
+                req.add_header('User-Agent', _UserAgent_)
+                response = urllib2.urlopen(req)
+                data = response.read()
+                response.close()
+                match = re.compile("<dt class=\"result-title\">[\s|\S]*?<a href=\"(.+?)\">[\s]*?(.+?)</a>[\s]+</dt").findall(data)
+                for item in match:
+                        name = item[1].replace('\t', '')
+                        addDir(name, __baseurl__ + item[0], 3, icon)
+                       
 #==========================================================================
 
 
 #==========================================================================
 def getUrlData(url):
-	req = urllib2.Request(url)
-    	req.add_header('User-Agent', _UserAgent_)
-    	response = urllib2.urlopen(req)
-    	data = response.read()
-    	response.close()
-	return data
+        req = urllib2.Request(url)
+        req.add_header('User-Agent', _UserAgent_)
+        response = urllib2.urlopen(req)
+        data = response.read()
+        response.close()
+        return data
 #==========================================================================
 
 
@@ -89,51 +89,54 @@ def INDEX(url):
     items = doc.findAll('div', 'pos-media')
     for item in items:
             try:
-		rating = item.find('div', 'vote-message').getText(" ").encode('utf-8')
-		r = re.search('(?P<rating>.+?)rating', rating)
-		if r:
-			ra = r.group('rating').split('/')
-			rating = float(ra[0]) * 2
-            	item2 = item.findNextSibling()
-	        popis = item2.getText(" ").encode('utf-8')
-	        s = re.search('Originální název: (?P<origname>.+?)Český název: (?P<jmeno>.+?)Datum vydání: (?P<rok>.+?)Žánry: (?P<zanry>.+?)Hrají: (?P<herci>.+?)Obsah: (?P<obsah>.+?)$', popis)
-	        if s:
-			origname = s.group('origname')
-			name = s.group('jmeno')
-			rok = s.group('rok')
-			zanry = s.group('zanry')
-			herci = s.group('herci').replace(' a ', ',').split(',')
-			obsah = s.group('obsah')
-			
-	        infoLabels = {'Title': name, 'Genre': zanry, 'Year': int(rok), 'Cast': herci, 'Rating': rating, 'OriginalTitle': origname, 'Plot': obsah}
-	    
-	    except:
-	        infoLabels = {}
-      	    item = item.find('a')
+                rating = item.find('div', 'vote-message').getText(" ").encode('utf-8')
+                r = re.search('(?P<rating>.+?)rating', rating)
+                if r:
+                        ra = r.group('rating').split('/')
+                        rating = float(ra[0]) * 2
+                item2 = item.findNextSibling()
+                popis = item2.getText(" ").encode('utf-8')
+                s = re.search('Originální název: (?P<origname>.+?)Český název: (?P<jmeno>.+?)Datum vydání: (?P<rok>.+?)Žánry: (?P<zanry>.+?)Hrají: (?P<herci>.+?)Obsah: (?P<obsah>.+?)$', popis)
+                if s:
+                        origname = s.group('origname')
+                        name = s.group('jmeno')
+                        rok = s.group('rok')
+                        zanry = s.group('zanry')
+                        herci = s.group('herci').replace(' a ', ',').split(',')
+                        obsah = s.group('obsah')
+                       
+                infoLabels = {'Title': name, 'Genre': zanry, 'Year': int(rok), 'Cast': herci, 'Rating': rating, 'OriginalTitle': origname, 'Plot': obsah}
+           
+            except:
+                infoLabels = {}
+            item = item.find('a')
             name = item['title'].encode('utf-8')
             link = item['href']
-	    item = item.find('img')
+            item = item.find('img')
             icon = item['src']
-            addDir(name, __baseurl__ + link, 3, icon, infoLabels=infoLabels)
+            addDir(name, __baseurl__ + link, 3, icon, infoLabels)
     try:
         pager = doc.find('div', 'pagination-bg')
         act_page_a = pager.find('span')
         act_page = act_page_a.getText(" ").encode('utf-8')
         next_page = int(act_page) + 1
-	items = pager.findAll('a')
+        items = pager.findAll('a')
         for item in items:
-		odkaz = item.getText(" ").encode('utf-8')
-		if odkaz == '>':
-			next_page_a = item['href']
-		elif odkaz == '>>':
-        		index = item['href'].rfind('/')
-			max_page = item['href'][index + 1:]
-		else:
-			continue
-	if (int(next_page) > int(max_page)):
-	        next_page = max_page
-	next_label = 'Přejít na stranu ' + str(next_page) + ' z ' + str(max_page) 
-	addDir(next_label, __baseurl__ + next_page_a, 2, nexticon)
+                odkaz = item.getText(" ")
+                odkaz = odkaz.replace(u"\u00A0", "").encode('utf-8')
+                
+                print 'item:', item, 'odkaz:', odkaz
+                if odkaz == '>':
+                        next_page_a = item['href']
+                elif odkaz == '>>':
+                        index = item['href'].rfind('/')
+                        max_page = item['href'][index + 1:]
+                else:
+                        continue
+        if (int(next_page) > int(max_page)):
+                next_page = max_page
+        next_label = 'Přejít na stranu ' + str(next_page) + ' z ' + str(max_page)
+        addDir(next_label, __baseurl__ + next_page_a, 2, nexticon)
     except:
         print 'stop'
 #==========================================================================
@@ -141,141 +144,142 @@ def INDEX(url):
 
 #==========================================================================
 def SERIALY(url):
-	req = urllib2.Request(url)
-	req.add_header('User-Agent', _UserAgent_)
-	response = urllib2.urlopen(req)
-	data = response.read()
-	response.close()
-	match = re.compile('<div class=\"contentheading\"><h1>Seriály online</h1></div>[\s|\S]+<dl class=\"social-links\">'). findall(data)
-	match = re.compile('<p><a href=\"(.+?)\">(.+?)</a></p>').findall(match[0])
+        req = urllib2.Request(url)
+        req.add_header('User-Agent', _UserAgent_)
+        response = urllib2.urlopen(req)
+        data = response.read()
+        response.close()
+        match = re.compile('<div class=\"contentheading\"><h1>Seriály online</h1></div>[\s|\S]+<dl class=\"social-links\">'). findall(data)
+        match = re.compile('<p><a href=\"(.+?)\">(.+?)</a></p>').findall(match[0])
 
-	for item in match:
-		addDir(item[1], __baseurl__ + item[0], 6, '', infoLabels={})
+        for item in match:
+                addDir(item[1], __baseurl__ + item[0], 6, '', infoLabels={})
 #==========================================================================
 
 
 #==========================================================================
 def SERIALY_DET(url):
-	req = urllib2.Request(url)
-	req.add_header('User-Agent', _UserAgent_)
-	response = urllib2.urlopen(req)
-	data = response.read()
-	response.close()
-	match = re.compile('<div class=\"contentheading\"><h1>[\s|\S]+<dl class=\"social-links\">'). findall(data)
-	match = re.compile('href=\"(.+?)\">(.+?)</a>').findall(match[0])
-	for item in match:
-		r = re.search('mce_href=\"(?P<mce>.+?)$', item[0])
-		if r:
-			url = r.group('mce')
-		else:
-			url = item[0]
-		name = item[1].replace('&nbsp;', ' ')
-		name = name.replace('<b></b>', '')
-		name = name.replace('<strong></strong>', '')
-		addDir(name, __baseurl__ + url, 3, '', infoLabels={})
+        req = urllib2.Request(url)
+        req.add_header('User-Agent', _UserAgent_)
+        response = urllib2.urlopen(req)
+        data = response.read()
+        response.close()
+        match = re.compile('<div class=\"contentheading\"><h1>[\s|\S]+<dl class=\"social-links\">'). findall(data)
+        match = re.compile('href=\"(.+?)\">(.+?)</a>').findall(match[0])
+        for item in match:
+                r = re.search('mce_href=\"(?P<mce>.+?)$', item[0])
+                if r:
+                        url = r.group('mce')
+                else:
+                        url = item[0]
+                name = item[1].replace('&nbsp;', ' ')
+                name = name.replace('<b></b>', '')
+                name = name.replace('<strong></strong>', '')
+                addDir(name, __baseurl__ + url, 3, '', infoLabels={})
 #==========================================================================
 
 
 
 #==========================================================================
 def VIDEOBB_LINK(url, name):
-	try:
-		videourl = videobb.getURL(url)
-    		addLink(name + " - videobb.com", videourl, '', '')
-	except:
-		print "VIDEOBB URL: " + url
+        try:
+                videourl = videobb.getURL(url)
+                addLink(name + " - videobb.com", videourl, '', '')
+        except:
+                print "VIDEOBB URL: " + url
 #==========================================================================
 
 
 #==========================================================================
 def NOVAMOV_LINK(url, name):
-	try:
-		videourl = novamov.getURL(url)
-    		addLink(name + " - novamov.com", videourl, '', '')
-	except:
-       		print "NOVAMOV.COM URL: " + url
+        try:
+                videourl = novamov.getURL(url)
+                addLink(name + " - novamov.com", videourl, '', '')
+        except:
+                print "NOVAMOV.COM URL: " + url
 #==========================================================================
 
 
 #==========================================================================
 def VKCOM_LINK(url, name):
-	try:
-		videourl = vk.getURL(url)
-    		addLink(name + " - vk.com", videourl, '', '')
-	except:
-       		print "VK.COM URL: " + url
+        try:
+                videourl = vk.getURL(url)
+                addLink(name + " - vk.com", videourl, '', '')
+        except:
+                print "VK.COM URL: " + url
 #==========================================================================
 
 #==========================================================================
 def VIDEONET_LINK(url, name):
-	try:
-		videourl = videonet.getURL(url)
-    		addLink(name + " - 24video.net", videourl, '', '')
-	except:
-       		print "24VIDEO.NET URL: " + url
+        try:
+                videourl = videonet.getURL(url)
+                addLink(name + " - 24video.net", videourl, '', '')
+        except:
+                print "24VIDEO.NET URL: " + url
 #==========================================================================
 
 #==========================================================================
 def YOUTUBE_LINK(url, name):
-	try:
-		videourl = youtube.getURL(url)
-		addLink(name + " - youtube.com", videourl, '', '')
-	except:
-       		print "YOUTUBE.COM URL: " + url
+        try:
+                videourl = youtube.getURL(url)
+                addLink(name + " - youtube.com", videourl, '', '')
+        except:
+                print "YOUTUBE.COM URL: " + url
 #==========================================================================
 
 
 #==========================================================================
 def VIDEOLINK(url, name):
-	
+       
     print "URL: " + url
-    data = getUrlData(url) 
-    
-    
+    data = getUrlData(url)
+   
+   
     match = re.compile('<p>(.+?)</p>\s*.*<p style=.*><.*mce_(src|href)=\"(.+?)\".*').findall(data)
     if (len(match) < 1) or (match[0][0].find('<br /></p><p><br />') != -1) :
-	items = servertools.findvideo(data)
-	for server, adresa in items:
-		adresa = adresa.replace('&amp;', '&')
-		server = server.lower()
-	
-		if server == "youtube":
-			YOUTUBE_LINK(adresa, name + ' - UKAZKA')
+        items = servertools.findvideo(data)
+        for server, adresa in items:
+                adresa = adresa.replace('&amp;', '&')
+                server = server.lower()
+       
+                if server == "youtube":
+                        YOUTUBE_LINK(adresa, name + ' - UKAZKA')
 
-		if server == "24video":
-			VIDEONET_LINK(adresa, name)
-		if server == "videobb":
-			VIDEOBB_LINK(adresa, name)
-		if server == "novamov":
-			NOVAMOV_LINK(adresa, name)
-		if server == "vk":
-			VKCOM_LINK(adresa, name)
-		#else:
-		#	print "VIDEOLINK URL: "+url
+                if server == "24video":
+                        VIDEONET_LINK(adresa, name)
+                if server == "videobb":
+                        VIDEOBB_LINK(adresa, name)
+                if server == "novamov":
+                        NOVAMOV_LINK(adresa, name)
+                if server == "vk":
+                        VKCOM_LINK(adresa, name)
+                #else:
+                #       print "VIDEOLINK URL: "+url
     else:
-	for item in match:
-		url = item[len(item) - 1].replace('&amp;', '&')
-		try:
-			n = item[2]
-			name = item[0]
-		except:
-			pass 	    
-		if url.find('youtube.com') != -1:
-			YOUTUBE_LINK(url, name)
-		elif url.find('24video.net') != -1:
-			match = re.search('flash[v|V]ars.*\"id=(?P<id>.+?)&amp;idHtml=(?P<html>.+?)&amp;.*rootUrl=(?P<url>.+?)&amp;', data, re.IGNORECASE | re.DOTALL)
-			VIDEONET_LINK(('%s%s%s?mode=play' % (match.group('url') , match.group('html'), match.group('id'))), name)
-		elif url.find('videobb.com') != -1:
-			VIDEOBB_LINK(url, name)
-		elif url.find('novamov.com') != -1:
-			NOVAMOV_LINK(url, name)
-		elif url.find('vk.com') != -1 or url.find('vkontakte.ru') != -1:
-			VKCOM_LINK(url, name)
-		else:
-			print "VIDEOLINK URL: " + url
+        for item in match:
+                url = item[len(item) - 1].replace('&amp;', '&')
+                try:
+                        n = item[2]
+                        name = item[0]
+                except:
+                        pass        
+                if url.find('youtube.com') != -1:
+                        YOUTUBE_LINK(url, name)
+                elif url.find('24video.net') != -1:
+                        match = re.search('flash[v|V]ars.*\"id=(?P<id>.+?)&amp;idHtml=(?P<html>.+?)&amp;.*rootUrl=(?P<url>.+?)&amp;', data, re.IGNORECASE | re.DOTALL)
+                        VIDEONET_LINK(('%s%s%s?mode=play' % (match.group('url') , match.group('html'), match.group('id'))), name)
+                elif url.find('videobb.com') != -1:
+                        VIDEOBB_LINK(url, name)
+                elif url.find('novamov.com') != -1:
+                        NOVAMOV_LINK(url, name)
+                elif url.find('vk.com') != -1 or url.find('vkontakte.ru') != -1:
+                        VKCOM_LINK(url, name)
+                else:
+                        print "VIDEOLINK URL: " + url
    
 
 #==========================================================================
+
 	
 url = None
 name = None
