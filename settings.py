@@ -9,6 +9,7 @@ from Components.config import config, ConfigSubsection, ConfigSelection, ConfigD
 from Components.Language import language
 from Plugins.Extensions.archivCZSK import log, _
 from engine.player.info import videoPlayerInfo
+from engine.tools import stb
 SERVICEMP4 = False
 
 try:
@@ -19,6 +20,7 @@ except ImportError:
     SERVICEMP4 = False
  
 LANGUAGE_SETTINGS_ID = language.getLanguage()[:2]
+AZBOX = stb.getBoxtype()[0] == 'Azbox'
 
 ######### Plugin Paths ##############
 
@@ -39,8 +41,6 @@ config.plugins.archivCZSK.archives = ConfigSubsection()
 ################## Player config #####################################
 
 config.plugins.archivCZSK.videoPlayer = ConfigSubsection()
-choicelist = [('standard', _('standard player')),
-                ('custom', _('custom player (subtitle support)'))]
 playertype = [(videoPlayerInfo.type, videoPlayerInfo.getName())]
 
 config.plugins.archivCZSK.videoPlayer.detectedType = ConfigSelection(choices=playertype)
@@ -48,10 +48,16 @@ if videoPlayerInfo.isRTMPSupported():
     config.plugins.archivCZSK.videoPlayer.seeking = ConfigYesNo(default=True)
 else:
     config.plugins.archivCZSK.videoPlayer.seeking = ConfigYesNo(default=False)
+
+choicelist = [('standard', _('standard player')),
+              ('custom', _('custom player (subtitle support)'))]
 config.plugins.archivCZSK.videoPlayer.type = ConfigSelection(default="custom", choices=choicelist)
 config.plugins.archivCZSK.videoPlayer.useVideoController = ConfigYesNo(default=True)             
 config.plugins.archivCZSK.videoPlayer.useDefaultSkin = ConfigYesNo(default=True)
 config.plugins.archivCZSK.videoPlayer.autoPlay = ConfigYesNo(default=True)
+
+# to use servicemrua instead of servicemp3/servicemp4
+config.plugins.archivCZSK.videoPlayer.servicemrua = ConfigYesNo(default=False)
 
 if SERVICEMP4:
     config.plugins.archivCZSK.videoPlayer.servicemp4 = ConfigYesNo(default=True)
@@ -68,7 +74,7 @@ config.plugins.archivCZSK.videoPlayer.extraHeaders = ConfigText(default="")
 config.plugins.archivCZSK.videoPlayer.userAgent = ConfigText(default="")
 
 
-
+choicelist=[]
 for i in range(5, 120, 1):
     choicelist.append(("%d" % i, "%d s" % i))
 config.plugins.archivCZSK.videoPlayer.httpTimeout = ConfigSelection(default="40", choices=choicelist)
@@ -152,6 +158,7 @@ def get_player_settings():
     list = []
     player = config.plugins.archivCZSK.videoPlayer.type.getValue()
     useServiceMP4 = config.plugins.archivCZSK.videoPlayer.servicemp4.getValue()
+    useServiceMRUA = config.plugins.archivCZSK.videoPlayer.servicemrua.getValue()
     buffer_mode = config.plugins.archivCZSK.videoPlayer.bufferMode.getValue()
     list.append(getConfigListEntry(_("Detected player"), config.plugins.archivCZSK.videoPlayer.detectedType))
     list.append(getConfigListEntry(_("Video player"), config.plugins.archivCZSK.videoPlayer.type))
@@ -161,15 +168,16 @@ def get_player_settings():
         if videoPlayerInfo.type == 'gstreamer':
             list.append(getConfigListEntry(_("Buffer size"), config.plugins.archivCZSK.videoPlayer.bufferSize))
             #list.append(getConfigListEntry(_("Video player Buffer Mode"), config.plugins.archivCZSK.videoPlayer.bufferMode))
-            if SERVICEMP4:
-                list.append(getConfigListEntry(_("Use servicemp4"), config.plugins.archivCZSK.videoPlayer.servicemp4))
-                if useServiceMP4:
-                    list.append(getConfigListEntry(_("HTTP Timeout"), config.plugins.archivCZSK.videoPlayer.httpTimeout))
-                    list.append(getConfigListEntry(_("Buffer Mode"), config.plugins.archivCZSK.videoPlayer.bufferMode))
-                    list.append(getConfigListEntry(_("Buffer duration"), config.plugins.archivCZSK.videoPlayer.bufferDuration))
-                    if buffer_mode == "2":
-                        list.append(getConfigListEntry(_("Buffer size on HDD"), config.plugins.archivCZSK.videoPlayer.downloadBufferSize))
-
+    if (player == 'standard' and AZBOX) and not useServiceMP4:
+        list.append(getConfigListEntry(_("Use servicemrua (AZBOX)"), config.plugins.archivCZSK.videoPlayer.servicemrua))
+    if SERVICEMP4 and not useServiceMRUA:
+        list.append(getConfigListEntry(_("Use servicemp4"), config.plugins.archivCZSK.videoPlayer.servicemp4))
+        if useServiceMP4:
+            list.append(getConfigListEntry(_("HTTP Timeout"), config.plugins.archivCZSK.videoPlayer.httpTimeout))
+            list.append(getConfigListEntry(_("Buffer Mode"), config.plugins.archivCZSK.videoPlayer.bufferMode))
+            list.append(getConfigListEntry(_("Buffer duration"), config.plugins.archivCZSK.videoPlayer.bufferDuration))
+            if buffer_mode == "2":
+                list.append(getConfigListEntry(_("Buffer size on HDD"), config.plugins.archivCZSK.videoPlayer.downloadBufferSize))
     list.append(getConfigListEntry(_("Video player with RTMP support"), config.plugins.archivCZSK.videoPlayer.seeking))
     list.append(getConfigListEntry(_("TV archive rtmp buffer"), config.plugins.archivCZSK.videoPlayer.archiveBuffer))                                                 
     list.append(getConfigListEntry(_("Default live rtmp streams buffer"), config.plugins.archivCZSK.videoPlayer.liveBuffer))

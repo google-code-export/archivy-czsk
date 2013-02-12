@@ -47,6 +47,8 @@ from Plugins.Extensions.archivCZSK.engine.exceptions.archiveException import Cus
 from Plugins.Extensions.archivCZSK.gui.base import BaseArchivCZSKScreen
 
 SERVICEMP4_ID = 0x1011
+SERVICEMRUA_ID = 4370
+
 RTMPGW_PATH = '/usr/bin/rtmpgw'
 NETSTAT_PATH = 'netstat'
 
@@ -235,7 +237,7 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePl
 			iPlayableService.evUser + 12: self.__evPluginError
 		})
 		
-		InfoBarBase.__init__(self,steal_current_service=True)
+		InfoBarBase.__init__(self, steal_current_service=True)
 		# init of all inherited screens
 		for x in HelpableScreen, InfoBarShowHide, \
 			    InfoBarSeek, InfoBarAudioSelection, InfoBarNotifications, \
@@ -728,6 +730,8 @@ class Player():
 	def _createServiceRef(self, streamURL):
 		if self.settings.servicemp4.getValue():
 			sref = eServiceReference(SERVICEMP4_ID, 0, streamURL)
+		elif self.settings.servicemrua.getValue():
+			sref = eServiceReference(SERVICEMRUA_ID, 0, streamURL)
 		else:
 			sref = eServiceReference(4097, 0, streamURL)
 		sref.setName(self.name.encode('utf-8', 'ignore'))

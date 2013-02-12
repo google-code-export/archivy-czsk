@@ -63,7 +63,6 @@ def getFileInfo(url, localFileName=None, headers={}):
         else:
             url_ext = '.' + url.split('.')[-1]
             localName = localName + url_ext
-            
     localName = localName.replace(' ', '_')
         
     return localName, length
@@ -152,7 +151,7 @@ class DownloadManager(object):
             # Its not nice fix but its working ...
             if mode == "":
                 if os.path.splitext(filename)[1] in ('.avi', '.mkv') and playDownload:
-                    d = HTTPDownloadTwisted(name=filename, url=url, filename=filename, destDir=destination, quiet=quiet, headers=headers)
+                    d = HTTPDownloadTwisted(name=filename, url=url, filename=filename, destDir=destination, quiet=quiet, headers=headers,fullLengthFile=True)
                 else:
                     d = HTTPDownloadE2(name=filename, url=url, filename=filename, destDir=destination, quiet=quiet, headers=headers)
                     
@@ -475,7 +474,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
 
 class HTTPDownloadTwisted(Download):
-    def __init__(self, name, url, destDir, filename=None, quiet=False, headers={}):
+    def __init__(self, name, url, destDir, filename=None, quiet=False, headers={},fullLengthFile=False):
         if filename is None:
             path = urlparse.urlparse(url).path
             filename = os.path.basename(path)
@@ -483,6 +482,7 @@ class HTTPDownloadTwisted(Download):
         self.connector = None
         self.currentLength = 0
         self.headers = headers
+        self.fullLengthFile= fullLengthFile
 
     def __startCB(self):
         self.running = True
@@ -511,7 +511,7 @@ class HTTPDownloadTwisted(Download):
     
     def start(self):
         self.__startCB()
-        self.defer = self.downloadWithProgress(self.url, self.local, writeToEmptyFile=True, outputCB=self.__outputCB, headers=self.headers).addCallback(self.__finishCB).addErrback(self.downloadError)
+        self.defer = self.downloadWithProgress(self.url, self.local, writeToEmptyFile=self.fullLengthFile, outputCB=self.__outputCB, headers=self.headers).addCallback(self.__finishCB).addErrback(self.downloadError)
 
     def cancel(self):
         if self.running and self.connector is not None:

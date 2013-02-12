@@ -213,9 +213,10 @@ class ArchiveCZSKConfigScreen(BaseArchivCZSKConfigScreen):
         ConfigListScreen.keyLeft(self)
         current = self["config"].getCurrent()[1] 
         if current in [
-                       config.plugins.archivCZSK.videoPlayer.type,
                         config.plugins.archivCZSK.linkVerification,
+                        config.plugins.archivCZSK.videoPlayer.type,
                         config.plugins.archivCZSK.videoPlayer.servicemp4,
+                        config.plugins.archivCZSK.videoPlayer.servicemrua,
                         config.plugins.archivCZSK.videoPlayer.bufferMode]:
             self.buildMenu()
 
@@ -223,9 +224,10 @@ class ArchiveCZSKConfigScreen(BaseArchivCZSKConfigScreen):
         ConfigListScreen.keyRight(self)
         current = self["config"].getCurrent()[1] 
         if current in [
-                       config.plugins.archivCZSK.videoPlayer.type,
                        config.plugins.archivCZSK.linkVerification,
+                       config.plugins.archivCZSK.videoPlayer.type,
                        config.plugins.archivCZSK.videoPlayer.servicemp4,
+                       config.plugins.archivCZSK.videoPlayer.servicemrua,
                        config.plugins.archivCZSK.videoPlayer.bufferMode]:
             self.buildMenu()
           

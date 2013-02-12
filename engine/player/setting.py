@@ -23,7 +23,11 @@ def resetSettings():
 
 class VideoPlayerSettingsProvider(object):
     def __init__(self):
-        self.__config = config.plugins.archivCZSK.videoPlayer 
+        self.__config = config.plugins.archivCZSK.videoPlayer
+        
+    def setHTTPTimeout(self,timeout):
+        self.__config.httpTimeout.setValue(str(timeout))
+        self.__config.httpTimeout.save()
     
     def setExtraHeaders(self, dictHeaders={}):
         headersString = ','.join([(key + ' ' + value) for key, value in dictHeaders.iteritems()])
