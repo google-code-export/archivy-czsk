@@ -63,8 +63,12 @@ def getFileInfo(url, localFileName=None, headers={}):
         else:
             url_ext = '.' + url.split('.')[-1]
             localName = localName + url_ext
-    localName = localName.replace(' ', '_')
+            
+    # we didnt get playable video extensions so we add one
+    if os.path.splitext(localName)[1] not in VIDEO_EXTENSIONS:
+        localName=os.path.splitext(localName)[0] + '.mp4'
         
+    localName = localName.replace(' ', '_')
     return localName, length
 
 
