@@ -6,6 +6,7 @@ Created on 22.5.2012
 
 from skin import parseColor
 from Screens.Screen import Screen
+from Screens.MessageBox import MessageBox
 from Components.Label import Label, LabelConditional, MultiColorLabel
 from Components.Pixmap import Pixmap
 from Components.MenuList import MenuList
@@ -165,12 +166,12 @@ class LoadingScreen(Screen):
         self.__shown = False
 
         self.timer = eTimer()
-        self.timer.callback.append(self.showNextSpinner)
+        self.timer.timeout.get().append(self.showNextSpinner)
 
     def start(self):
         self.__shown = True
         self.show()
-        self.timer.start(200, False)
+        self.timer.start(200, True)
 
     def stop(self):
         self.hide()
@@ -181,11 +182,12 @@ class LoadingScreen(Screen):
         return self.__shown
 
     def showNextSpinner(self):
+        self.timer.stop()
         self.curr += 1
         if self.curr > 10:
             self.curr = 0
-        png = LoadPixmap(cached=True, path=PNG_PATH + str(self.curr) + ".png")
-        self["spinner"].instance.setPixmap(png)
+        self["spinner"].instance.setPixmapFromFile(PNG_PATH + str(self.curr) + ".png")
+        self.timer.start(200, True)
               
         
 class MultiLabelWidget():
@@ -269,6 +271,28 @@ class ButtonLabel(MultiColorLabel):
     def changeLabel(self, idx):
         self.setForegroundColorNum(idx)
         self.setBackgroundColorNum(idx)
+        
+
+def showInfoMessage(session, message, timeout=3, cb=None):
+    if cb is not None:
+        session.openWithCallback(cb, MessageBox, text=message, timeout=timeout, type=MessageBox.TYPE_INFO)
+    else:
+        session.open(MessageBox, text=message, timeout=timeout, type=MessageBox.TYPE_INFO)
+
+def showWarningMessage(session, message, timeout=3, cb=None):
+    if cb is not None:
+        session.openWithCallback(cb, MessageBox, text=message, timeout=timeout, type=MessageBox.TYPE_WARNING)
+    else:
+        session.open(MessageBox, text=message, timeout=timeout, type=MessageBox.TYPE_WARNING)    
+
+def showErrorMessage(session, message, timeout=3, cb=None):
+    if cb is not None:
+        session.openWithCallback(cb, MessageBox, text=message, timeout=timeout, type=MessageBox.TYPE_ERROR)
+    else:
+        session.open(MessageBox, text=message, timeout=timeout, type=MessageBox.TYPE_ERROR)
+        
+def showYesNoDialog(session, message, cb):
+    session.openWithCallback(cb, MessageBox, text=message, type=MessageBox.TYPE_YESNO)
         
         
         

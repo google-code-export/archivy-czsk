@@ -10,7 +10,7 @@ import os
 from Screens.MessageBox import MessageBox
 from Components.config import config
 
-from . import _
+from . import _, log
 
 import settings
 # loading repositories and their addons
@@ -44,7 +44,6 @@ class ArchivCZSK():
     
     __repositories = {}
     __addons = {}
-    __loaded = False
     
     @staticmethod
     def isLoaded():
@@ -53,19 +52,19 @@ class ArchivCZSK():
     @staticmethod
     def load_repositories():
         from engine.repository import Repository
-        print '[ArchivCZSK] looking for repositories in %s' % settings.REPOSITORY_PATH
+        log.info('looking for repositories in %s', settings.REPOSITORY_PATH)
         for repo in os.listdir(settings.REPOSITORY_PATH):
             repo_path = os.path.join(settings.REPOSITORY_PATH, repo)
             if os.path.isfile(repo_path):
                 continue
-            print '[ArchivCZSK] founded repository %s' % repo
+            log.info('found repository %s', repo)
             repo_xml = os.path.join(repo_path, 'addon.xml')
             try:
                 repository = Repository(repo_xml)
             except Exception:
                 traceback.print_exc()
-                print '[ArchivCZSK] cannot load repository %s' % repo
-                print "[ArchivCZSK] skipping"
+                log.info('cannot load repository %s',repo)
+                log.info("skipping")
                 continue
             else:
                 ArchivCZSK.add_repository(repository)
@@ -122,12 +121,12 @@ class ArchivCZSK():
             try:
                 self.toupdate_addons += repository.check_updates()
             except archiveException.UpdateXMLVersionException:
-                print 'cannot retrieve update xml for repository %s' % repository
+                log.info('cannot retrieve update xml for repository %s', repository)
                 #self.show_error(_("Cannot retrieve update xml for repository") + " [%s]" % repository.name.encode('utf-8'))
                 continue
             except Exception:
                 traceback.print_exc()
-                print 'Error when checking updates for repository %s' % repository
+                log.info('error when checking updates for repository %s', repository)
                 #self.show_error(_("Error when checking updates of repository") + " [%s]" % repository.name.encode('utf-8'))
                 continue
         return '\n'.join(addon.name for addon in self.toupdate_addons)
@@ -180,8 +179,6 @@ class ArchivCZSK():
             from Screens.Standby import TryQuitMainloop
             self.session.open(TryQuitMainloop, 10)
         
-    
-    
     def open_archive_screen(self):
         if not ArchivCZSK.__loaded:
             self.load_repositories()
@@ -193,10 +190,10 @@ class ArchivCZSK():
                 continue
             if key in tv_archives:
                 tv_video_addon.append(PVideoAddon(addon))
-                print '[ArchivCZSK] adding %s addon to tv group' % key
+                log.debug('adding %s addon to tv group' , key)
             else:
                 video_addon.append(PVideoAddon(addon))
-                print '[ArchivCZSK] adding %s addon to video group' % key
+                log.debug('adding %s addon to video group', key)
                 
        
         tv_video_addon.sort(key=lambda addon:addon.name)
@@ -210,8 +207,14 @@ class ArchivCZSK():
             self.__addons.clear()
             self.__repositories.clear()
             ArchivCZSK.__loaded = False
-        #We dont need worker thread anymore so we stop it  
+        # We dont need worker thread anymore so we stop it  
         Task.stopWorkerThread()
+        
+        # clear tmp content by shamman
+        os.system("rm -rf /tmp/*.url")
+        os.system("rm -rf /tmp/*.png")
+        os.system("rm -rf /tmp/*.txt")
+        os.system("rm -r /tmp/archivCZSK")
         
     def show_error(self, info):
         self.session.open(MessageBox, info, type=MessageBox.TYPE_ERROR, timeout=1)
