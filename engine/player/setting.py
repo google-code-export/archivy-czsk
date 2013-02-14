@@ -3,8 +3,9 @@ Created on 2.2.2013
 
 @author: marko
 '''
-from Components.config import config
+from Components.config import config, ConfigInteger, ConfigSubsection, ConfigYesNo, ConfigText
 from Plugins.Extensions.archivCZSK import log
+USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:18.0) Gecko/20100101 Firefox/18.0'
 
 def loadSettings(url, download=False):
     if url.find('munkvideo') > 0:
@@ -19,13 +20,12 @@ def loadSettings(url, download=False):
         
 def resetSettings():
     DefaultVideoPlayerSetting()
-    
 
 class VideoPlayerSettingsProvider(object):
     def __init__(self):
         self.__config = config.plugins.archivCZSK.videoPlayer
         
-    def setHTTPTimeout(self,timeout):
+    def setHTTPTimeout(self, timeout):
         self.__config.httpTimeout.setValue(str(timeout))
         self.__config.httpTimeout.save()
     
@@ -40,12 +40,15 @@ class VideoPlayerSettingsProvider(object):
                 self.__config.userAgent.setValue(agent)
                 self.__config.userAgent.save()
         else:
-            if not hasattr(config,'mediaplayer'):
-                return
-            if not hasattr(config.mediaplayer,'useAlternateUserAgent'):
-                return
-            if not hasattr(config.mediaplayer,'alternateUserAgent'):
-                return
+            # servicemp3 uses config.mediaplayer.alternateUserAgent to set UserAgent for gstreamer
+            if not hasattr(config, 'mediaplayer'):
+                config.mediaplayer = ConfigSubsection()
+                config.mediaplayer.useAlternateUserAgent = ConfigYesNo(default=True)
+                config.mediaplayer.alternateUserAgent = ConfigText(default="")
+            if not hasattr(config.mediaplayer, 'useAlternateUserAgent'):
+                config.mediaplayer.useAlternateUserAgent = ConfigYesNo(default=True)
+            if not hasattr(config.mediaplayer, 'alternateUserAgent'):
+                config.mediaplayer.alternateUserAgent = ConfigText(default="")
                  
             if agent != "":
                 config.mediaplayer.useAlternateUserAgent.setValue(True)
@@ -75,7 +78,7 @@ class VideoPlayerSetting(object):
 class DefaultVideoPlayerSetting(VideoPlayerSetting):
     def __init__(self):
         super(DefaultVideoPlayerSetting, self).__init__()
-        self.vpsp.setUserAgent("")
+        self.vpsp.setUserAgent(USER_AGENT)
         self.vpsp.setExtraHeaders({})
         self.vpsp.setDownloadMode(False)
      

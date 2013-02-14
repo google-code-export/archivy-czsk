@@ -18,7 +18,7 @@ except ImportError:
 
 RTMP_DUMP_PATH = '/usr/bin/rtmpdump'
 WGET_PATH = 'wget'
-USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:14.0) Gecko/20100101 Firefox/14.0.1'
+USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:18.0) Gecko/20100101 Firefox/18.0'
 VIDEO_EXTENSIONS = ('.avi', '.flv', '.mp4', '.mkv', '.mpeg', 'mpg', '.asf', '.wmv', '.divx')
 
 class NotSupportedProtocolException(Exception):
@@ -51,8 +51,15 @@ def getFileInfo(url, localFileName=None, headers={}):
     elif resp.url != url: 
         # if we were redirected, the real file name we take from the final URL
         localName = url2name(resp.url)
+    
+    # we can force to save the file as specified name
     if localFileName: 
-        # we can force to save the file as specified name
+        # if our filename doesnt have extensions, then add identified extension from localName
+        if os.path.splitext(localFileName)[1] == "":
+            ext = os.path.splitext(localName)[1]
+            if ext in VIDEO_EXTENSIONS:
+                localFileName = os.path.splitext(localFileName)[0] + ext
+                
         localName = localFileName
     resp.close()
     
@@ -66,7 +73,7 @@ def getFileInfo(url, localFileName=None, headers={}):
             
     # we didnt get playable video extensions so we add one
     if os.path.splitext(localName)[1] not in VIDEO_EXTENSIONS:
-        localName=os.path.splitext(localName)[0] + '.mp4'
+        localName = os.path.splitext(localName)[0] + '.mp4'
         
     localName = localName.replace(' ', '_')
     return localName, length
@@ -143,8 +150,8 @@ class DownloadManager(object):
             resetUrllib2Opener()
             try:
                 filename, length = getFileInfo(url, filename, headers)
-            except (urllib2.HTTPError,urllib2.URLError) as e:
-                print "[Downloader] cannot create download %s - %s error"%(toUTF8(filename),str(e))
+            except (urllib2.HTTPError, urllib2.URLError) as e:
+                print "[Downloader] cannot create download %s - %s error" % (toUTF8(filename), str(e))
                 raise
             # only for EPLAYER3
             # When playing and downloading avi/mkv container then use HTTPTwistedDownload instead of wget
@@ -155,7 +162,7 @@ class DownloadManager(object):
             # Its not nice fix but its working ...
             if mode == "":
                 if os.path.splitext(filename)[1] in ('.avi', '.mkv') and playDownload:
-                    d = HTTPDownloadTwisted(name=filename, url=url, filename=filename, destDir=destination, quiet=quiet, headers=headers,fullLengthFile=True)
+                    d = HTTPDownloadTwisted(name=filename, url=url, filename=filename, destDir=destination, quiet=quiet, headers=headers, fullLengthFile=True)
                 else:
                     d = HTTPDownloadE2(name=filename, url=url, filename=filename, destDir=destination, quiet=quiet, headers=headers)
                     
@@ -171,7 +178,7 @@ class DownloadManager(object):
             return d
             
         else:
-            print '[Downloader] cannot create download %s - not supported protocol'%toUTF8(filename)
+            print '[Downloader] cannot create download %s - not supported protocol' % toUTF8(filename)
             raise NotSupportedProtocolException()
         
 class DownloadStatus():
@@ -414,7 +421,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         self.updateCurrentLength = updateCurrentLength
         self.totalLength = 0
         self.currentLength = 0
-        client.HTTPDownloader.__init__(self, url, fileOrName, headers=headers, *args, **kwargs)
+        client.HTTPDownloader.__init__(self, url, fileOrName, headers=headers, agent=USER_AGENT, *args, **kwargs)
         
 
     def gotHeaders(self, headers):
@@ -459,7 +466,6 @@ class HTTPProgressDownloader(client.HTTPDownloader):
         return client.HTTPDownloader.pagePart(self, data)
     
     def createEmptyFile(self, size):
-        print 'createemptyfile'
         f = open(self.fileName, "wb")
         f.seek((size) - 1)
         f.write("\0")
@@ -478,7 +484,7 @@ class HTTPProgressDownloader(client.HTTPDownloader):
 
 
 class HTTPDownloadTwisted(Download):
-    def __init__(self, name, url, destDir, filename=None, quiet=False, headers={},fullLengthFile=False):
+    def __init__(self, name, url, destDir, filename=None, quiet=False, headers={}, fullLengthFile=False):
         if filename is None:
             path = urlparse.urlparse(url).path
             filename = os.path.basename(path)
@@ -486,7 +492,7 @@ class HTTPDownloadTwisted(Download):
         self.connector = None
         self.currentLength = 0
         self.headers = headers
-        self.fullLengthFile= fullLengthFile
+        self.fullLengthFile = fullLengthFile
 
     def __startCB(self):
         self.running = True
@@ -541,3 +547,11 @@ class HTTPDownloadTwisted(Download):
         self.running = False
         print "Error:", failure.getErrorMessage()
         self.__finishCB(None)
+        
+        
+        
+class GStreamerDownload():
+    def __init__(self, path, preBufferPercent=0, preBufferSeconds=0):
+        self.path = path
+        self.preBufferPercent = 0
+        self.preBufferSeconds = 0
