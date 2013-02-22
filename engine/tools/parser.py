@@ -5,33 +5,58 @@ Created on 30.10.2012
 '''
 import util
 
-class AddonXMLParser():
-    def __init__(self, addon_xml):
-        xml = util.load_xml(addon_xml)
+class XMLParser():
+    def __init__(self, xml_file):
+        xml = util.load_xml(xml_file)
         self.xml = xml.getroot()
         
-    def parse(self, addon):
-        
-        name = self.addon.attrib.get('name')
-        version = self.addon.attrib.get('version')
-        author = self.addon.attrib.get('provider-name')
-        
-        return {"name":name, "author":author, "version":version}
+    def parse(self):
+        pass
 
+class XBMCSettingsXMLParser(XMLParser):
+    
+    def parse(self):
+        categories = []
+        settings = self.xml
+        
+        for category in settings.findall('category'):
+            category_entry = self.get_category_entry(category)
+            categories.append(category_entry)
+        
+        main_category = {'label':'general', 'subentries':[]}
+        for setting in settings.findall('setting'):
+            main_category['subentries'].append(self.get_setting_entry(setting)) 
+            categories.append(main_category)
+        return categories
+            
+            
+    def get_category_entry(self, category):
+        entry = {'label':category.attrib.get('label'), 'subentries':[]}
+        for setting in category.findall('setting'):
+            entry['subentries'].append(self.get_setting_entry(setting))
+        return entry
+        
+        
+    def get_setting_entry(self, setting):
+        entry = {}
+        entry['label'] = setting.attrib.get('label')
+        entry['id'] = setting.attrib.get('id')
+        entry['type'] = setting.attrib.get('type')
+        entry['default'] = setting.attrib.get('default')
+        if entry['type'] == 'enum':
+            entry['lvalues'] = setting.attrib.get('lvalues')
+        elif entry['type'] == 'labelenum':
+            entry['values'] = setting.attrib.get('values')
+        return entry
 
     
-class XBMCAddonXMLParser(AddonXMLParser):
+class XBMCAddonXMLParser(XMLParser):
         
     addon_types = {
                    "xbmc.python.pluginsource":"content",
                    "xbmc.addon.repository":"repository",
                    "xbmc.python.module":"tools"
                    }
-    ignore_requires = [
-                       "xbmc.python",
-                       "script.module.simplejson",
-                       "script.usage.tracker"
-                       ]
     
     def get_addon_id(self, addon):
         id_addon = addon.attrib.get('id')#.replace('-', '')
@@ -60,6 +85,7 @@ class XBMCAddonXMLParser(AddonXMLParser):
         type = 'unknown'
         description = {}
         broken = False
+        broken_reason = u''
         repo_datadir_url = u''
         repo_addons_url = u''
         requires = []
@@ -68,8 +94,7 @@ class XBMCAddonXMLParser(AddonXMLParser):
         
         req = addon.find('requires')
         for imp in req.findall('import'):
-            if imp.attrib.get('addon') not in self.ignore_requires:
-                requires.append({'addon':imp.attrib.get('addon'), 'version':imp.attrib.get('version')})
+            requires.append({'addon':imp.attrib.get('addon'), 'version':imp.attrib.get('version')})
             
             
         for info in addon.findall('extension'):
@@ -97,6 +122,7 @@ class XBMCAddonXMLParser(AddonXMLParser):
             if info.attrib.get('point') == 'xbmc.addon.metadata':
                 if info.attrib.get('broken') is not None:
                     broken = True
+                    broken_reason = info.attrib.get('broken')
 
                 for desc in info.findall('description'):
                     if desc.attrib.get('lang') is None:
@@ -104,20 +130,19 @@ class XBMCAddonXMLParser(AddonXMLParser):
                     else:
                         description[desc.attrib.get('lang')] = desc.text
                         
-        return {
-                "id":id,
+        return {"id":id,
                 "name":name,
                 "author":author,
                 "type":type ,
                 "version":version,
                 "description":description,
                 "broken":broken,
+                "broken_reason":broken_reason,
                 "repo_addons_url":repo_addons_url,
                 "repo_datadir_url":repo_datadir_url,
                 "requires":requires,
                 "library":library,
-                "script":script
-                } 
+                "script":script} 
  
  
 class XBMCMultiAddonXMLParser(XBMCAddonXMLParser):

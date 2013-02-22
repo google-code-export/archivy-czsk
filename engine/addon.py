@@ -39,7 +39,6 @@ class Addon(object):
         
         # load languages
         self.language = AddonLanguage(self, os.path.join(self.path, self.repository.addon_languages_relpath))
-        
         if self.language.has_language(settings.LANGUAGE_SETTINGS_ID):
             self.language.set_language(settings.LANGUAGE_SETTINGS_ID)
         else:
@@ -51,7 +50,6 @@ class Addon(object):
         
         # load settings
         self.settings = AddonSettings(self, os.path.join(self.path, self.repository.addon_settings_relpath))
-        self.settings.initialize()
         
         # loader to handle addon imports    
         self.loader = AddonLoader(self)
@@ -152,11 +150,16 @@ class ToolsAddon(Addon):
         self.loader.add_path(lib_path)
 
 class VideoAddon(Addon):
+    ignore_requires = [
+                       "xbmc.python",
+                       "script.module.simplejson",
+                       "script.usage.tracker"
+                       ]
         
     def __init__(self, info, repository):
         Addon.__init__(self, info, repository)
         self.script = info.script
-        self.requires = info.requires
+        self.requires = [require for require in info.requires if require['addon'] not in VideoAddon.ignore_requires]
         if self.script == '':
             raise Exception("%s entry point missing in addon.xml" % self)
         # content provider
@@ -188,7 +191,6 @@ class VideoAddon(Addon):
 
 class AddonLanguage(object):
     """Loading xml language file"""
-    
     language_map = {
                     'en':'English',
                     'sk':'Slovak',
@@ -198,12 +200,13 @@ class AddonLanguage(object):
     def __init__(self, addon, languages_dir):
         
         self.addon = addon
+        self._languages_dir = languages_dir
         self._language_filename = 'strings.xml'
         self.current_language = {}
         self.default_language_id = 'en'
         self.current_language_id = 'en'
         self.languages = {}
-        log.info("initializing languages of %s", addon)
+        log.debug("initializing languages of %s" % addon)
         
         if not os.path.isdir(languages_dir):
             log.debug("%s cannot load languages, missing %s directory" % (self, os.path.basename(languages_dir)))
@@ -218,26 +221,32 @@ class AddonLanguage(object):
             language_dir_path = os.path.join(languages_dir, language_dir)
             language_file_path = os.path.join(language_dir_path, self._language_filename)
             if os.path.isfile(language_file_path):
-                try:
-                    el = util.load_xml(language_file_path)
-                except Exception:
-                    log.debug("skipping language %s" % language_dir)
-                else:
-                    language = {}
-                    strings = el.getroot()
-                    for string in strings.findall('string'):
-                        string_id = int(string.attrib.get('id'))
-                        text = string.text
-                        language[string_id] = text
-                    self.languages[language_id] = language
-                    log.info("%s language %s was successfully loaded" % (self, language_dir))
-                    el = None
+                self.languages[language_id] = None
             else:
-                log.info("%s cannot find language file %s" % (self, language_file_path))
-                log.info("skipping language %s" % language_dir)
+                log.debug("%s cannot find language file %s" % (self, language_file_path))
+                log.debug("skipping language %s" % language_dir)
                 
     def __repr__(self):
         return "%s Language" % self.addon
+    
+    
+    def load_language(self, language_id):
+        language_dir_path = os.path.join(self._languages_dir, self.get_language_name(language_id))
+        language_file_path = os.path.join(language_dir_path, self._language_filename)
+        try:
+            el = util.load_xml(language_file_path)
+        except Exception:
+            log.debug("skipping language %s" % language_id)
+        else:
+            language = {}
+            strings = el.getroot()
+            for string in strings.findall('string'):
+                string_id = int(string.attrib.get('id'))
+                text = string.text
+                language[string_id] = text
+            self.languages[language_id] = language
+            log.debug("%s language %s was successfully loaded" % (self, language_id))
+    
                   
     def get_language_id(self, language_name):
         revert_langs = dict(map(lambda item: (item[1], item[0]), self.language_map.items()))
@@ -259,12 +268,13 @@ class AddonLanguage(object):
             log.debug("%s cannot find language id %s in %s language of %s\n returning id of language" % (self, string_id, self.current_language_id))
             return str(string_id)
         
-    
     def has_language(self, language_id):
         return language_id in self.languages   
         
     def set_language(self, language_id):
         if self.has_language(language_id):
+            if self.languages[language_id] is None:
+                self.load_language(language_id)
             log.debug("setting current language %s to %s" % (self.current_language_id, language_id))
             self.current_language_id = language_id
             self.current_language = self.languages[language_id]
@@ -282,7 +292,9 @@ class AddonLanguage(object):
 class AddonSettings(object):
     
     def __init__(self, addon, settings_file):
-        log.info("initializing settings of addon %s" % addon.name)
+        log.debug("initializing settings of addon %s" % addon.name)
+            
+            
         # remove dots from addon.id to resolve issue with load/save config of addon
         addon_id = addon.id.replace('.', '_')
         
@@ -290,81 +302,54 @@ class AddonSettings(object):
         self.main = getattr(config.plugins.archivCZSK.archives, addon_id)
         addon_config.add_global_addon_settings(addon, self.main)
         
+        self.main.enabled_addon = ConfigYesNo(default=True)
+        
         self.addon = addon
-        self.entries = []
         self.categories = []
+        # not every addon has settings
         try:
-            el = util.load_xml(settings_file)
-        except Exception:
-            log.debug("cannot load %s" % self)
-            el = None
-        if el is not None:
-            settings = el.getroot()
-            main_category = {'label':'general', 'subentries':[]}
-            
-            for category in settings.findall('category'):
-                entry = {'label':category.attrib.get('label'), 'subentries':[]}
-                for setting in category.findall('setting'):
-                    entry['subentries'].append(self.get_setting_entry(setting))
-                self.entries.append(entry)
-                
-            for setting in settings.findall('setting'):
-                main_category['subentries'].append(self.get_setting_entry(setting))
-            
-            self.entries.append(main_category)
-            el = None
+            settings_parser = parser.XBMCSettingsXMLParser(settings_file)
+        except IOError:
+            pass
+        else:
+            self.category_entries = settings_parser.parse()
+            self.initialize_settings()
+        
             
     def __repr__(self):
         return "%s Settings" % self.addon
             
     
-    def initialize(self):
-        for entry in self.entries:
+    def initialize_settings(self):
+        for entry in self.category_entries:
             if entry['label'] == 'general': 
                 if len(entry['subentries']) == 0 :
                     continue
                 else:
                     category = {'label':'general', 'subentries':[]}
             else:
-                category = {'label':self.get_label(entry['label']), 'subentries':[]}
+                category = {'label':self._get_label(entry['label']), 'subentries':[]}
                 
             for subentry in entry['subentries']:
                 self.initialize_entry(self.main, subentry)
-                category['subentries'].append(getConfigListEntry(self.get_label(subentry['label']).encode('utf-8'), subentry['setting_id']))
-            log.debug("initialized category %s", str(category))
+                category['subentries'].append(getConfigListEntry(self._get_label(subentry['label']).encode('utf-8'), subentry['setting_id']))
+            log.debug("initialized category %s" % str(category))
             self.categories.append(category)                                      
 
                             
     def get_configlist_categories(self):
         return self.categories
              
-       
-    def get_setting_entry(self, setting):
-        entry = {}
-        entry['label'] = setting.attrib.get('label')
-        entry['id'] = setting.attrib.get('id')
-        entry['type'] = setting.attrib.get('type')
-        entry['default'] = setting.attrib.get('default')
-        if entry['type'] == 'enum':
-            entry['lvalues'] = setting.attrib.get('lvalues')
-        if entry['type'] == 'labelenum':
-            entry['values'] = setting.attrib.get('values')
-            
-        log.debug("getting entry from xml %s" , str(entry))
-        return entry
-    
-    def get_label(self, label):
-        log.debug('resolving label: %s', label)
+
+    def _get_label(self, label):
+        log.debug('resolving label: %s' % label)
         try:
             string_id = int(label)
         except ValueError:
-            #log.debug("isstring")
             if isinstance(label, unicode):
-                #log.debug("isunicode %s" , label)
                 return label
             else:
                 label = util.decode_string(label)
-                #log.debug('decoded label: %s' , label)
                 return label
         else:
             label = self.addon.get_localized_string(string_id)
@@ -375,10 +360,6 @@ class AddonSettings(object):
         # fix dotted id
         entry['id'] = entry['id'].replace('.', '_')
         
-        if entry['type'] == 'folder':
-            setattr(setting, entry['id'], ConfigDirectory(default=entry['default']))
-            entry['setting_id'] = getattr(setting, entry['id'])
-        
         if entry['type'] == 'bool':
             setattr(setting, entry['id'], ConfigYesNo(default=(entry['default'] == 'true')))
             entry['setting_id'] = getattr(setting, entry['id'])
@@ -388,16 +369,16 @@ class AddonSettings(object):
             entry['setting_id'] = getattr(setting, entry['id'])
             
         elif entry['type'] == 'enum':
-            choicelist = [(str(idx), self.get_label(e).encode('utf-8')) for idx, e in enumerate(entry['lvalues'].split("|"))]
+            choicelist = [(str(idx), self._get_label(e).encode('utf-8')) for idx, e in enumerate(entry['lvalues'].split("|"))]
             setattr(setting, entry['id'], ConfigSelection(default=entry['default'], choices=choicelist))
             entry['setting_id'] = getattr(setting, entry['id'])
             
         elif entry['type'] == 'labelenum':
-            choicelist = [(self.get_label(e).encode('utf-8'), self.get_label(e).encode('utf-8')) for e in entry['values'].split("|")]
+            choicelist = [(self._get_label(e).encode('utf-8'), self._get_label(e).encode('utf-8')) for e in entry['values'].split("|")]
             setattr(setting, entry['id'], ConfigSelection(default=entry['default'], choices=choicelist))
             entry['setting_id'] = getattr(setting, entry['id'])
         else:
-            log.debug('%s cannot initialize unknown entry %s' , self, entry['type'])
+            log.debug('%s cannot initialize unknown entry %s' % (self, entry['type']))
             
     def close(self):
         self.addon = None
@@ -424,6 +405,9 @@ class AddonInfo(object):
         self.tmp_path = settings.TMP_PATH
         self.data_path = os.path.join(config.plugins.archivCZSK.dataPath.getValue(), self.id)
         self.profile = self.data_path
+        
+        # create data_path(profile folder)
+        util.make_path(self.data_path)
         
         if settings.LANGUAGE_SETTINGS_ID in addon_dict['description']:
             self.description = addon_dict['description'][settings.LANGUAGE_SETTINGS_ID]
