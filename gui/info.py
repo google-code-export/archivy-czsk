@@ -97,9 +97,9 @@ class Info(object):
 		
 	def showInfo(self):
 		print '[Info] showInfo'
-		self.session.openWithCallback(self.closeInfo, InfoScreen, self.it)
+		self.session.openWithCallback(self.closeInfo, ItemInfoScreen, self.it)
 
-class InfoScreen(BaseArchivCZSKScreen):
+class ItemInfoScreen(BaseArchivCZSKScreen):
 	def __init__(self, session, it):
 		BaseArchivCZSKScreen.__init__(self, session)
 		self.image_link = None

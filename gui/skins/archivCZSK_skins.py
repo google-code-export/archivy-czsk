@@ -79,7 +79,7 @@ ContentScreen_HD = """
              """
 
 StreamContentScreen_HD = """
-        <screen backgroundColor="background" name="StreamContentScreen_HD" position="center,90" size="900,575" title="StreamContentScreen">
+        <screen backgroundColor="background" name="StreamContentScreen_HD" position="center,90" size="900,575" title="Streams">
             <widget backgroundColor="#9f1313" font="Regular;20" halign="center" name="key_red" position="8,520" shadowColor="black" shadowOffset="-2,-2" size="215,45" valign="center" zPosition="1" />
             <widget backgroundColor="#1f771f" font="Regular;20" halign="center" name="key_green" position="231,520" shadowColor="black" shadowOffset="-2,-2" size="215,45" valign="center" zPosition="1" />
             <widget backgroundColor="#a08500" font="Regular;20" halign="center" name="key_yellow" position="454,520" shadowColor="black" shadowOffset="-2,-2" size="215,45" valign="center" zPosition="1" />
@@ -109,8 +109,8 @@ ContentMenuScreen_HD = """
             <widget name="menu" position="0,0" size="500,290" scrollbarMode="showOnDemand" />
         </screen>"""
         
-InfoScreen_HD = """
-        <screen name="InfoScreen" position="center,center" size="1100,600" title="Info">
+ItemInfoScreen_HD = """
+        <screen name="ItemInfoScreen" position="center,center" size="1100,600" title="Info">
             <widget font="Regular;22" foregroundColor="yellow" name="genre" position="435,52" size="613,30" transparent="1" />
             <widget font="Regular;22" foregroundColor="yellow" name="year" position="435,106" size="613,30" transparent="1" />
             <widget font="Regular;22" foregroundColor="yellow" name="rating" position="435,158" size="613,30" transparent="1" />
@@ -119,7 +119,7 @@ InfoScreen_HD = """
         </screen>
         """
 
-InfoScreen_SD = """
+ItemInfoScreen_SD = """
         <screen position="center,center" size="720,576" title="Info" >
             <widget name="genre" position="320,50" size="400,30" font="Regular;22" transparent="1" foregroundColor="yellow" />
             <widget name="year" position="320,90" size="400,30" font="Regular;22" transparent="1" foregroundColor="yellow" />
