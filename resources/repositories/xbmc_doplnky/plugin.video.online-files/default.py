@@ -83,7 +83,7 @@ settings = {}
 providers = {}
 
 if __settings__('bezvadata_enabled'):
-	p = bezvadata.BezvadataContentProvider(username='', password='', filter=bezvadata_filter, tmp_dir='/tmp/')
+	p = bezvadata.BezvadataContentProvider(username='', password='', filter=bezvadata_filter, tmp_dir=__addon__.getInfo('profile'))
 	extra = {
 			'keep-searches':__settings__('bezvadata_keep-searches'),
             'vip':'0'

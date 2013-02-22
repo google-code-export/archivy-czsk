@@ -29,7 +29,7 @@ RE_DATE = re.compile('(\d{1,2}\.\s*\d{1,2}\.\s*\d{4})')
 
 
 def OBSAH():
-    addSearch('Vyhledat...(beta)', __baseurl__, 13, None)
+    addSearch('Vyhledat...(beta)','0',13,None)
     addDir('Nejnovější pořady', __baseurl__ + '/?nejnovejsi=vsechny-porady', 12, icon)
     addDir('Nejsledovanější videa týdne', __baseurl__ + '/?nejsledovanejsi=tyden', 11, icon)
     addDir('Podle data', __baseurl__ + '/podle-data-vysilani/', 5, icon)
@@ -287,34 +287,51 @@ def BONUSY(link):
     except:
         print 'STRANKOVANI NENALEZENO!'
         
-def HLEDAT():
+        
+def HLEDAT(url):
     #https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=filtered_cse&num=20&hl=cs&prettyPrint=false&source=gcsc&gss=.cz&sig=981037b0e11ff304c7b2bfd67d56a506&cx=000499866030418304096:fg4vt0wcjv0&q=vypravej+tv&googlehost=www.google.com&callback=google.search.Search.apiary6680&nocache=1360011801862
     #https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=filtered_cse&num=20&start=20&hl=cs&prettyPrint=false&source=gcsc&gss=.cz&sig=981037b0e11ff304c7b2bfd67d56a506&cx=000499866030418304096:fg4vt0wcjv0&q=vypravej+tv&googlehost=www.google.com&callback=google.search.Search.apiary6680&nocache=1360011801862
-                        what = getSearch(session)
-                        what = re.sub(' ', '+', what)
-                        url = 'http://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=filtered_cse&num=20&hl=cs&prettyPrint=false&source=gcsc&gss=.cz&sig=981037b0e11ff304c7b2bfd67d56a506&cx=000499866030418304096:fg4vt0wcjv0&q=' + what + '&googlehost=www.google.com&callback=google.search.Search.apiary6680&nocache=1360011801862'
-                        req = urllib2.Request(url)
-                        req.add_header('User-Agent', _UserAgent_)
-                        response = urllib2.urlopen(req)
-                        httpdata = response.read()
-                        response.close()
-                        match = re.compile('google.search.Search.apiary6680\((.*)\)').findall(httpdata)
-                        items = json.loads(match[0])[u'results']
-                        for item in items:
-                            name = item[u'titleNoFormatting']
-                            name = name.encode('utf-8')
-                            url = item[u'url']
-                            url = url.encode('utf-8')
-                            try:
-                                image = item[u'richSnippet'][u'cseImage'][u'src']
-                                image = image.encode('utf-8')
-                            except:
-                                image = icon
-                            if re.search('diskuse', url, re.U):
-                                continue
-                            #if not re.search('([0-9]{15}-)', url, re.U):
-                            #continue
-                            addDir(name, url, 10, image)
+    if url == '0':
+            what = getSearch(session)
+            if not what == '':
+                what = re.sub(' ','+',what)
+                url2 = 'https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=filtered_cse&num=20&hl=cs&prettyPrint=false&source=gcsc&gss=.cz&sig=981037b0e11ff304c7b2bfd67d56a506&cx=000499866030418304096:fg4vt0wcjv0&q='+what+'&googlehost=www.google.com&callback=google.search.Search.apiary6680&nocache=1360011801862'
+    else:
+        match_page = re.compile('start=([0-9]+)').findall(url)
+        match2 = re.compile('q=(.+?)&googlehost').findall(url)
+        next_page = int(match_page[0]) + 20
+        url2 = url
+    req = urllib2.Request(url2)
+    req.add_header('User-Agent', _UserAgent_)
+    response = urllib2.urlopen(req)
+    httpdata = response.read()
+    response.close()
+    match = re.compile('google.search.Search.apiary6680\((.*)\)').findall(httpdata)
+    items = json.loads(match[0])[u'results']
+    for item in items:        
+        name = item[u'titleNoFormatting']
+        name = name.encode('utf-8')
+        url2 = item[u'url']
+        url2 = url.encode('utf-8')
+        try:
+            image = item[u'richSnippet'][u'cseImage'][u'src']
+            image = image.encode('utf-8')
+        except:
+            image = icon
+        if re.search('diskuse', url2, re.U):
+            continue
+        #if not re.search('([0-9]{15}-)', url, re.U):
+        #continue
+        addDir(name,url2,10,image)
+    if url == '0':
+        next_url = 'https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=filtered_cse&num=20&start=20&hl=cs&prettyPrint=false&source=gcsc&gss=.cz&sig=981037b0e11ff304c7b2bfd67d56a506&cx=000499866030418304096:fg4vt0wcjv0&q='+what+'&googlehost=www.google.com&callback=google.search.Search.apiary6680&nocache=1360011801862'
+        next_title = '>> Další strana (výsledky 0 - 20)'
+        addDir(next_title,next_url,13,nexticon)
+    else:
+        next_url = 'https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=filtered_cse&num=20&start='+ str(next_page) + '&hl=cs&prettyPrint=false&source=gcsc&gss=.cz&sig=981037b0e11ff304c7b2bfd67d56a506&cx=000499866030418304096:fg4vt0wcjv0&q=' + match2[0] + '&googlehost=www.google.com&callback=google.search.Search.apiary6680&nocache=1360011801862'
+        next_title = '>> Další strana (výsledky '+ str(match_page[0]) + ' - ' + str(next_page) + ')'
+        addDir(next_title,next_url,13,nexticon)
+
 
 
 
@@ -494,5 +511,7 @@ elif mode == 12:
         NEWEST(url)
         
 elif mode == 13:
-        HLEDAT()
+        print "" + url
+        HLEDAT(url)
+
 

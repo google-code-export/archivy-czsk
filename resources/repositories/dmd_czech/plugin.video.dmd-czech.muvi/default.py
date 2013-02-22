@@ -30,24 +30,30 @@ def OBSAH():
         addDir(name,__baseurl__+url,1,__baseurl__+thumb)    
 
             
-def INDEX(url): 
+def INDEX(url):
     doc = read_page(url)
     items = doc.find('div', 'videoClipsWrapper')
     for item in items.findAll('li','listItem'):
         thumb = item.find('a', 'framedThumbnail')
         thumb = str(item.img['src'])            
         info = item.find('div', 'carouselListItemText')
-        name = info.find('a')
-        name = name.getText(" ").encode('utf-8')
-        name2 = info.find('div','showTitle')
-        name2 = name2.getText(" ").encode('utf-8')
+        try:
+            name = info.find('a')
+            name = name.getText(" ").encode('utf-8')
+        except:
+            name = ""
+        try:
+            name2 = info.find('div',' carouselItemText')
+            name2 = name2.getText(" ").encode('utf-8')
+        except:
+            name2 = "Neznámý"
         link = str(info.a['href'])
         #print name+' '+name2,__baseurl__+link,2,thumb
         addDir(name+' '+name2,__baseurl__+link,2,thumb)    
     try:
         items = doc.find('div', 'pager')
         for item in items.findAll('a'):
-            page = item.text.encode('utf-8') 
+            page = item.text.encode('utf-8')
             if re.match('následující', page, re.U):
                 next_url = item['href'].replace('.','')
                 cast_url = urlparse(url)

@@ -131,9 +131,13 @@ def VIDEOLINK(url,name):
         print 'LQ '+__cdn_url__+name,stream_video[0],icon,''
         addLink('LQ '+name,__cdn_url__+stream_video[0],icon,'')        
     else:
+        try:
+            hd_stream = re.compile("'hd_id':'(.+?)'").findall(data)
+            hd_stream = hd_stream[0]
+        except:
+            hd_stream = 'Null'        
         hq_stream = re.compile("'hq_id':'(.+?)'").findall(data)
         lq_stream = re.compile("'lq_id':'(.+?)'").findall(data)
-        hd_stream = re.sub('_1000','_1500',hq_stream[0])
         geo_zone = re.compile("'zoneGEO':(.+?),").findall(data)        
         try:
             thumb = re.compile("'thumbnail': '(.+?)'").findall(data)
@@ -151,12 +155,14 @@ def VIDEOLINK(url,name):
         #keydata = re.compile("auth='(.*?)'").findall(keydata)        
         print keydata
         if geo_zone[0] == "1":
-            hd_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token_'+geo_zone[0]+'?auth=_any_'+keydata[1]+'/mp4:'+hd_stream
+            #hd_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token?auth=_any_'+keydata[1]+'/mp4:hq/'+hd_stream[0]
+            hd_url = 'rtmp://bcasts1w.livebox.cz:80/iprima_token_'+geo_zone[0]+'?auth=_any_'+keydata[1]+' playpath=mp4:hq/'+hd_stream+ ' live=true'
             hq_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token_'+geo_zone[0]+'?auth=_any_'+keydata[1]+'/mp4:'+hq_stream[0]
             lq_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token_'+geo_zone[0]+'?auth=_any_'+keydata[1]+'/mp4:'+lq_stream[0]
         else:
             if re.match('Prima', hq_stream[0], re.U):
-                hd_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token?auth=_any_'+keydata[1]+'/mp4:'+hd_stream
+                #hd_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token?auth=_any_'+keydata[1]+'/mp4:hq/'+hd_stream[0]
+                hd_url = 'rtmp://bcasts1w.livebox.cz:80/iprima_token?auth=_any_'+keydata[1]+' playpath=mp4:hq/'+hd_stream+ ' live=true'
                 hq_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token?auth=_any_'+keydata[1]+'/mp4:'+hq_stream[0]
                 lq_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token?auth=_any_'+keydata[1]+'/mp4:'+lq_stream[0]
             else:
@@ -167,7 +173,10 @@ def VIDEOLINK(url,name):
         #print nahled, hq_url, lq_url
         if kvalita == "HD":
             print 'HD '+name,hq_url,nahled,name
-            addLink('HD '+name,hd_url,nahled,name)
+            if hd_stream == 'Null':
+                addLink('HD kvalita není pro toto video dostupná!','',icon,'HD kvalita není pro toto video dostupná!')
+            else:
+                addLink('HD '+name,hd_url,nahled,name)
             addLink('HQ '+name,hq_url,nahled,name)            
         elif kvalita == "HQ":
             print 'HQ '+name,lq_url,nahled,name
@@ -176,8 +185,6 @@ def VIDEOLINK(url,name):
         else:            
             print 'LQ '+name,lq_url,nahled,name
             addLink('LQ '+name,lq_url,nahled,name)
-
-
 
 
 def gen_random_decimal(d):
