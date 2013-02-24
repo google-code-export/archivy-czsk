@@ -33,7 +33,7 @@ stream = 'plugin.video.dmd-czech.stream'
 stv = 'plugin.video.dmd-czech.stv'
 markiza = 'plugin.video.dmd-czech.markiza'
 
-tv_archives = [stv, joj, ct, prima, nova, huste, metropol, btv, markiza, stream]
+tv_archives = [stv, joj, ct, prima, nova, huste, muvi, metropol, btv, markiza, stream]
 
 
 
@@ -63,7 +63,7 @@ class ArchivCZSK():
                 repository = Repository(repo_xml)
             except Exception:
                 traceback.print_exc()
-                log.info('cannot load repository %s',repo)
+                log.info('cannot load repository %s', repo)
                 log.info("skipping")
                 continue
             else:
