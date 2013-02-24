@@ -208,10 +208,10 @@ def add_play(title, provider_name, quality, url, subs=None, filename=None, image
 		
 	downloadSettings = None
 	if url.find('munkvideo') > 0:
-		downloadSettings = {"headers":{"Referer":"me"}}
+		settings = {"extra-headers":{"Referer":"me"}}
 		
 	if hasattr(client, "getVersion"):
-		client.add_video(name, url, subs=subs, filename=filename, image=image, infoLabels=infoLabels, menuItems=menuItems, downloadSettings=downloadSettings)
+		client.add_video(name, url, subs=subs, filename=filename, image=image, infoLabels=infoLabels, menuItems=menuItems, settings=settings)
 	else:
 		client.add_video(name, url, subs=subs, filename=filename, image=image, infoLabels=infoLabels, menuItems=menuItems)
 

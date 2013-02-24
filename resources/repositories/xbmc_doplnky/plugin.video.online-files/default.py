@@ -59,6 +59,26 @@ def bezvadata_filter(item):
 		return False
 	return True
 
+def ulozto_filter(item):
+        ext_filter = __settings__('ulozto_ext-filter').split(',')
+        ext_filter = ['.' + f.strip() for f in ext_filter]
+        extension = os.path.splitext(item['title'])[1]
+        if extension in ext_filter:
+                return False
+        return True
+       
+class XBMCUloztoContentProvider(xbmcprovider.XBMCLoginOptionalContentProvider):
+
+    def __init__(self, provider, settings, addon):
+        xbmcprovider.XBMCLoginOptionalContentProvider.__init__(self, provider, settings, addon)
+        self.check_setting_keys(['vip', 'search-type'])
+        search_type = ''
+        search_types = {'0':'', '1':'media=video&', '2':'media=image&', '3':'media=music&', '4':'media=document&'}
+        print 'setting is ' + str(settings['search-type'])
+        if settings['search-type'] in search_types.keys():
+            search_type = search_types[settings['search-type']]
+        provider.search_type = search_type
+
 
 class XBMCHellspyContentProvider(xbmcprovider.XBMCLoginRequiredContentProvider):
 
@@ -83,7 +103,7 @@ settings = {}
 providers = {}
 
 if __settings__('bezvadata_enabled'):
-	p = bezvadata.BezvadataContentProvider(username='', password='', filter=bezvadata_filter, tmp_dir=__addon__.getInfo('profile'))
+	p = bezvadata.BezvadataContentProvider(username='', password='', filter=bezvadata_filter, tmp_dir=__addon__.getAddonInfo('profile'))
 	extra = {
 			'keep-searches':__settings__('bezvadata_keep-searches'),
             'vip':'0'
@@ -91,13 +111,14 @@ if __settings__('bezvadata_enabled'):
 	extra.update(settings)
 	providers[p.name] = xbmcprovider.XBMCLoginOptionalDelayedContentProvider(p, extra, __addon__, session)
 if __settings__('ulozto_enabled'):
-	p = ulozto.UloztoContentProvider(__settings__('ulozto_user'), __settings__('ulozto_pass'))
+	p = ulozto.UloztoContentProvider(__settings__('ulozto_user'), __settings__('ulozto_pass'), filter=ulozto_filter)
 	extra = {
 			'vip':__settings__('ulozto_usevip'),
-			'keep-searches':__settings__('ulozto_keep-searches')
+			'keep-searches':__settings__('ulozto_keep-searches'),
+			'search-type':__settings__('ulozto_search-type')
 	}
 	extra.update(settings)
-	providers[p.name] = xbmcprovider.XBMCLoginOptionalContentProvider(p, extra, __addon__, session)
+	providers[p.name] = XBMCUloztoContentProvider(p,extra,__addon__)
 if __settings__('hellspy_enabled'):
 	p = hellspy.HellspyContentProvider(__settings__('hellspy_user'), __settings__('hellspy_pass'), site_url=__settings__('hellspy_site_url'))
 	extra = {

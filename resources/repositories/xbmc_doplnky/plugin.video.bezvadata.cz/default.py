@@ -53,7 +53,7 @@ def create_filter():
 def filter(item):
 	return can_show(create_filter(),item)
 
-provider = bezvadata.BezvadataContentProvider(username='',password='',filter=filter,tmp_dir=__addon__.getInfo('profile'))
+provider = bezvadata.BezvadataContentProvider(username='',password='',filter=filter,tmp_dir=__addon__.getAddonInfo('profile'))
 
 settings = {
     'vip':'0'
