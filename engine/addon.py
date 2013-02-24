@@ -32,7 +32,7 @@ class Addon(object):
         self.path = info.path
         self.relative_path = os.path.relpath(self.path, repository.path)
         
-        log.info("initializing %s" % self)
+        log.info("initializing %s", self)
 
         self._updater = repository._updater
         self.__need_update = False
@@ -206,25 +206,25 @@ class AddonLanguage(object):
         self.default_language_id = 'en'
         self.current_language_id = 'en'
         self.languages = {}
-        log.debug("initializing languages of %s" % addon)
+        log.debug("initializing languages of %s", addon)
         
         if not os.path.isdir(languages_dir):
-            log.debug("%s cannot load languages, missing %s directory" % (self, os.path.basename(languages_dir)))
+            log.debug("%s cannot load languages, missing %s directory", self, os.path.basename(languages_dir))
             return
     
         for language_dir in os.listdir(languages_dir):
             language_id = self.get_language_id(language_dir)
             if language_id is None:
-                log.debug("%s unknown language %s, you need to update Language map to use it" % self, language_dir)
-                log.debug("skipping language %s" % language_dir)
+                log.debug("%s unknown language %s, you need to update Language map to use it", self, language_dir)
+                log.debug("skipping language %s", language_dir)
                 continue
             language_dir_path = os.path.join(languages_dir, language_dir)
             language_file_path = os.path.join(language_dir_path, self._language_filename)
             if os.path.isfile(language_file_path):
                 self.languages[language_id] = None
             else:
-                log.debug("%s cannot find language file %s" % (self, language_file_path))
-                log.debug("skipping language %s" % language_dir)
+                log.debug("%s cannot find language file %s",self, language_file_path)
+                log.debug("skipping language %s", language_dir)
                 
     def __repr__(self):
         return "%s Language" % self.addon
@@ -236,7 +236,7 @@ class AddonLanguage(object):
         try:
             el = util.load_xml(language_file_path)
         except Exception:
-            log.debug("skipping language %s" % language_id)
+            log.debug("skipping language %s", language_id)
         else:
             language = {}
             strings = el.getroot()
@@ -245,7 +245,7 @@ class AddonLanguage(object):
                 text = string.text
                 language[string_id] = text
             self.languages[language_id] = language
-            log.debug("%s language %s was successfully loaded" % (self, language_id))
+            log.debug("%s language %s was successfully loaded", (self, language_id))
     
                   
     def get_language_id(self, language_name):
@@ -265,7 +265,7 @@ class AddonLanguage(object):
         if string_id in self.current_language:
             return self.current_language[string_id]
         else:
-            log.debug("%s cannot find language id %s in %s language of %s\n returning id of language" % (self, string_id, self.current_language_id))
+            log.debug("%s cannot find language id %s in %s language of %s\n returning id of language", self, string_id, self.current_language_id)
             return str(string_id)
         
     def has_language(self, language_id):
@@ -275,11 +275,11 @@ class AddonLanguage(object):
         if self.has_language(language_id):
             if self.languages[language_id] is None:
                 self.load_language(language_id)
-            log.debug("setting current language %s to %s" % (self.current_language_id, language_id))
+            log.debug("setting current language %s to %s", self.current_language_id, language_id)
             self.current_language_id = language_id
             self.current_language = self.languages[language_id]
         else:
-            log.debug("%s cannot set language %s, language is not available" % (self, language_id))
+            log.debug("%s cannot set language %s, language is not available", self, language_id)
             
     def get_language(self):
         return self.current_language_id
@@ -292,7 +292,7 @@ class AddonLanguage(object):
 class AddonSettings(object):
     
     def __init__(self, addon, settings_file):
-        log.debug("initializing settings of addon %s" % addon.name)
+        log.debug("initializing settings of addon %s", addon.name)
             
             
         # remove dots from addon.id to resolve issue with load/save config of addon
@@ -333,7 +333,7 @@ class AddonSettings(object):
             for subentry in entry['subentries']:
                 self.initialize_entry(self.main, subentry)
                 category['subentries'].append(getConfigListEntry(self._get_label(subentry['label']).encode('utf-8'), subentry['setting_id']))
-            log.debug("initialized category %s" % str(category))
+            log.debug("initialized category %s", str(category))
             self.categories.append(category)                                      
 
                             
@@ -342,7 +342,7 @@ class AddonSettings(object):
              
 
     def _get_label(self, label):
-        log.debug('resolving label: %s' % label)
+        log.debug('resolving label: %s', label)
         try:
             string_id = int(label)
         except ValueError:
@@ -378,7 +378,7 @@ class AddonSettings(object):
             setattr(setting, entry['id'], ConfigSelection(default=entry['default'], choices=choicelist))
             entry['setting_id'] = getattr(setting, entry['id'])
         else:
-            log.debug('%s cannot initialize unknown entry %s' % (self, entry['type']))
+            log.debug('%s cannot initialize unknown entry %s', self, entry['type'])
             
     def close(self):
         self.addon = None

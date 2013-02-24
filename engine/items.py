@@ -1,5 +1,7 @@
 # GUI items
-from Plugins.Extensions.archivCZSK import settings
+import os
+
+from Plugins.Extensions.archivCZSK import settings, _
 PNG_PATH = settings.IMAGE_PATH
 
 class PContextMenuItem(object):
@@ -78,7 +80,7 @@ class PVideo(PItem):
         #stream object, can be stream/rtmp stream
         self.stream = None
         #download object, provides additional info for downloading
-        self.download = {"headers":{}}
+        self.settings = {"user-agent":{}, "extra-headers":{}}
         
     def get_protocol(self):
         return self.url[:self.url.find('://')].upper()
@@ -95,6 +97,13 @@ class PDownload(PVideo):
     def __init__(self, path):
         PVideo.__init__(self)
         self.path = path
+        self.size = os.path.getsize(path)
+        # for now we assume that all downloads succesfully finished
+        self.state = 'success_finished'
+        self.stateText = _('succesfully finished')
+        self.start_time = None
+        self.finish_time = os.path.getmtime(path)
+        
         
 class PExit(PFolder):
     def __init__(self):

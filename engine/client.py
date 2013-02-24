@@ -153,7 +153,7 @@ def add_dir(name, params={}, image=None, infoLabels={}, menuItems={}, search_fol
     GItem_lst[0].append(it)
 
 
-def add_video(name, url, subs=None, image=None, infoLabels={}, menuItems={}, filename=None, live=False, stream=None, downloadSettings=None):
+def add_video(name, url, subs=None, image=None, infoLabels={}, menuItems={}, filename=None, live=False, stream=None, settings=None):
     
     """
     adds video item to content screen
@@ -163,6 +163,7 @@ def add_video(name, url, subs=None, image=None, infoLabels={}, menuItems={}, fil
         @param infoLabels: dictationary of informations{'title':title,'plot':plot,'rating':rating,''}"
         @param filename: set this filename when downloading
         @param live: is video live stream
+        @param settings: dictationary of player/download settings{"user-agent",:"","extra-headers":{}}
     """
     
     #controling if task shouldnt be _aborted(ie. we pushed exit button when loading)
@@ -218,8 +219,8 @@ def add_video(name, url, subs=None, image=None, infoLabels={}, menuItems={}, fil
     if stream is not None and isinstance(Stream):
         it.add_stream(stream)
         
-    if downloadSettings is not None:
-        it.download = downloadSettings
+    if settings is not None:
+        it.settings = settings
     
     GItem_lst[0].append(it)
     
