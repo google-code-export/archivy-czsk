@@ -12,6 +12,7 @@ import urlparse, urllib2
 
 try:
     from enigma import eConsoleAppContainer
+    from Plugins.Extensions.archivCZSK import _
 except ImportError:
     pass
 
@@ -37,7 +38,9 @@ def resetUrllib2Opener():
 def url2name(url):
     return os.path.basename(urlsplit(url)[2])
 
-def getFileInfo(url, localFileName=None, headers={}):
+def getFileInfo(url, localFileName=None, headers={}):    
+    resetUrllib2Opener()
+    
     localName = url2name(url)
     req = urllib2.Request(url, headers=headers)
     resp = urllib2.urlopen(req)
@@ -91,11 +94,12 @@ class DownloadManager(object):
         DownloadManager.instance = self
         self.download_lst = download_lst
         self.count = len(download_lst)
+        self.on_change = []
 
     def addDownload(self, download, overrideCB=None):
         if not download.url in [down.url for down in self.download_lst]:
-                self.download_lst.append(download)
-                download.start()
+            self.download_lst.append(download)
+            download.start()
         else:
             if overrideCB is not None:
                 overrideCB(download)
@@ -147,13 +151,12 @@ class DownloadManager(object):
             return d
 
         elif url[0:4] == 'http':
-            resetUrllib2Opener()
             try:
                 filename, length = getFileInfo(url, filename, headers)
             except (urllib2.HTTPError, urllib2.URLError) as e:
                 print "[Downloader] cannot create download %s - %s error" % (toUTF8(filename), str(e))
                 raise
-            # only for EPLAYER3
+            # only for EPLAYER3(ffmpeg demux)
             # When playing and downloading avi/mkv container then use HTTPTwistedDownload instead of wget
             # Reason is that when we use wget download, downloading file is progressively increasing its size, and ffmpeg isnt updating size of file accordingly
             # so when video gets to place what ffmpeg read in start, playing prematurely stops because of EOF. 
@@ -251,18 +254,36 @@ class Download(object):
         self.finishCB = self.__runFinishCB
         self.onFinishCB = []
         self.pp = None
+        self.state = 'unknown'
+        self.textState = _('unknown')
         
     def __runFinishCB(self, download):
+        self.__updateState()
         for f in self.onFinishCB:
             f(self)
             
     def __runStartCB(self, download):
+        self.__updateState()
         for f in self.onStartCB:
             f(self)
             
     def __runOutputCB(self, data):
         for f in self.onOutputCB:
             f(data)
+    
+    def __updateState(self):
+        if not self.running and self.downloaded:
+            self.state = 'success_finished'
+            self.textState = _('succesfully finished')
+        elif not self.running and not self.downloaded:
+            self.state = 'error_finished'
+            self.textState = _('not succesfully finished')
+        elif self.running and not self.downloaded:
+            self.state = 'downloading'
+            self.textState = _('downloading')
+        else:
+            self.state = 'unknown'
+            self.textState = _("unknown")
         
 
     def remove(self, callback=None):

@@ -3,6 +3,7 @@ Created on 22.5.2012
 
 @author: marko
 '''
+import time
 
 from skin import parseColor
 from Screens.Screen import Screen
@@ -15,7 +16,8 @@ from Tools.LoadPixmap import LoadPixmap
 from Tools.Directories import resolveFilename, pathExists, fileExists
 from enigma import loadPNG, RT_HALIGN_RIGHT, RT_VALIGN_TOP, eSize, eListbox, ePoint, RT_HALIGN_LEFT, RT_HALIGN_RIGHT, RT_HALIGN_CENTER, RT_VALIGN_CENTER, eListboxPythonMultiContent, gFont, getDesktop, ePicLoad, eServiceCenter, iServiceInformation, eServiceReference, iSeekableService, iPlayableService, iPlayableServicePtr, eTimer
 
-from Plugins.Extensions.archivCZSK import settings
+from Plugins.Extensions.archivCZSK import settings, _
+from Plugins.Extensions.archivCZSK.engine.tools import util
 
 def toUTF8(text):
     if isinstance(text, unicode):
@@ -23,6 +25,7 @@ def toUTF8(text):
     return text
 
 PNG_PATH = settings.IMAGE_PATH + '/'
+SPINNER_PATH = PNG_PATH + 'spinner/'
 
 class PanelList(MenuList):
     def __init__(self, list):
@@ -31,6 +34,14 @@ class PanelList(MenuList):
         self.l.setFont(0, gFont("Regular", 21))
         self.l.setFont(1, gFont("Regular", 23))
         self.l.setFont(2, gFont("Regular", 18))
+        
+class PanelListDownload(MenuList):
+    def __init__(self, list):
+        MenuList.__init__(self, list, False, eListboxPythonMultiContent)
+        self.l.setItemHeight(56)
+        self.l.setFont(0, gFont("Regular", 21))
+        self.l.setFont(1, gFont("Regular", 23))
+        self.l.setFont(2, gFont("Regular", 17))
             
 def PanelListEntryHD(name, idx, png=''):
     res = [(name)]
@@ -55,13 +66,13 @@ def PanelListDownloadEntry_SD(name, download):
     res = [(name)]
     res.append(MultiContentEntryText(pos=(0, 5), size=(610, 30), font=0, flags=RT_HALIGN_LEFT, text=toUTF8(name)))
     #res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_LEFT, text=toUTF8(download.startTime)))
-    if download.downloaded and not download.running:
+    if download.state == 'success_finished':
         res.append(MultiContentEntryText(pos=(0, 5), size=(570, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('finished'), color=0x00FF00))
         #res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_LEFT, text=toUTF8(download.startTime)))
-    elif not download.downloaded and not download.running:
+    elif download.state == 'error_finished':
         res.append(MultiContentEntryText(pos=(0, 5), size=(570, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('finished with errors'), color=0xff0000))
         #res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_RIGHT, text=toUTF8(download.finishTime)))
-    else:
+    elif download.state == 'downloading':
         res.append(MultiContentEntryText(pos=(0, 5), size=(570, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('downloading')))
     return res 
 
@@ -70,17 +81,51 @@ def PanelListDownloadEntry_SD(name, download):
 
 def PanelListDownloadEntry(name, download):
     res = [(name)]
-    res.append(MultiContentEntryText(pos=(0, 5), size=(900, 30), font=0, flags=RT_HALIGN_LEFT, text=toUTF8(name)))
+    res.append(MultiContentEntryText(pos=(0, 5), size=(640, 30), font=0, flags=RT_HALIGN_LEFT, text=toUTF8(name)))
     #res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_LEFT, text=toUTF8(download.startTime)))
-    if download.downloaded and not download.running:
-        res.append(MultiContentEntryText(pos=(0, 5), size=(850, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('finished'), color=0x00FF00))
+    if download.state == 'success_finished':
+        res.append(MultiContentEntryText(pos=(0, 5), size=(850, 30), font=0, flags=RT_HALIGN_RIGHT, text=download.textState, color=0x00FF00))
         #res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_LEFT, text=toUTF8(download.startTime)))
-    elif not download.downloaded and not download.running:
-        res.append(MultiContentEntryText(pos=(0, 5), size=(850, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('finished with errors'), color=0xff0000))
+    elif download.state == 'error_finished':
+        res.append(MultiContentEntryText(pos=(0, 5), size=(850, 30), font=0, flags=RT_HALIGN_RIGHT, text=download.textState, color=0xff0000))
         #res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_RIGHT, text=toUTF8(download.finishTime)))
+    elif download.state == 'downloading':
+        res.append(MultiContentEntryText(pos=(0, 5), size=(850, 30), font=0, flags=RT_HALIGN_RIGHT, text=download.textState))
+    return res
+
+
+
+def PanelListDownloadListEntry(pdownload):
+    res = [(pdownload.name)]
+    finishText = _('Finished: ')
+    if pdownload.finish_time is not None:
+        finishText = _('Finished: ') + time.strftime("%b %d %Y %H:%M:%S", time.localtime(pdownload.finish_time))
+        
+    sizeKB = util.BtoKB(pdownload.size)
+    if sizeKB <= 1024 and sizeKB >= 0:
+        size = ("%d KB        " % sizeKB)
+    elif sizeKB <= 1024 * 1024: 
+        size = ("%d MB        " % util.BtoMB(pdownload.size))
     else:
-        res.append(MultiContentEntryText(pos=(0, 5), size=(850, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('downloading')))
-    return res 
+        size = ("%.2f GB        ", util.BtoGB(pdownload.size))
+    
+    sizeText = _('Size: ') + size
+    stateText = pdownload.stateText
+    
+    res.append(MultiContentEntryPixmapAlphaTest(pos=(5, 5), size=(35, 25), png=loadPNG(pdownload.thumb)))
+    res.append(MultiContentEntryText(pos=(60, 5), size=(760, 30), font=0, flags=RT_HALIGN_LEFT, text=toUTF8(pdownload.name)))
+    res.append(MultiContentEntryText(pos=(0, 38), size=(900, 18), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_RIGHT, text=sizeText, color=0xE6A800))
+    
+    if pdownload.state == 'success_finished':
+        res.append(MultiContentEntryText(pos=(0, 38), size=(900, 18), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_LEFT, text=finishText, color=0xE6A800))
+        res.append(MultiContentEntryText(pos=(0, 38), size=(900, 18), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_CENTER, text=stateText, color=0x00FF00))
+    elif pdownload.state == 'error_finished':
+        res.append(MultiContentEntryText(pos=(0, 38), size=(900, 18), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_LEFT, text=finishText, color=0xE6A800))
+        res.append(MultiContentEntryText(pos=(0, 38), size=(900, 18), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_CENTER, text=stateText, color=0xff0000))
+    elif pdownload.state == 'downloading':
+        res.append(MultiContentEntryText(pos=(0, 38), size=(900, 18), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_CENTER, text=stateText, color=0xE6A800))
+    return res
+ 
 
 
 class MyConditionalLabel(LabelConditional):
@@ -171,7 +216,7 @@ class LoadingScreen(Screen):
     def start(self):
         self.__shown = True
         self.show()
-        self.timer.start(200, True)
+        self.timer.start(130, True)
 
     def stop(self):
         self.hide()
@@ -184,10 +229,12 @@ class LoadingScreen(Screen):
     def showNextSpinner(self):
         self.timer.stop()
         self.curr += 1
-        if self.curr > 10:
+        spin = SPINNER_PATH + str(self.curr) + ".png"
+        if not fileExists(spin):
             self.curr = 0
-        self["spinner"].instance.setPixmapFromFile(PNG_PATH + str(self.curr) + ".png")
-        self.timer.start(200, True)
+            spin = SPINNER_PATH + str(self.curr) + ".png"
+        self["spinner"].instance.setPixmapFromFile(spin)
+        self.timer.start(130, True)
               
         
 class MultiLabelWidget():

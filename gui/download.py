@@ -19,9 +19,11 @@ from Components.Label import Label, MultiColorLabel
 
 from Plugins.Extensions.archivCZSK import _
 from Plugins.Extensions.archivCZSK.engine.downloader import DownloadManager
+from Plugins.Extensions.archivCZSK.engine.tools import util
 
 from base import  BaseArchivCZSKScreen, BaseArchivCZSKMenuListScreen
-from common import PanelListEntryHD, PanelListDownloadEntry,MultiLabelWidget
+from common import PanelListEntryHD, PanelListDownload, PanelListDownloadEntry, PanelListDownloadListEntry, MultiLabelWidget
+
 PanelListEntry = PanelListEntryHD
 
 
@@ -34,12 +36,6 @@ def openAddonDownloads(session, addon, cb):
 
 def setGlobalSession(session):
     DownloadManagerMessages.session = session
-    
-def BtoKB(byte):
-    return int(float(byte) / float(1024))
-    
-def BtoMB(byte):
-    return float(float(byte) / float(1024 * 1024))
 
 
 class DownloadManagerMessages(object):
@@ -133,12 +129,12 @@ class DownloadStatusScreen(BaseArchivCZSKScreen):
         self.onClose.append(self.__onClose)
         
     def updateGUI(self):
-        MultiLabelWidget(self['size_label'],self['size'])
-        MultiLabelWidget(self['path_label'],self['path'])
-        MultiLabelWidget(self['speed_label'],self['speed'])
-        MultiLabelWidget(self['start_label'],self['start'])
-        MultiLabelWidget(self['finish_label'],self['finish'])
-        MultiLabelWidget(self['state_label'],self['state'])
+        MultiLabelWidget(self['size_label'], self['size'])
+        MultiLabelWidget(self['path_label'], self['path'])
+        MultiLabelWidget(self['speed_label'], self['speed'])
+        MultiLabelWidget(self['start_label'], self['start'])
+        MultiLabelWidget(self['finish_label'], self['finish'])
+        MultiLabelWidget(self['state_label'], self['state'])
         
         
     def startTimer(self):
@@ -164,15 +160,18 @@ class DownloadStatusScreen(BaseArchivCZSKScreen):
         
     def updateState(self, cb=None):
         download = self._download
-        if download.downloaded and not download.running:
-            self["state"].setText(_("Download succesfully finished"))
+        if download.state == 'success_finished':
+            self["state"].setText(download.textState)
             self["state"].setForegroundColorNum(0)
-        elif not download.downloaded and not download.running:
-            self["state"].setText(_("Download finished with errors"))
+        elif download.state == 'error_finished':
+            self["state"].setText(download.textState)
             self["state"].setForegroundColorNum(1)
-        else:
-            self["state"].setText(_("Download running"))
+        elif download.state == 'downloading':
+            self["state"].setText(download.textState)
             self["state"].setForegroundColorNum(2)
+        else:
+            self["state"].setText(download.textState)
+            self["state"].setForegroundColorNum(1)
             
     def updateFinishTime(self, cb=None):
         download = self._download
@@ -188,12 +187,12 @@ class DownloadStatusScreen(BaseArchivCZSKScreen):
         status.update(self.timer_interval / 1000)
         
         speed = status.speed
-        speedKB = BtoKB(speed)
+        speedKB = util.BtoKB(speed)
         
         if speedKB <= 1000 and speedKB > 0:
             self['speed'].setText(("%d KB/s" % speedKB))
         elif speedKB > 1000:
-            self['speed'].setText(("%.2f MB/s" % BtoMB(speed)))
+            self['speed'].setText(("%.2f MB/s" % util.BtoMB(speed)))
         else:
             self['speed'].setText(("%d KB/s" % 0))
         
@@ -201,9 +200,9 @@ class DownloadStatusScreen(BaseArchivCZSKScreen):
         currentLength = status.currentLength
         totalLength = status.totalLength
         
-        size = "%s (%2.f MB %s)" % (_("unknown"), BtoMB(currentLength), _("downloaded"))
+        size = "%s (%2.f MB %s)" % (_("unknown"), util.BtoMB(currentLength), _("downloaded"))
         if totalLength > 0:
-            size = "%2.f MB (%2.f MB %s)" % (BtoMB(totalLength), BtoMB(currentLength), _("downloaded"))
+            size = "%2.f MB (%2.f MB %s)" % (util.BtoMB(totalLength), util.BtoMB(currentLength), _("downloaded"))
         self["size"].setText(size)
         
         if not download.running:
@@ -300,7 +299,7 @@ class DownloadListScreen(BaseArchivCZSKMenuListScreen):
         if len(self.lst_items) > 0:
             download = self.getSelectedItem()
             self.session.openWithCallback(self.removeDownload, MessageBox, _('Do you want to remove') + ' '\
-                                           + download.name.encode('utf-8', 'ígnore') + ' ?', type=MessageBox.TYPE_YESNO)    
+                                           + download.name.encode('utf-8', 'ígnore') + _('from disk') + ' ?', type=MessageBox.TYPE_YESNO)    
     
     def removeDownload(self, callback=None):
         if callback:
@@ -341,20 +340,24 @@ class DownloadListScreen(BaseArchivCZSKMenuListScreen):
 class DownloadsScreen(BaseArchivCZSKMenuListScreen, DownloadList):
     instance = None        
     def __init__(self, session, name, content_provider):
-        BaseArchivCZSKMenuListScreen.__init__(self, session)
+        BaseArchivCZSKMenuListScreen.__init__(self, session, panelList=PanelListDownload)
         DownloadList.__init__(self)
         self.name = name
-        self.content_provider = content_provider
-        
+        self.content_provider = content_provider        
         from Plugins.Extensions.archivCZSK.engine.player.player import Player
         self.player = Player(session, self.workingFinished)
+        self.sort_options = [{'id':'az', 'name':_('Sort alphabetically')},
+                             {'id':'date', 'name':_('Sort by date')},
+                             {'id':'size', 'name':_('Sort by size')},
+                             {'id':'state', 'name':_('Sort by state')}]
+        self.sort_current = self.sort_options[0]
+        self.sort_next = self.sort_options[1]
+        self.lst_items = self.content_provider.get_downloads()
         
         self["key_red"] = Button(_("Remove"))
         self["key_green"] = Button("")
-        self["key_yellow"] = Button("")
+        self["key_yellow"] = Button(self.sort_next['name'])
         self["key_blue"] = Button("")
-        
-        self.lst_items = self.content_provider.get_downloads()
         self.title = self.name.encode('utf-8', 'ignore') + ' ' + (_("downloads"))
 
         self["actions"] = NumberActionMap(["archivCZSKActions"],
@@ -362,17 +365,20 @@ class DownloadsScreen(BaseArchivCZSKMenuListScreen, DownloadList):
                 "ok": self.ok,
                 "cancel": self.cancel,
                 "red": self.askRemoveDownload,
+                "yellow": self.toggleSort,
                 "up": self.up,
                 "down": self.down,
             }, -2)
         
+        self.onLayoutFinish.append(self.sortList)
         self.onShown.append(self.setWindowTitle)    
 
     def setWindowTitle(self):
         self.setTitle(self.title)
     
-    def refreshList(self):
-        self.lst_items = self.content_provider.get_downloads()
+    def refreshList(self, sort=False):
+        if not sort:
+            self.lst_items = self.content_provider.get_downloads()
         self.updateMenuList()
         
     def askRemoveDownload(self):
@@ -385,11 +391,36 @@ class DownloadsScreen(BaseArchivCZSKMenuListScreen, DownloadList):
         if callback:
             self.content_provider.remove_download(self.getSelectedItem())
             self.refreshList()
+            
+    def toggleSort(self):
+        next_idx = self.sort_options.index(self.sort_next)
+        self.sort_current = self.sort_next
+        
+        if  next_idx == len(self.sort_options) - 1:
+            self.sort_next = self.sort_options[0]
+        else:
+            self.sort_next = self.sort_options[next_idx + 1]
+
+        self["key_yellow"].setText(self.sort_next['name'])
+        
+        self.sortList()        
+        
+    def sortList(self):
+        if self.sort_current['id'] == 'az':
+            self.lst_items.sort(key=lambda d:d.name)
+        elif self.sort_current['id'] == 'size':
+            self.lst_items.sort(key=lambda d:d.size)
+        elif self.sort_current['id'] == 'state':
+            self.lst_items.sort(key=lambda d:d.state)
+        elif self.sort_current['id'] == 'date':
+            self.lst_items.sort(key=lambda d:d.finish_time)
+        self.refreshList(True)
+        
 
     def updateMenuList(self):
         menu_list = []
         for idx, x in enumerate(self.lst_items):
-            menu_list.append(PanelListEntry(x.name, idx, x.thumb)) 
+            menu_list.append(PanelListDownloadListEntry(x)) 
         self["menu"].setList(menu_list)        
 
     def ok(self):

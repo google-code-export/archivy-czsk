@@ -15,7 +15,7 @@ from Plugins.Extensions.archivCZSK.engine.exceptions.archiveException import Cus
 from Plugins.Extensions.archivCZSK import settings
 import xmlshortcuts 
 from tools import task, util
-from downloader import DownloadManager,NotSupportedProtocolException
+from downloader import DownloadManager, NotSupportedProtocolException
 from items import PVideo, PFolder, PDownload, Stream, RtmpStream, PExit
 
 VIDEO_EXTENSIONS = ['.avi', '.mkv', '.mp4', '.flv', '.mpg', '.mpeg', '.wmv']
@@ -38,11 +38,8 @@ class ContentProvider(object):
     def get_downloads(self):
         video_lst = []
         if not os.path.isdir(self.downloads_path):
-            try:
-                os.makedirs(self.downloads_path)
-            except OSError:
-                return []
-        
+            util.make_path(self.downloads_path)
+            
         downloads = os.listdir(self.downloads_path)
         for download in downloads:
             download_path = os.path.join(self.downloads_path, download)
@@ -61,6 +58,15 @@ class ContentProvider(object):
                 it.name = filename
                 it.url = url
                 it.subs = subs
+                
+                downloadManager = DownloadManager.getInstance()
+                download = downloadManager.findDownloadByIT(it)
+                
+                if download is not None:
+                    it.finish_time = download.finish_time
+                    it.start_time = download.start_time
+                    it.state = download.state
+                    it.stateText = download.stateText
                 video_lst.append(it)
                 
         return video_lst
@@ -73,18 +79,18 @@ class ContentProvider(object):
             log.info('cannot remove item %s from disk, not PDownload instance', str(item))
             
         
-    def download(self, item, startCB, finishCB, playDownload=False,mode=""):
+    def download(self, item, startCB, finishCB, playDownload=False, mode=""):
         """Downloads item PVideo itemem calls startCB when download starts and finishCB when download finishes"""
         
         quiet = False
-        headers = item.download['headers']
+        headers = item.settings['extra-headers']
         log.debug("Download headers %s", headers)
         downloadManager = DownloadManager.getInstance()
         try:
             d = downloadManager.createDownload(name=item.name, url=item.url, stream=item.stream, filename=item.filename,
                                            live=item.live, destination=self.downloads_path,
-                                           startCB=startCB, finishCB=finishCB, quiet=quiet, 
-                                           playDownload=playDownload, headers=headers,mode=mode)
+                                           startCB=startCB, finishCB=finishCB, quiet=quiet,
+                                           playDownload=playDownload, headers=headers, mode=mode)
         except NotSupportedProtocolException:
             raise CustomInfoError(_("Cannot download") + item.name.encode('utf-8') + _("not supported protocol"))
         else:
@@ -179,7 +185,7 @@ class VideoAddonContentProvider(ContentProvider):
                 log.info("required %s addon not founded" , addon_id)
                 if strict:
                     log.info("cannot execute %s addon" , self.video_addon)
-                    raise Exception("Cannot execute %s, missing dependency %s" % self.video_addon, addon_id)
+                    raise Exception("Cannot execute %s, missing dependency %s" % (self.video_addon, addon_id))
                 else:
                     log.debug("skipping")
         self.resolved_dependencies = True

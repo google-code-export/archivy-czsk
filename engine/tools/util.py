@@ -199,11 +199,14 @@ def isSupportedVideo(url):
     return True
 
 
-def BtoKB(self, byte):
+def BtoKB(byte):
         return int(float(byte) / float(1024))
     
-def BtoMB(self, byte):
+def BtoMB(byte):
         return int(float(byte) / float(1024 * 1024))
+    
+def BtoGB(byte): 
+    return int(float(byte) / float(1024 * 1024 * 1024))
     
 def sToHMS(self, sec):
     m, s = divmod(sec, 60)
