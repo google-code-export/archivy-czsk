@@ -63,9 +63,13 @@ class BaseArchivCZSKScreen(Screen):
         
 class BaseArchivCZSKMenuListScreen(BaseArchivCZSKScreen):
     """Base Screen for screens with menu list"""
-    def __init__(self, session):
-        
+    def __init__(self, session,panelList = None):
         BaseArchivCZSKScreen.__init__(self, session)
+        
+        pl = PanelList
+        if panelList is not None:
+            pl = panelList
+        
         
         if not self.HD:
             PanelListEntry = PanelListEntrySD
@@ -86,7 +90,7 @@ class BaseArchivCZSKMenuListScreen(BaseArchivCZSKScreen):
         self.working = False
         
         # gui menu list
-        self["menu"] = PanelList([])
+        self["menu"] = pl([])
         self["menu"].onSelectionChanged.append(self.updateGUI)
         
         #called by workingStarted
