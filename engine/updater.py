@@ -4,19 +4,17 @@ Created on 25.6.2012
 @author: marko
 '''
 import os, shutil
-import logging
 
 from tools import unzip, util, parser
 from exceptions import archiveException as archiveException
-
-log = logging.getLogger(__name__)
+from Plugins.Extensions.archivCZSK import log
 
 def removePyOC(pyfile):
     if os.path.isfile(pyfile + 'c'):
-        log.debug('removing %s' % (pyfile + 'c'))
+        log.debug('removing %s', (pyfile + 'c'))
         os.remove(pyfile + 'c')
     elif os.path.isfile(pyfile + 'o'):
-        log.debug('removing %s' % (pyfile + 'o'))
+        log.debug('removing %s', (pyfile + 'o'))
         os.remove(pyfile + 'o')
 
 def removeFiles(files):
@@ -38,24 +36,24 @@ class Updater(object):
     
     def check_addon(self, addon, update_xml=True):
         """check if addon needs update"""
-        log.debug("checking updates for %s" % addon.name)
+        log.debug("checking updates for %s", addon.name)
         self._get_server_addon(addon, update_xml)
         
         remote_version = self.remote_addons_dict[addon.id]['version']
         local_version = addon.version
         if util.check_version(local_version, remote_version):
-            log.debug("%s local version %s < remote version %s" % (addon.name, local_version, remote_version))
-            log.debug("%s is not up to date" % addon.name)
+            log.debug("%s local version %s < remote version %s", addon.name, local_version, remote_version)
+            log.debug("%s is not up to date", addon.name)
             return True
         else:
-            log.debug("%s local version %s >= remote version %s" % (addon.name, local_version, remote_version))
-            log.debug("%s is up to date" % addon.name)  
+            log.debug("%s local version %s >= remote version %s", addon.name, local_version, remote_version)
+            log.debug("%s is up to date", addon.name)  
         return False
           
     def update_addon(self, addon):
         """updates addon"""
         
-        log.debug("updating %s" % addon.name)
+        log.debug("updating %s", addon.name)
         self._get_server_addon(addon)
     
         local_base = os.path.join(self.local_path, addon.id)        
@@ -68,9 +66,9 @@ class Updater(object):
             unzipper = unzip.unzip()
             unzipper.extract(zip_file, self.local_path)
             
-            log.debug("%s was successfully updated to version %s" % (addon.name, self.remote_addons_dict[addon.id]['version']))
+            log.debug("%s was successfully updated to version %s", addon.name, self.remote_addons_dict[addon.id]['version'])
             return True
-        log.debug("%s failed to update to version %s" % (addon.name, addon.version))
+        log.debug("%s failed to update to version %s", addon.name, addon.version)
         return False
     
     
@@ -86,11 +84,11 @@ class Updater(object):
                 if local_addon.check_update(False):
                     update_needed.append(local_addon)
             elif new:
-                log.debug("%s not in local repository, adding dummy Addon to update" % remote_addon['name'])
+                log.debug("%s not in local repository, adding dummy Addon to update",remote_addon['name'])
                 new_addon = DummyAddon(self.repository, remote_addon['id'], remote_addon['name'], remote_addon['version'])
                 update_needed.append(new_addon)
             else:
-                log.debug("dont want new addons skipping %s" % remote_addon['id'])
+                log.debug("dont want new addons skipping %s", remote_addon['id'])
         return update_needed        
             
             
@@ -149,7 +147,7 @@ class Updater(object):
         try:
             util.download_to_file(self.update_xml_url, self.update_xml_file, debugfnc=log.debug)
         except Exception:
-            log.debug('cannot download %s update xml' % self.repository.name)
+            log.debug('cannot download %s update xml', self.repository.name)
             raise archiveException.UpdateXMLVersionException()
         
 
