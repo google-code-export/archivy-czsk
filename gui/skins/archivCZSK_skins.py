@@ -110,7 +110,7 @@ ContentMenuScreen_HD = """
         </screen>"""
         
 ItemInfoScreen_HD = """
-        <screen name="ItemInfoScreen" position="center,center" size="1100,600" title="Info">
+        <screen name="InfoScreen" position="center,center" size="1100,600" title="Info">
             <widget font="Regular;22" foregroundColor="yellow" name="genre" position="435,52" size="613,30" transparent="1" />
             <widget font="Regular;22" foregroundColor="yellow" name="year" position="435,106" size="613,30" transparent="1" />
             <widget font="Regular;22" foregroundColor="yellow" name="rating" position="435,158" size="613,30" transparent="1" />
