@@ -229,6 +229,8 @@ class ContentItemHandler(ItemHandler):
                     self.content_screen.showInfo(_('Not implemented yet'))
                 else:
                     self.player.playAndDownload()
+            elif mode == 'play_and_download_gst':
+                self.player.playAndDownload(True)
             else:
                 self.player.play()
 
@@ -260,11 +262,13 @@ class ContentItemHandler(ItemHandler):
         if self.is_video(item):
             item.add_context_menu_item(_("Play"), action=self.play_item, params={'item':item})
             item.add_context_menu_item(_("Play and Download"), action=self.play_item, params={'item':item, 'mode':'play_and_download'})
+            if config.plugins.archivCZSK.videoPlayer.servicemp4.getValue():   
+                item.add_context_menu_item(_("Play and Download (GStreamer)"), action=self.play_item, params={'item':item, 'mode':'play_and_download_gst'})
             if item.url.startswith('http'):
-                item.add_context_menu_item(_("Download (wget)"), action=self.download_item, params={'item':item,'mode':'wget'})
-                item.add_context_menu_item(_("Download (Twisted)"), action=self.download_item, params={'item':item,'mode':'twisted'})
+                item.add_context_menu_item(_("Download (wget)"), action=self.download_item, params={'item':item, 'mode':'wget'})
+                item.add_context_menu_item(_("Download (Twisted)"), action=self.download_item, params={'item':item, 'mode':'twisted'})
             elif item.url.startswith('rtmp'):
-                item.add_context_menu_item(_("Download (rtmpdump)"), action=self.download_item, params={'item':item,'mode':'rtmpdump'})
+                item.add_context_menu_item(_("Download (rtmpdump)"), action=self.download_item, params={'item':item, 'mode':'rtmpdump'})
     
         context.showContextMenu(self.session, item.name, item.thumb, item.context, self.menu_item_cb)
         
@@ -352,10 +356,10 @@ class StreamContentItemHandler(ContentItemHandler):
             item.add_context_menu_item(_("Play"), action=self.play_item, params={'item':item})
             item.add_context_menu_item(_("Play and Download"), action=self.play_item, params={'item':item, 'mode':'play_and_download'})
             if item.url.startswith('http'):
-                item.add_context_menu_item(_("Download (wget)"), action=self.download_item, params={'item':item,'mode':'wget'})
-                item.add_context_menu_item(_("Download (Twisted)"), action=self.download_item, params={'item':item,'mode':'twisted'})
+                item.add_context_menu_item(_("Download (wget)"), action=self.download_item, params={'item':item, 'mode':'wget'})
+                item.add_context_menu_item(_("Download (Twisted)"), action=self.download_item, params={'item':item, 'mode':'twisted'})
             elif item.url.startswith('rtmp'):
-                item.add_context_menu_item(_("Download (rtmpdump)"), action=self.download_item, params={'item':item,'mode':'rtmpdump'})
+                item.add_context_menu_item(_("Download (rtmpdump)"), action=self.download_item, params={'item':item, 'mode':'rtmpdump'})
             item.add_context_menu_item(_("Remove"), action=self.ask_remove_stream, params={'item':item})
         context.showContextMenu(self.session, item.name, item.thumb, item.context, self.menu_item_cb)    
         

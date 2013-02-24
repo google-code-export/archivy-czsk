@@ -1,15 +1,90 @@
-from enigma import  eTimer
+import os
+import shutil
+
+from enigma import  eTimer, iPlayableService
 from Screens.MessageBox import MessageBox
 from Components.config import config
+from Components.ServiceEventTracker import ServiceEventTracker
 from Plugins.Extensions.archivCZSK import _
 from Plugins.Extensions.archivCZSK import log
+from Plugins.Extensions.archivCZSK.gui.common import showInfoMessage, showErrorMessage, showYesNoDialog
 
 
+show_info_message = showInfoMessage
+show_error_message = showErrorMessage
+show_yesno_dialog = showYesNoDialog
 
-def send_info_message(session, info, timeout=5):
-    session.open(MessageBox, info, timeout=timeout, type=MessageBox.TYPE_INFO)
+    
+class BaseVideoPlayerController(object):
+    def __init__(self):
+        self.video_player = None
+        
+    def start(self, play_and_download):
+        pass
+    
+    def set_video_player(self, video_player):
+        self.video_player = video_player
+        
+    def is_video_paused(self):
+        return self.video_player.SEEK_STATE_PAUSE == self.video_player.seekstate
 
-class VideoPlayerController(object):
+#  Video Controller Actions called by Video Player  #
+##################################################### 
+
+    def seek_fwd(self):
+        self._seek_fwd()
+            
+    def seek_back(self):
+        self._seek_back()
+            
+    def do_seek_relative(self, relative_pts):
+        self._do_seek_relative(relative_pts)
+                
+    def pause_service(self):
+        self._pause_service()
+            
+    def unpause_service(self):
+        self._unpause_service()
+    
+    def do_eof_internal(self, playing):
+        self._do_eof_internal(playing)
+                
+    def exit_video_player(self):
+        self._exit_video_player()
+
+        
+
+#  Video Player Actions called by Video Controller  #
+#####################################################      
+
+    def _seek_back(self):
+        self.video_player._seekBack()
+        
+    def _seek_fwd(self):
+        self.video_player._seekFwd()
+    # not sure why but riginal MP doSeek method does nothing, so I use on seeking only doSeekRelative
+    def _do_seek(self, pts):
+        self.video_player.doSeek(pts)
+    
+    def _do_seek_relative(self, pts):
+        self.video_player._doSeekRelative(pts)
+        
+    def _unpause_service(self):
+        if self.is_video_paused():
+            self.video_player.setSeekState(self.video_player.SEEK_STATE_PLAY)  
+        
+    def _pause_service(self):
+        if not self.is_video_paused():
+            self.video_player.setSeekState(self.video_player.SEEK_STATE_PAUSE)
+    
+    def _do_eof_internal(self, playing):
+        self.video_player._doEofInternal(playing)
+        
+    def _exit_video_player(self):
+        self.video_player._exitVideoPlayer()
+
+
+class VideoPlayerController(BaseVideoPlayerController):
     """
     External Video Player Controller for video playback
     @param session: reference to active session for info messages
@@ -75,7 +150,7 @@ class VideoPlayerController(object):
                 (self.download is not None, self.video_check_interval, self.buffer_time, self.seekable, self.pausable, self.autoplay)
                 
                 
-    def set_video_player(self,video_player):
+    def set_video_player(self, video_player):
         self.video_player = video_player
         
     def start(self, play_and_download):
@@ -141,8 +216,6 @@ class VideoPlayerController(object):
         h, m = divmod(m, 60)
         return h, m, s
             
-
-    
     def get_download_position(self):
         if self.video_length_total is None:
             return None
@@ -174,11 +247,7 @@ class VideoPlayerController(object):
             
     def is_pts_available(self, pts):
         return pts >= 0 and pts < self.video_length
-        
-    def is_video_paused(self):
-        return self.video_player.SEEK_STATE_PAUSE == self.video_player.seekstate
-        
-
+    
 
     def _update_download_status(self):
         self.download.status.update(self.download_interval_check / 1000)
@@ -187,7 +256,6 @@ class VideoPlayerController(object):
 #        Video Player Actions called by Video Controller                      
 ##############################################################
         
-    
     def _update_info_bar(self):
         log.debug('updating infobar')
         if self.video_length is None:
@@ -203,12 +271,6 @@ class VideoPlayerController(object):
                     'bitrate':0
                 }
         self.video_player.updateInfobar(info)
-        
-    def _seek_back(self):
-        self.video_player._seekBack()
-        
-    def _seek_fwd(self):
-        self.video_player._seekFwd()
         
     # not sure why but riginal MP doSeek method does nothing, so I use on seeking only doSeekRelative
     def _do_seek(self, pts):
@@ -252,25 +314,25 @@ class VideoPlayerController(object):
 #####################################################################
     def seek_fwd(self):
         if not self.seekable:
-            send_info_message(self.session, _("Its not possible to seek in this video"), 3)
+            show_info_message(self.session, _("Its not possible to seek in this video"), 3)
         elif self.download is not None and self.download.running:
-            send_info_message(self.session, _("Its not possible to use trick seek in downloading video "), 3)
+            show_info_message(self.session, _("Its not possible to use trick seek in downloading video "), 3)
         else:
             self._seek_fwd()
             
 
     def seek_back(self):
         if not self.seekable:
-            send_info_message(self.session, _("Its not possible to seek in this video"), 3)
+            show_info_message(self.session, _("Its not possible to seek in this video"), 3)
         elif self.download is not None and self.download.running:
-            send_info_message(self.session, _("Its not possible to use trick seek in downloading video "), 3)
+            show_info_message(self.session, _("Its not possible to use trick seek in downloading video "), 3)
         else:
             self._seek_back()
             
     
     def do_seek_relative(self, relative_pts):
         if not self.seekable:
-            send_info_message(self.session, _("Its not possible to seek in this video"), 3)
+            show_info_message(self.session, _("Its not possible to seek in this video"), 3)
         else:
             player_position = self.get_player_position()
                 
@@ -310,7 +372,7 @@ class VideoPlayerController(object):
                             if possible_seek > 0:
                                 self._do_seek_relative(possible_seek)
                             else:
-                                send_info_message(self.session, _("Cannot seek, not enough video is downloaded"), 2)
+                                show_info_message(self.session, _("Cannot seek, not enough video is downloaded"), 2)
                                 log.debug("cannot seek, not enough video is downloaded")
                         else:
                             self._do_seek_relative(-player_position)
@@ -321,24 +383,18 @@ class VideoPlayerController(object):
                 
     def pause_service(self):
         if not self.pausable:
-            send_info_message(self.session, _("Its not possible to pause this video"), 2)
+            show_info_message(self.session, _("Its not possible to pause this video"), 2)
         else:
             self._user_pause = True
             self._pause_service()
             
     def unpause_service(self):
         if not self._buffered:
-            send_info_message(self.session, _("Cannot unpause, Video is not buffered yet..."), 2)
+            show_info_message(self.session, _("Cannot unpause, Video is not buffered yet..."), 2)
             #self.check_position()
         else:
             self._user_pause = False
             self._unpause_service()
-            
-    def exit_video_player(self):
-        self._exit_video_player()
-        
-    def do_eof_internal(self, playing):
-        self._do_eof_internal(playing)
         
 ############ Periodically called action by VideoController
 
@@ -404,7 +460,174 @@ class VideoPlayerController(object):
             self.stop_buffer_check()
             self.stop_video_check()
             self._buffered = True
-            
-    
+                
+
+class GStreamerDownloadController(BaseVideoPlayerController):
+    def __init__(self, download_path, prebuffer_seconds=0, prebuffer_percent=0):
         
+        self.video_player = None
+        self.session = None
+        self.istreamed = None
+        # where we want to save download
+        self.download_path = download_path
+        # where is gstreamer downloading
+        self.gst_download_path = None
+        
+        # pre-buffering
+        self.prebuffer_percent = prebuffer_percent
+        self.prebuffer_seconds = prebuffer_seconds
+        self.prebufferred_seconds = 0
+        self.prebuffered_percent = 0
+        self.prebuffering = (self.prebuffer_percent != 0 or self.prebuffer_seconds != 0)
+        
+        # download/buffer state
+        self.download_percent = 0
+        self.download_speed = 0
+        self.buffered_percent = 0
+        self.buffer_size = 0
+        self.temp_length = 0
+        
+        log.debug("GstreamerDownloadController started")
+        
+        # register download/buffer events
+        self.__event_tracker = None
+        
+    def get_istreamed(self):
+        return self.session.nav.getCurrentService().streamed()
+        
+    def set_video_player(self, video_player):
+        self.video_player = video_player
+        self.session = video_player.session
+        
+        ServiceEventTracker(screen=video_player, eventmap=
+        {
+            iPlayableService.evBuffering: self.__ev_updated_buffer_info,
+            iPlayableService.evUser + 21: self.__ev_download_finished,
+            iPlayableService.evUser + 22: self.__ev_updated_download_status,
+        })
+    
+    def start(self, play_and_download):
+        if self.istreamed is None:
+            self.istreamed = self.get_istreamed()
+        self.video = self.video_player.video
+        
+    def __ev_updated_buffer_info(self):
+        self.istreamed = self.get_istreamed()
+        info = self.istreamed.getBufferCharge()
+        self.buffered_percent = info[0]
+        self._update_info_bar()
+    
+    # called every 1 seconds
+    def __ev_updated_download_status(self):
+        if self.istreamed is None:
+            return
+        info = self.istreamed.getBufferCharge()
+        self.download_speed = info[1]
+        self.download_percent = info[7]
+        self.buffered_percent = info[0]
+        self.buffer_size = info[4]
+        log.debug('download_percent: %d, buffer_size %lu', self.download_percent, self.buffer_size)
+        self._update()
+    
+    def __ev_download_finished(self):
+        show_info_message(self.session, _("Downloading finished"))
+    
+    
+    def _update(self):
+        if self.prebuffering:
+            self._prebuffer()
+            self._update_playing_state()
+        if self.gst_download_path is None:
+            self._update_download_location()
+        self._update_info_bar()
+        
+    def _update_download_location(self):
+        path = self.istreamed.getBufferCharge()[6]
+        if path != "":
+            self.gst_download_path = path
+            log.debug("download location is %s", self.gst_download_path)
+        
+    def _prebuffer(self):
+        if self.prebuffering:
+            self.prebufferred_seconds += 1
+            self.prebuffered_percent = int(float(self.download_percent) / float(self.prebuffer_percent) * 100)
+            log.debug("Prebuffered seconds : %ds, Prebuffered percent %d%%", self.prebufferred_second, self.prebuffered_percent)
+            
+    def _update_playing_state(self):
+        if self.prebufferred_seconds < self.prebuffer_seconds:
+            self.pause_service()
+            self.prebuffering = True
+        elif self.download_percent < self.prebuffer_percent:
+            self.pause_service()
+            self.prebuffering = True
+        else:
+            self.prebuffering = False
+            self.unpause_service()
+    
+    def _update_info_bar(self):
+        info = {
+                'buffer_percent': self.buffered_percent,
+                'buffer_secondsleft':0,
+                'buffer_size':self.buffer_size,
+                'download_speed':self.download_speed,
+                'buffer_slider':self.download_percent,
+                'bitrate':0
+                }
+        self.video_player.updateInfobar(info)
+
+
+    # not implemented yet..
+    def seek_fwd(self):
+        pass
+    
+    def seek_back(self):
+        pass
+    
+    def do_seek_relative(self, pts):
+        pass
+    
+    def do_seek(self):
+        pass
+    
+    def unpause_service(self):
+        if self.prebuffering:
+            log.debug("Forcing unpause... while prebuffering")
+            self.prebuffering = False
+        self._unpause_service()
+    
+    # exit actions - save/cancel download depending on download state
+    def _ask_cancel_download(self):
+        show_yesno_dialog(self.session, _("Download is not finished yet. Do you want to cancel downloading?"), cb=self._cancel_download)
+        
+    def _cancel_download(self, cb=None):
+        if cb:
+            # clear tmp gstreamer download path
+            if os.path.exists(self.gst_download_path):
+                os.remove(self.gst_download_path)
+                
+            self.video_player._exitVideoPlayer()
+        
+    def _ask_save_download(self):
+        show_yesno_dialog(self.session, _("Download is not saved yet. Do you want to save download?"), cb=self._save_download)
+    
+    def _save_download(self, cb=None):
+        if cb:
+            # we need to stop playing downloaded file because we want to move
+            # it to our download location
+            self.session.nav.stopService()
+            
+            log.debug("saving %s to %s", self.gst_download_path, self.download_path)
+            shutil.move(self.gst_download_path, self.download_path)
+            show_info_message(self.session, _("Download was succesfully saved"))
+            self.video_player._exitVideoPlayer()
+            
+
+    def _exit_video_player(self):
+        if self.download_percent != 100:
+            self._ask_cancel_download()
+        elif self.download_percent == 100:
+            self._ask_save_download()
+        else:
+            self.video_player._exitVideoPlayer()
+            
         

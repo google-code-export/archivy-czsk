@@ -35,7 +35,7 @@ from Components.Sources.StaticText import StaticText
 
 
 from subtitles.subtitles import SubsSupport
-from controller import VideoPlayerController
+from controller import VideoPlayerController, GStreamerDownloadController
 from infobar import ArchivCZSKMoviePlayerInfobar
 import setting
 
@@ -234,7 +234,7 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePl
 			iPlayableService.evStart: self.__serviceStarted,
 			iPlayableService.evUser + 10: self.__evAudioDecodeError,
 			iPlayableService.evUser + 11: self.__evVideoDecodeError,
-			iPlayableService.evUser + 12: self.__evPluginError
+			iPlayableService.evUser + 12: self.__evPluginError,
 		})
 		
 		InfoBarBase.__init__(self, steal_current_service=True)
@@ -254,7 +254,6 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePl
 		self.sref = service	
 		self.returning = False
 		self.onClose.append(self._onClose)
-		
 	
 	def __evAudioDecodeError(self):
 		currPlay = self.session.nav.getCurrentService()
@@ -288,7 +287,11 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePl
 		
 	def createSummary(self):
 		return ArchivCZSKMoviePlayerSummary
-						
+	
+	# override InfobarShowhide method
+	def epg(self):
+		self.toggleShow()
+			
 	def playService(self):
 		self.session.nav.playService(self.sref)
 		
@@ -312,7 +315,7 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePl
 		# make sure that playback is unpaused otherwise the  
 		# player driver might stop working 
 		
-		# disabled because on gstreamer freezes e2 after stoping live rtmp stream
+		# disabled because on gstreamer freezes e2 after stopping live rtmp stream
 		
 		#self.setSeekState(self.SEEK_STATE_PLAY) 
 		
@@ -333,7 +336,7 @@ class CustomVideoPlayer(ArchivCZSKMoviePlayer):
 	def __init__(self, session, sref, videoPlayerController, playAndDownload=False, subtitles=None):
 		ArchivCZSKMoviePlayer.__init__(self, session, sref, subtitles)
 		self.videoPlayerController = videoPlayerController
-		self.useVideoController = config.plugins.archivCZSK.videoPlayer.useVideoController.getValue()
+		self.useVideoController = self.videoPlayerController is not None
 		self.playAndDownload = playAndDownload
 		if self.useVideoController:
 			self.videoPlayerController.set_video_player(self)
@@ -561,6 +564,7 @@ class Player():
 		
 		#if we are playing and downloading
 		self.download = None
+		self.gstDownload = None
 		self.rtmpgwProcess = None
 		
 		#default player settings
@@ -569,7 +573,7 @@ class Player():
 		
 		self.playDelay = int(self.settings.playDelay.getValue())
 		self.autoPlay = self.settings.autoPlay.getValue()
-		self.playerBuffer = int(self.settings.bufferSize.getValue()) 
+		self.playerBuffer = int(self.settings.bufferSize.getValue())
 			
 		self.it = None
 		self.name = u'unknown stream'
@@ -579,6 +583,12 @@ class Player():
 		self.live = False
 		self.rtmpBuffer = 20000
 		self.stream = None
+		
+		# additional play settings
+		self.playSettings = self.it.settings
+		
+		# for amiko hdmu fix
+		self.rassFuncs = []
 		
 		#setting ContentScreen callback		
 		self.callback = callback
@@ -645,7 +655,7 @@ class Player():
 			log.info("Nothing to play. You need to set VideoItem first.")
 			
 			
-	def playAndDownload(self):
+	def playAndDownload(self, gstreamerDownload=False):
 		"""starts downloading and then playing after playDelay value"""
 		
 		def playNDownload(callback=None):
@@ -653,24 +663,42 @@ class Player():
 				self.content_provider.download(self.it, self._showPlayDownloadDelay, DownloadManagerMessages.finishDownloadCB, playDownload=True)
 		
 		from Plugins.Extensions.archivCZSK.gui.download import DownloadManagerMessages
-		#from Plugins.Extensions.archivCZSK.engine.downloader import getFileInfo
-		
-		# we use gstreamer to download stream
-		"""if self.settings.servicemp4.getValue():
-			self.settings.download.setValue("True")
-			self.settings.download.save()
-			filename, length = getFileInfo(self.it.url, self.it.filename)
-			path = os.path.join(self.content_provider.downloads_path, filename)
-			path = path.encode('ascii', 'ignore')
-			log.debug("Download path: %s", path)
-			self.settings.downloadPath.setValue(path)
-			self.settings.downloadPath.save()
-			self._playStream(self.playUrl, self.subtitles)
-			return"""
+		from Plugins.Extensions.archivCZSK.engine.downloader import getFileInfo, GStreamerDownload
 		
 		if self.content_provider is None:
 			log.info('Cannot download.. You need to set your content provider first')
 			return
+		
+		# we use gstreamer to play and download stream
+		if gstreamerDownload:
+			
+			# find out local path
+			filename = self.it.filename
+			name = self.it.name
+			downloadsPath = self.content_provider.downloads_path
+			if self.playUrl.startswith('http'):
+				info = getFileInfo(self.playUrl, filename, self.playSettings['extra-headers'])
+				path = os.path.join(downloadsPath, info[0])
+			elif self.playUrl.startswith('rtmp'):
+				if filename is None:
+					filename = name + '.flv'
+					filename = filename.replace(' ', '_')
+					filename = filename.replace('/', '')
+					filename = filename.replace('(', '')
+					filename = filename.replace(')', '')
+				path = os.path.join(downloadsPath, filename)
+			path = path.encode('ascii', 'ignore')
+			log.debug("download path: %s", path)
+			
+			# set prebuffering settings and play..
+			prebufferSeconds = 0
+			prebufferPercent = 2
+			self.gstDownload = GStreamerDownload(path, prebufferSeconds, prebufferPercent)
+			self._playStream(self.playUrl, self.subtitles, playAndDownloadGst=True)
+			return
+		
+		
+		# we are downloading by wget/twisted and playing it by gstreamer/eplayer2,3
 		try:
 			self.session.openWithCallback(playNDownload, MessageBox, _("""Play and download mode is not supported by all video formats, 
 																		 Player can start behave unexpectedly or not play video at all. 
@@ -738,7 +766,7 @@ class Player():
 		return sref	
 								
 			
-	def _playStream(self, streamURL, subtitlesURL, playAndDownload=False, verifyLink=False):
+	def _playStream(self, streamURL, subtitlesURL, playAndDownload=False, playAndDownloadGst=False, verifyLink=False):
 		if verifyLink:
 			ret = util.url_exist(streamURL, int(config.plugins.archivCZSK.linkVerificationTimeout.getValue()))
 			if ret is not None and not ret:
@@ -746,13 +774,16 @@ class Player():
 				raise CustomInfoError(_("Video url doesnt exist"))
 		
 		self.session.nav.stopService()
+		
 		if isinstance(streamURL, unicode):
 			streamURL = streamURL.encode('utf-8')
 			
 		sref = self._createServiceRef(streamURL)
 		
-		# load settings according url
-		setting.loadSettings(streamURL)
+		# load play settings
+		setting.loadSettings(self.playSettings['user-agent'],
+							 self.playSettings['extra-headers'],
+							 playAndDownloadGst)
 		
 		videoPlayerSetting = self.settings.type.getValue()
 		videoPlayerController = None
@@ -760,6 +791,11 @@ class Player():
 		playerType = self.settings.detectedType.getValue()
 		useVideoController = self.settings.useVideoController.getValue()
 		
+		# fix for HDMU sh4 image..
+		self.rassFuncs = ServiceEventTracker.EventMap[14][:]
+		ServiceEventTracker.EventMap[14] = []
+		
+				
 		if useVideoController:
 			videoPlayerController = VideoPlayerController(self.session, download=self.download, \
 													 seekable=self.seekable, pausable=self.pausable)
@@ -769,6 +805,12 @@ class Player():
 		
 		elif videoPlayerSetting == 'custom':
 			if playerType == 'gstreamer':
+				if playAndDownloadGst:
+					path = self.gstDownload.path
+					prebufferP = self.gstDownload.preBufferPercent
+					prebufferS = self.gstDownload.preBufferSeconds
+					videoPlayerController = GStreamerDownloadController(path, prebufferP, prebufferS)
+					playAndDownload = True
 				self.session.openWithCallback(self.exit, GStreamerVideoPlayer, sref, videoPlayerController, \
 										 playAndDownload, subtitlesURL)
 			elif playerType == 'eplayer3':
@@ -829,6 +871,9 @@ class Player():
 
 
 	def exit(self, callback=None):
+		# fix for HDMU sh4 image..
+		ServiceEventTracker.EventMap[14] = self.rassFuncs
+		
 		if self.rtmpgwProcess is not None:
 			self.rtmpgwProcess.sendCtrlC()
 		if self.download is not None:

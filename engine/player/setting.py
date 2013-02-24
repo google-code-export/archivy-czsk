@@ -7,21 +7,16 @@ from Components.config import config, ConfigInteger, ConfigSubsection, ConfigYes
 from Plugins.Extensions.archivCZSK import log
 USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:18.0) Gecko/20100101 Firefox/18.0'
 
-def loadSettings(url, download=False):
-    if url.find('munkvideo') > 0:
-        if download:
-            DownloadMunkVideoPlayerSetting()
-        else:
-            MunkVideoPlayerSetting()    
-    elif download:
-        DownloadVideoPlayerSetting()
+def loadSettings(userAgent="", extraHeaders={}, downloadMode=False):
+    if userAgent != "" or len(extraHeaders) > 0 or downloadMode:
+        CustomVideoPlaySetting(userAgent, extraHeaders, downloadMode)
     else:
-        DefaultVideoPlayerSetting()
+        DefaultVideoPlaySetting()
         
 def resetSettings():
-    DefaultVideoPlayerSetting()
+    DefaultVideoPlaySetting()
 
-class VideoPlayerSettingsProvider(object):
+class VideoPlaySettingsProvider(object):
     def __init__(self):
         self.__config = config.plugins.archivCZSK.videoPlayer
         
@@ -68,38 +63,27 @@ class VideoPlayerSettingsProvider(object):
 
 
 
-class VideoPlayerSetting(object):
+class VideoPlaySetting(object):
     def __init__(self):
-        self.vpsp = VideoPlayerSettingsProvider()
+        self.vpsp = VideoPlaySettingsProvider()
         log.info("Loading %s", self.__class__.__name__)
         
-
-
-class DefaultVideoPlayerSetting(VideoPlayerSetting):
+class CustomVideoPlaySetting(VideoPlaySetting):
+    def __init__(self, userAgent="", extraHeaders={}, downloadMode=False):
+        super(CustomVideoPlaySetting, self).__init__()
+        self.vpsp.setUserAgent(userAgent)
+        self.vpsp.setExtraHeaders(extraHeaders)
+        self.vpsp.setDownloadMode(downloadMode)
+        
+class DefaultVideoPlaySetting(VideoPlaySetting):
     def __init__(self):
-        super(DefaultVideoPlayerSetting, self).__init__()
+        super(DefaultVideoPlaySetting, self).__init__()
         self.vpsp.setUserAgent(USER_AGENT)
         self.vpsp.setExtraHeaders({})
         self.vpsp.setDownloadMode(False)
-     
-# Play and download mode for gstreamer
-class DownloadVideoPlayerSetting(VideoPlayerSetting):
-    def __init__(self):
-        super(VideoPlayerSetting, self).__init__()
-        self.vpsp.setDownloadMode(True)
-    
-    
-class MunkVideoPlayerSetting(VideoPlayerSetting):
-    def __init__(self):
-        super(MunkVideoPlayerSetting, self).__init__()
-        self.vpsp.setExtraHeaders({"Referer":"me"})
+        
+        
 
-
-class DownloadMunkVideoPlayerSetting(VideoPlayerSetting):
-    def __init__(self):
-        super(DownloadMunkVideoPlayerSetting, self).__init__()
-        self.vpsp.setDownloadMode(True)
-        self.vpsp.setExtraHeaders({"Referer":"me"})
     
     
         
