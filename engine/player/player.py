@@ -585,7 +585,7 @@ class Player():
 		self.stream = None
 		
 		# additional play settings
-		self.playSettings = self.it.settings
+		self.playSettings = None
 		
 		# for amiko hdmu fix
 		self.rassFuncs = []
@@ -608,8 +608,7 @@ class Player():
 		
 		self.seekable = seekable
 		self.pausable = pausable
-		self.settings.download.setValue("False")
-		self.settings.download.save()
+		self.playSettings = it.settings
 		
 		if it.stream is not None:
 			self.stream = it.stream

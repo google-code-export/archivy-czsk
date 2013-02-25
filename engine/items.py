@@ -80,7 +80,7 @@ class PVideo(PItem):
         #stream object, can be stream/rtmp stream
         self.stream = None
         #download object, provides additional info for downloading
-        self.settings = {"user-agent":{}, "extra-headers":{}}
+        self.settings = {"user-agent":"", "extra-headers":{}}
         
     def get_protocol(self):
         return self.url[:self.url.find('://')].upper()

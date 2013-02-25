@@ -206,7 +206,7 @@ def add_play(title, provider_name, quality, url, subs=None, filename=None, image
 	if not 'title' in infoLabels:
 		infoLabels['title'] = name
 		
-	downloadSettings = None
+	settings = None
 	if url.find('munkvideo') > 0:
 		settings = {"extra-headers":{"Referer":"me"}}
 		

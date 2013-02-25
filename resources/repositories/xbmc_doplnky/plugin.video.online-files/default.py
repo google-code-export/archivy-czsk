@@ -36,7 +36,6 @@ import bezvadata, hellspy, ulozto
 import xbmcprovider
 
 
-
 def search_cb(what):
 	for key in providers.keys():
 		p = providers[key]
@@ -69,8 +68,8 @@ def ulozto_filter(item):
        
 class XBMCUloztoContentProvider(xbmcprovider.XBMCLoginOptionalContentProvider):
 
-    def __init__(self, provider, settings, addon):
-        xbmcprovider.XBMCLoginOptionalContentProvider.__init__(self, provider, settings, addon)
+    def __init__(self, provider, settings, addon, session):
+        xbmcprovider.XBMCLoginOptionalContentProvider.__init__(self, provider, settings, addon, session)
         self.check_setting_keys(['vip', 'search-type'])
         search_type = ''
         search_types = {'0':'', '1':'media=video&', '2':'media=image&', '3':'media=music&', '4':'media=document&'}
@@ -118,7 +117,7 @@ if __settings__('ulozto_enabled'):
 			'search-type':__settings__('ulozto_search-type')
 	}
 	extra.update(settings)
-	providers[p.name] = XBMCUloztoContentProvider(p,extra,__addon__)
+	providers[p.name] = XBMCUloztoContentProvider(p, extra, __addon__, session)
 if __settings__('hellspy_enabled'):
 	p = hellspy.HellspyContentProvider(__settings__('hellspy_user'), __settings__('hellspy_pass'), site_url=__settings__('hellspy_site_url'))
 	extra = {

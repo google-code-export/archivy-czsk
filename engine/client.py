@@ -220,8 +220,16 @@ def add_video(name, url, subs=None, image=None, infoLabels={}, menuItems={}, fil
         it.add_stream(stream)
         
     if settings is not None:
-        it.settings = settings
-    
+        if not isinstance(settings, dict):
+            log.info("Cannot load settings %s class, it has to be dict class" , settings.__class__.__name__)
+        else:
+            if 'user-agent' not in settings:
+                settings['user-agent'] = ""
+            if 'extra-headers' not in settings:
+                settings['extra-headers'] = {}
+            log.debug("Settings: %s", settings)
+            it.settings = settings
+        
     GItem_lst[0].append(it)
     
         
