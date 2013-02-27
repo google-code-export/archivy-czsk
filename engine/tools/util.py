@@ -122,36 +122,37 @@ def make_path(p):
         pass
 
 def download_to_file(remote, local, mode='wb', debugfnc=None):
+    f, localFile = None, None
     try:
         if debugfnc:
-            debugfnc("downloading %s to %s" % (remote, local))
+            debugfnc("downloading %s to %s", remote, local)
         else:
-            print  "downloading %s to %s" % (remote, local) 
+            print  "downloading %s to %s", (remote, local) 
         f = urllib2.urlopen(remote)
         make_path(os.path.dirname(local))
         localFile = open(local, mode)
         localFile.write(f.read())
     except urllib2.HTTPError, e:
         if debugfnc:
-            debugfnc("HTTP Error: %s %s" % (e.code, remote))
+            debugfnc("HTTP Error: %s %s", e.code, remote)
         else:
             print "HTTP Error: %s %s" % (e.code, remote)
         raise
     except urllib2.URLError, e:
         if debugfnc:
-            debugfnc("URL Error: %s %s" % (e.reason, remote))
+            debugfnc("URL Error: %s %s", e.reason, remote)
         else:
             print "URL Error: %s %s" % (e.reason, remote)
         raise
     except IOError, e:
         if debugfnc:
-            debugfnc("I/O error(%d): %s" % (e.errno, e.strerror))
+            debugfnc("I/O error(%d): %s", (e.errno, e.strerror))
         else:
             print "I/O error(%d): %s" % (e.errno, e.strerror)
         raise
     else:
         if debugfnc:
-            debugfnc('%s succesfully downloaded' % local)
+            debugfnc('%s succesfully downloaded', local)
         else:
             print local, 'succesfully downloaded'
     finally:

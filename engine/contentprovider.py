@@ -66,7 +66,7 @@ class ContentProvider(object):
                     it.finish_time = download.finish_time
                     it.start_time = download.start_time
                     it.state = download.state
-                    it.stateText = download.stateText
+                    it.textState = download.textState
                 video_lst.append(it)
                 
         return video_lst
@@ -96,7 +96,7 @@ class ContentProvider(object):
         else:
             if item.subs is not None and item.subs != '':
                 log.debug('subtitles link: %s' , item.subs)
-                subs_file_path = os.path.join(self.downloads_path, os.path.splitext(d.filename)[0] + '.srt')
+                subs_file_path = os.path.splitext(d.local)[0] + '.srt'
                 util.download_to_file(item.subs, subs_file_path)
             downloadManager.addDownload(d) 
         

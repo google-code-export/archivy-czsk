@@ -100,7 +100,7 @@ class PDownload(PVideo):
         self.size = os.path.getsize(path)
         # for now we assume that all downloads succesfully finished
         self.state = 'success_finished'
-        self.stateText = _('succesfully finished')
+        self.textState = _('succesfully finished')
         self.start_time = None
         self.finish_time = os.path.getmtime(path)
         
