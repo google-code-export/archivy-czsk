@@ -14,7 +14,7 @@ from . import _, log
 
 import settings
 # loading repositories and their addons
-
+from gui.common import showYesNoDialog, showInfoMessage, showErrorMessage
 from gui.content import VideoAddonsContentScreen
 from engine.items import PVideoAddon
 from engine.addon import VideoAddon, XBMCAddon
@@ -101,10 +101,15 @@ class ArchivCZSK():
         self.session = session
         self.toupdate_addons = []
         self.updated_addons = []
+        self.first_time = os.path.exists(os.path.join(settings.PLUGIN_PATH, 'firsttime'))
+        
     
         update_string = ''
         if ArchivCZSK.__need_restart:
             self.ask_restart_e2()
+            
+        elif self.first_time:
+            self.opened_first_time()
         
         elif config.plugins.archivCZSK.autoUpdate.value:
             update_string = self.check_addon_updates()
@@ -114,6 +119,23 @@ class ArchivCZSK():
                 self.open_archive_screen()
         else:
             self.open_archive_screen()
+            
+    def opened_first_time(self):
+        os.remove(os.path.join(settings.PLUGIN_PATH, 'firsttime'))
+        config.plugins.archivCZSK.videoPlayer.useDefaultSkin.setValue(False)
+        config.plugins.archivCZSK.videoPlayer.useDefaultSkin.save()
+        
+        text = _("""This is the first time you started archivyCZSK.
+For optimal use of this plugin, you need to check if you have all neccesary video plugins installed.""")
+        
+        showInfoMessage(self.session, text, 0, self.open_player_info)
+        
+        
+    def open_player_info(self, callback=None):
+        import gui.info as info
+        info.showVideoPlayerInfo(self.session, self.open_archive_screen)
+        
+        
 
     def check_addon_updates(self):
         for repo_key in self.__repositories.keys():
@@ -179,7 +201,7 @@ class ArchivCZSK():
             from Screens.Standby import TryQuitMainloop
             self.session.open(TryQuitMainloop, 10)
         
-    def open_archive_screen(self):
+    def open_archive_screen(self, callback=None):
         if not ArchivCZSK.__loaded:
             self.load_repositories()
         tv_video_addon = []

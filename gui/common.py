@@ -94,6 +94,13 @@ def PanelListDownloadEntry(name, download):
     return res
 
 
+def PanelColorListEntry(name, value, color, sizePanelX):
+    res = [(name)]
+    res.append(MultiContentEntryText(pos=(0, 5), size=(sizePanelX, 30), font=0, flags=RT_HALIGN_LEFT, text=name, color=color))
+    res.append(MultiContentEntryText(pos=(0, 5), size=(sizePanelX, 30), font=0, flags=RT_HALIGN_RIGHT, text=value, color=color))
+    return res
+
+
 
 def PanelListDownloadListEntry(pdownload):
     res = [(pdownload.name)]
@@ -110,7 +117,7 @@ def PanelListDownloadListEntry(pdownload):
         size = ("%.2f GB        ", util.BtoGB(pdownload.size))
     
     sizeText = _('Size: ') + size
-    stateText = pdownload.stateText
+    stateText = pdownload.textState
     
     res.append(MultiContentEntryPixmapAlphaTest(pos=(5, 5), size=(35, 25), png=loadPNG(pdownload.thumb)))
     res.append(MultiContentEntryText(pos=(60, 5), size=(760, 30), font=0, flags=RT_HALIGN_LEFT, text=toUTF8(pdownload.name)))

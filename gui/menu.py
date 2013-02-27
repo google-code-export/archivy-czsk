@@ -230,6 +230,15 @@ class ArchiveCZSKConfigScreen(BaseArchivCZSKConfigScreen):
                        config.plugins.archivCZSK.videoPlayer.servicemrua,
                        config.plugins.archivCZSK.videoPlayer.bufferMode]:
             self.buildMenu()
+            
+    def keyOk(self):
+        current = self["config"].getCurrent()[1]
+        if current == config.plugins.archivCZSK.videoPlayer.info:
+            info.showVideoPlayerInfo(self.session)
+        else:
+            super(ArchiveCZSKConfigScreen, self).keyOk()
+            
+        
           
         
  
@@ -332,4 +341,9 @@ class SelectPath(Screen):
             self["target"].setText(currFolder)
         else:
             self["target"].setText(_("Invalid Location"))
+    
+    
+    
+    
+    
 

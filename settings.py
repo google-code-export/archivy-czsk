@@ -5,7 +5,7 @@ Created on 15.10.2012
 '''
 import os
 
-from Components.config import config, ConfigSubsection, ConfigSelection, ConfigDirectory, ConfigInteger, ConfigYesNo, ConfigText, configfile, getConfigListEntry
+from Components.config import config, ConfigSubsection, ConfigSelection, ConfigDirectory, ConfigInteger, ConfigYesNo, ConfigText, ConfigNothing, configfile, getConfigListEntry, NoSave
 from Components.Language import language
 from Plugins.Extensions.archivCZSK import log, _
 from engine.player.info import videoPlayerInfo
@@ -20,7 +20,11 @@ except ImportError:
     SERVICEMP4 = False
  
 LANGUAGE_SETTINGS_ID = language.getLanguage()[:2]
-AZBOX = stb.getBoxtype()[0] == 'Azbox'
+
+############ STB Info ###############
+
+(MANUFACTURER, MODEL, ARCH, VERSION) = stb.getBoxtype()
+AZBOX = MODEL == 'Azbox'
 
 ######### Plugin Paths ##############
 
@@ -41,6 +45,7 @@ config.plugins.archivCZSK.archives = ConfigSubsection()
 ################## Player config #####################################
 
 config.plugins.archivCZSK.videoPlayer = ConfigSubsection()
+config.plugins.archivCZSK.videoPlayer.info = NoSave(ConfigNothing())
 playertype = [(videoPlayerInfo.type, videoPlayerInfo.getName())]
 
 config.plugins.archivCZSK.videoPlayer.detectedType = ConfigSelection(choices=playertype)
@@ -53,7 +58,7 @@ choicelist = [('standard', _('standard player')),
               ('custom', _('custom player (subtitle support)'))]
 config.plugins.archivCZSK.videoPlayer.type = ConfigSelection(default="custom", choices=choicelist)
 config.plugins.archivCZSK.videoPlayer.useVideoController = ConfigYesNo(default=True)             
-config.plugins.archivCZSK.videoPlayer.useDefaultSkin = ConfigYesNo(default=True)
+config.plugins.archivCZSK.videoPlayer.useDefaultSkin = ConfigYesNo(default=False)
 config.plugins.archivCZSK.videoPlayer.autoPlay = ConfigYesNo(default=True)
 
 # to use servicemrua instead of servicemp3/servicemp4
@@ -74,7 +79,7 @@ config.plugins.archivCZSK.videoPlayer.extraHeaders = ConfigText(default="")
 config.plugins.archivCZSK.videoPlayer.userAgent = ConfigText(default="")
 
 
-choicelist=[]
+choicelist = []
 for i in range(5, 120, 1):
     choicelist.append(("%d" % i, "%d s" % i))
 config.plugins.archivCZSK.videoPlayer.httpTimeout = ConfigSelection(default="40", choices=choicelist)
@@ -137,6 +142,7 @@ config.plugins.archivCZSK.subtitlesPath = ConfigDirectory(default="/tmp")
 
 config.plugins.archivCZSK.convertPNG = ConfigYesNo(default=True)
 config.plugins.archivCZSK.clearMemory = ConfigYesNo(default=False)
+config.plugins.archivCZSK.hdmuFix = ConfigYesNo(default=False)
 
 # we dont need linkVerification with gstreamer
 if videoPlayerInfo.type == 'gstreamer':
@@ -161,6 +167,7 @@ def get_player_settings():
     useServiceMRUA = config.plugins.archivCZSK.videoPlayer.servicemrua.getValue()
     buffer_mode = config.plugins.archivCZSK.videoPlayer.bufferMode.getValue()
     list.append(getConfigListEntry(_("Detected player"), config.plugins.archivCZSK.videoPlayer.detectedType))
+    list.append(getConfigListEntry(_("Show more info about player"), config.plugins.archivCZSK.videoPlayer.info))
     list.append(getConfigListEntry(_("Video player"), config.plugins.archivCZSK.videoPlayer.type))
     if player == 'custom':
         list.append(getConfigListEntry(_("Use video controller"), config.plugins.archivCZSK.videoPlayer.useVideoController))
@@ -209,4 +216,6 @@ def get_misc_settings():
         list.append(getConfigListEntry(_("Use link verification"), config.plugins.archivCZSK.linkVerification))
         if verification:
             list.append(getConfigListEntry(_("Verification timeout"), config.plugins.archivCZSK.linkVerificationTimeout))
+    if ARCH =='sh4':
+        list.append(getConfigListEntry(_("Amiko HDMU fix"), config.plugins.archivCZSK.hdmuFix))
     return list
