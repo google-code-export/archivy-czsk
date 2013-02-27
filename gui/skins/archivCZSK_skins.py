@@ -127,6 +127,24 @@ ItemInfoScreen_SD = """
             <widget name="plot" position="0,310" size="720,306" font="Regular;23" transparent="1" foregroundColor="white" />
             <widget name="img" position="10,0" zPosition="2" size="300,300"  alphatest="on"/>
         </screen>"""
+        
+VideoPlayerInfoScreen_HD= """
+        <screen position="center,center" size="900,575" title="ContentScreen">
+            <widget backgroundColor="#9f1313" font="Regular;20" halign="center" name="key_red" position="8,5" shadowColor="black" shadowOffset="-2,-2" size="215,45" valign="center" zPosition="1" />
+            <widget backgroundColor="#1f771f" font="Regular;20" halign="center" name="key_green" position="231,5" shadowColor="black" shadowOffset="-2,-2" size="215,45" valign="center" zPosition="1" />
+            <widget backgroundColor="#a08500" font="Regular;20" halign="center" name="key_yellow" position="454,5" shadowColor="black" shadowOffset="-2,-2" size="215,45" valign="center" zPosition="1" />
+            <widget backgroundColor="#18188b" font="Regular;20" halign="center" name="key_blue" position="677,5" shadowColor="black" shadowOffset="-2,-2" size="215,45" valign="center" zPosition="1" />
+            <widget name="detected player" position="24,81" size="222,31" text="Detected player:" font="Regular; 26" />
+            <widget name="detected player_val" position="264,81" size="222,31" text="GStreamer" font="Regular; 26" />
+            <widget name="protocol" position="33,135" size="240,30" text="Supported protocols" foregroundColor="#e5b243" font="Regular; 24" />
+            <widget name="container" position="33,317" size="240,30" text="Supported formats" font="Regular; 24" foregroundColor="#e5b243" />
+            <widget name="protocol_list" position="46,174" size="355,129" />
+            <widget name="container_list" position="46,357" size="355,206" />
+            <widget name="info_scrolllabel" position="443,135" size="434,428" valign="top" font="Regular; 19"/>
+        </screen>
+             """
+
+
 
 ContextMenuScreen = """
         <screen name="ContextMenuScreen" position="center,center" size="500,300">
@@ -300,8 +318,8 @@ ArchivCZSKMoviePlayer_HD = """
         <convert type="ConditionalShowHide" />
       </widget>
       <widget name="buffer_label" position="960,40" size="120,20" text="Buffer" font="Regular; 16" backgroundColor="background" transparent="1"/>
-      <widget name="buffer_state" position="1070,41" size="70,20" text="N/A" font="Regular; 16" backgroundColor="background" transparent="1" />
+      <widget name="buffer_state" position="1070,41" size="80,20" text="N/A" font="Regular; 16" backgroundColor="background" transparent="1" />
       <widget name="download_label" position="960,65" size="120,20" font="Regular; 16" backgroundColor="background" transparent="1"/>
-      <widget name="download_speed" position="1070,65" size="70,20" text="N/A" font="Regular; 16" backgroundColor="background" transparent="1"/>
+      <widget name="download_speed" position="1070,65" size="80,20" text="N/A" font="Regular; 16" backgroundColor="background" transparent="1"/>
     </screen>
     """
