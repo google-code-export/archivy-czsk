@@ -211,7 +211,7 @@ class SubsSupport(object):
         self.__subsDelay = 0
         self.__playerDelay = int(subtitles_settings.playerDelay.getValue())
         self.__subsEngine.setPlayerDelay(self.__playerDelay)
-        self.__startDelay = 300
+        self.__startDelay = 1000
         self.__defaultPath = None
         self.__forceDefaultPath = forceDefaultPath
         self.__showGUIInfoMessages = showGUIInfoMessages
@@ -458,7 +458,16 @@ class SubsSupport(object):
                     if subDict is None:
                         continue
                     break
-
+                
+            # try to parse by all parsers  
+            # in case extension was not set right
+            if subDict is None:
+                for parser in PARSERS:
+                    subDict = parser().parse(subText)
+                    if subDict is None:
+                        continue
+                    break
+                
             if subDict is None:
                 if self.__showGUIInfoMessages:
                     self.session.open(MessageBox, text=_("Cannot parse subtitles"),
@@ -1356,9 +1365,11 @@ class SubProcessPath(object):
         
         if subfile[0:4] == 'http':
             try:
+                print "[Subtitles] downloading from %s" % subfile
                 text = self.request(subfile)
             except Exception:
                 print "[Subtitles] cannot download subtitles %s" % subfile
+                traceback.print_exc()
             else:
                 self.text, self.encoding = self.decode(text) 
         else:

@@ -290,7 +290,7 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePl
 	
 	# override InfobarShowhide method
 	def epg(self):
-		self.toggleShow()
+		pass
 			
 	def playService(self):
 		self.session.nav.playService(self.sref)
@@ -779,10 +779,13 @@ class Player():
 			
 		sref = self._createServiceRef(streamURL)
 		
-		# load play settings
-		setting.loadSettings(self.playSettings['user-agent'],
-							 self.playSettings['extra-headers'],
-							 playAndDownloadGst)
+		# we dont need any special kind of play settings
+		# since we play from local path
+		if not playAndDownload:
+			# load play settings
+			setting.loadSettings(self.playSettings['user-agent'],
+							 	self.playSettings['extra-headers'],
+							 	playAndDownloadGst)
 		
 		videoPlayerSetting = self.settings.type.getValue()
 		videoPlayerController = None
@@ -791,8 +794,9 @@ class Player():
 		useVideoController = self.settings.useVideoController.getValue()
 		
 		# fix for HDMU sh4 image..
-		self.rassFuncs = ServiceEventTracker.EventMap[14][:]
-		ServiceEventTracker.EventMap[14] = []
+		if config.plugins.archivCZSK.hdmuFix.getValue():
+			self.rassFuncs = ServiceEventTracker.EventMap[14][:]
+			ServiceEventTracker.EventMap[14] = []
 		
 				
 		if useVideoController:
@@ -871,7 +875,8 @@ class Player():
 
 	def exit(self, callback=None):
 		# fix for HDMU sh4 image..
-		ServiceEventTracker.EventMap[14] = self.rassFuncs
+		if config.plugins.archivCZSK.hdmuFix.getValue():
+			ServiceEventTracker.EventMap[14] = self.rassFuncs
 		
 		if self.rtmpgwProcess is not None:
 			self.rtmpgwProcess.sendCtrlC()

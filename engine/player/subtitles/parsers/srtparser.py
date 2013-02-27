@@ -32,6 +32,7 @@ class SrtParser(BaseParser):
                 startTime = self.srt_time_to_pts(split[0].strip())
                 endTime = self.srt_time_to_pts(split[1].strip())
                 text = '\n'.join(j for j in st[2:len(st)])
+                #print text
                 subs.append(self.createSub(text, startTime, endTime))
         return subs
     

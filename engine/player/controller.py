@@ -27,6 +27,18 @@ class BaseVideoPlayerController(object):
         
     def is_video_paused(self):
         return self.video_player.SEEK_STATE_PAUSE == self.video_player.seekstate
+    
+    def sec_to_pts(self, sec):
+        return long(sec * 90000)
+        
+    def pts_to_sec(self, pts):
+        return int(pts / 90000)
+    
+    def pts_to_hms(self, pts):
+        sec = self.pts_to_sec(pts)
+        m, s = divmod(sec, 60)
+        h, m = divmod(m, 60)
+        return h, m, s
 
 #  Video Controller Actions called by Video Player  #
 ##################################################### 
@@ -203,18 +215,6 @@ class VideoPlayerController(BaseVideoPlayerController):
         if self.buffering_timer_running:
             self.buffering_timer.stop()
             self.buffering_timer_running = False
-        
-    def sec_to_pts(self, sec):
-        return long(sec * 90000)
-        
-    def pts_to_sec(self, pts):
-        return int(pts / 90000)
-    
-    def pts_to_hms(self, pts):
-        sec = self.pts_to_sec(pts)
-        m, s = divmod(sec, 60)
-        h, m = divmod(m, 60)
-        return h, m, s
             
     def get_download_position(self):
         if self.video_length_total is None:
@@ -480,6 +480,9 @@ class GStreamerDownloadController(BaseVideoPlayerController):
         self.prebuffered_percent = 0
         self.prebuffering = (self.prebuffer_percent != 0 or self.prebuffer_seconds != 0)
         
+        # seek-limit percent
+        self.seek_limit_percent = 2
+        
         # download/buffer state
         self.download_percent = 0
         self.download_speed = 0
@@ -497,6 +500,7 @@ class GStreamerDownloadController(BaseVideoPlayerController):
         
     def set_video_player(self, video_player):
         self.video_player = video_player
+        self.video = video_player.video
         self.session = video_player.session
         
         ServiceEventTracker(screen=video_player, eventmap=
@@ -530,7 +534,7 @@ class GStreamerDownloadController(BaseVideoPlayerController):
         self._update()
     
     def __ev_download_finished(self):
-        show_info_message(self.session, _("Downloading finished"))
+        show_info_message(self.session, _("Downloading succesfully finished"))
     
     
     def _update(self):
@@ -574,21 +578,51 @@ class GStreamerDownloadController(BaseVideoPlayerController):
                 'bitrate':0
                 }
         self.video_player.updateInfobar(info)
-
+        
+    def get_download_position(self):
+        total_length = self.video.getCurrentLength()
+        if total_length is None:
+            return None
+        return float(self.download_percent - self.seek_limit_percent) / 100 * total_length
 
     # not implemented yet..
     def seek_fwd(self):
-        pass
+        if self.download_percent != 100:
+            show_info_message(self.session, _("Its not possible to use trick seek in downloading video "), 3)
+        else:
+            self._seek_fwd()
     
     def seek_back(self):
-        pass
-    
-    def do_seek_relative(self, pts):
-        pass
+        if self.download_percent != 100:
+            show_info_message(self.session, _("Its not possible to use trick seek in downloading video "), 3)
+        else:
+            self._seek_back()
     
     def do_seek(self):
         pass
     
+    def do_seek_relative(self, pts):
+        if self.download_percent == 100 or pts < 0:
+            self._do_seek_relative(pts)
+            return
+        
+        play_pts = self.video.getCurrentPosition()
+        download_pts = self.get_download_position()
+        if play_pts is None or download_pts is None:
+            show_info_message(self.session, _("Error when trying to seek"), 2)
+            return
+        
+        if (play_pts + pts) < download_pts:
+            self._do_seek_relative(pts)
+            return
+        else:
+            want_seek_minutes = pts / 90000 / 60
+            can_seek = self.pts_to_hms(download_pts - play_pts)
+            can_seek_minutes = can_seek[1]
+            show_info_message(self.session, _("Cannot seek") + " " + str(want_seek_minutes) + " " + 
+                                            _("minutes forward not enough video is downloaded.\n") + 
+                                            _("You can seek maximum") + " " + str(can_seek_minutes) + " " + _("minutes forward"))
+                                              
     def unpause_service(self):
         if self.prebuffering:
             log.debug("Forcing unpause... while prebuffering")
@@ -605,29 +639,34 @@ class GStreamerDownloadController(BaseVideoPlayerController):
             if os.path.exists(self.gst_download_path):
                 os.remove(self.gst_download_path)
                 
-            self.video_player._exitVideoPlayer()
+            self._exit_video_player()
         
     def _ask_save_download(self):
         show_yesno_dialog(self.session, _("Download is not saved yet. Do you want to save download?"), cb=self._save_download)
     
     def _save_download(self, cb=None):
         if cb:
-            # we need to stop playing downloaded file because we want to move
+            # we need to pause playing downloaded file because we want to move
             # it to our download location
-            self.session.nav.stopService()
-            
+            self.pause_service()
             log.debug("saving %s to %s", self.gst_download_path, self.download_path)
-            shutil.move(self.gst_download_path, self.download_path)
+            os.system('mv %s %s' % (self.gst_download_path, self.download_path))
+            #shutil.move(self.gst_download_path, self.download_path)
             show_info_message(self.session, _("Download was succesfully saved"))
-            self.video_player._exitVideoPlayer()
+            self._exit_video_player()
+        else:
+            self._exit_video_player()
             
 
-    def _exit_video_player(self):
-        if self.download_percent != 100:
+    def exit_video_player(self):
+        # download dont started
+        if self.gst_download_path is None:
+            self._exit_video_player()
+        if self.gst_download_path is not None and self.download_percent != 100:
             self._ask_cancel_download()
         elif self.download_percent == 100:
             self._ask_save_download()
         else:
-            self.video_player._exitVideoPlayer()
+            self._exit_video_player()
             
         
