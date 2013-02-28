@@ -134,17 +134,15 @@ VideoPlayerInfoScreen_HD= """
             <widget backgroundColor="#1f771f" font="Regular;20" halign="center" name="key_green" position="231,5" shadowColor="black" shadowOffset="-2,-2" size="215,45" valign="center" zPosition="1" />
             <widget backgroundColor="#a08500" font="Regular;20" halign="center" name="key_yellow" position="454,5" shadowColor="black" shadowOffset="-2,-2" size="215,45" valign="center" zPosition="1" />
             <widget backgroundColor="#18188b" font="Regular;20" halign="center" name="key_blue" position="677,5" shadowColor="black" shadowOffset="-2,-2" size="215,45" valign="center" zPosition="1" />
-            <widget name="detected player" position="24,81" size="222,31" text="Detected player:" font="Regular; 26" />
-            <widget name="detected player_val" position="264,81" size="222,31" text="GStreamer" font="Regular; 26" />
-            <widget name="protocol" position="33,135" size="240,30" text="Supported protocols" foregroundColor="#e5b243" font="Regular; 24" />
-            <widget name="container" position="33,317" size="240,30" text="Supported formats" font="Regular; 24" foregroundColor="#e5b243" />
+            <widget name="detected player" position="24,81" size="222,31" font="Regular; 26" />
+            <widget name="detected player_val" position="264,81" size="222,31" font="Regular; 26" />
+            <widget name="protocol" position="33,135" size="240,30"  foregroundColor="#e5b243" font="Regular; 24" />
+            <widget name="container" position="33,317" size="240,30"  font="Regular; 24" foregroundColor="#e5b243" />
             <widget name="protocol_list" position="46,174" size="355,129" />
             <widget name="container_list" position="46,357" size="355,206" />
             <widget name="info_scrolllabel" position="443,135" size="434,428" valign="top" font="Regular; 19"/>
         </screen>
              """
-
-
 
 ContextMenuScreen = """
         <screen name="ContextMenuScreen" position="center,center" size="500,300">
