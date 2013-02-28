@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: archivCZSK 0.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-02-27 19:42+0100\n"
-"PO-Revision-Date: 2013-02-27 19:44+0100\n"
+"PO-Revision-Date: 2013-02-28 18:46+0100\n"
 "Last-Translator: mx3L <mxfitsat@gmail.com>\n"
 "Language-Team: mx3L\n"
 "MIME-Version: 1.0\n"
@@ -894,17 +894,17 @@ msgid ""
 "For example if you have ASF(WMV) - OK state, it doesnt already mean that you can play WMV file, it just means that player\n"
 "can open WMV container and get ENCODED video out of it. In WMV container is used VC1 encoded video. IF your player cannot decode VC1 codec, than you cannot play this video."
 msgstr ""
-"Jestli některý z testu selhá, měli by ste skusit instalovat GStreamer pluginy v nasledovném pořadí:\n"
+"Jestli není některý z pluginu nainstalován, měli by ste skusit instalovat GStreamer pluginy v nasledovném pořadí:\n"
+"1. Červené tlačidlo, 2. Zelené tlačidlo, 3. Žluté tlačidlo. Po úspěšné instalaci, dále nepokračujte v dalších krocích\n"
 "\n"
-"1. Červené tlačidlo, 2. Zelené tlačidlo, 3. Žluté tlačidlo.\n"
-"Stav neznámý neznamená, že daný protokol/kontejner není podporován.\n"
-"\n"
+"Stav NEZNÁMÝ neznamená, že danej protokol/kontejner není podporován.\n"
+" \n"
 "Videa jsou kódovány ruznými kodeky. Pro jejich přehrání musí mít váš příjmač hardverovou podporu na jejich dekódovaní.\n"
-"Například, jestli máte ASF(WMV) - OK stav, to hned neznamená že že mužete přehrát WMV video. Znamená to, že přehrávačmuže otevřít WMV kontejner a získat z něho enkódovaný video. Ve WMV kontejneru se používa VC1 enkódované video.Jesli váš přehrávač nemá HW podporu pro dekódování VC1 kodeku, video nepŕehrajete."
+"Například jestli máte ASF(WMV) - NAINSTALOVÁN stav, to hned neznamená že že mužete přehrát WMV video. Znamená to, že přehrávač muže otevřít WMV kontejner a získat z něho enkódovaný video. Ve WMV kontejneru se používa VC1 enkódované video.Jestli váš přehrávač nemá HW podporu pro dekódování VC1 kodeku, video nepřehrajete."
 
 #: gui/info.py:251
 msgid "HTTP Protocol"
-msgstr "HTTP Protokol"
+msgstr "HTTP protokol"
 
 #: gui/info.py:252
 msgid "MMS Protocol"
@@ -949,7 +949,7 @@ msgstr "NEZNÁMÝ"
 #: gui/info.py:275
 #: gui/menu.py:305
 msgid "OK"
-msgstr "OK"
+msgstr "NAINSTALOVÁN"
 
 #: gui/info.py:277
 msgid "FAIL"

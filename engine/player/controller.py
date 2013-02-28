@@ -486,6 +486,7 @@ class GStreamerDownloadController(BaseVideoPlayerController):
         # download/buffer state
         self.download_percent = 0
         self.download_speed = 0
+        self.download_finished = False
         self.buffered_percent = 0
         self.buffer_size = 0
         self.temp_length = 0
@@ -534,6 +535,7 @@ class GStreamerDownloadController(BaseVideoPlayerController):
         self._update()
     
     def __ev_download_finished(self):
+        self.download_finished = True
         show_info_message(self.session, _("Downloading succesfully finished"))
     
     
@@ -587,13 +589,13 @@ class GStreamerDownloadController(BaseVideoPlayerController):
 
     # not implemented yet..
     def seek_fwd(self):
-        if self.download_percent != 100:
+        if not self.download_finished:
             show_info_message(self.session, _("Its not possible to use trick seek in downloading video "), 3)
         else:
             self._seek_fwd()
     
     def seek_back(self):
-        if self.download_percent != 100:
+        if not self.download_finished:
             show_info_message(self.session, _("Its not possible to use trick seek in downloading video "), 3)
         else:
             self._seek_back()
@@ -662,11 +664,9 @@ class GStreamerDownloadController(BaseVideoPlayerController):
         # download dont started
         if self.gst_download_path is None:
             self._exit_video_player()
-        if self.gst_download_path is not None and self.download_percent != 100:
+        elif self.gst_download_path is not None and not self.download_finished:
             self._ask_cancel_download()
-        elif self.download_percent == 100:
+        elif self.gst_download_path is not None and self.download_finished:
             self._ask_save_download()
-        else:
-            self._exit_video_player()
             
         

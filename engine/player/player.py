@@ -412,7 +412,7 @@ class CustomVideoPlayer(ArchivCZSKMoviePlayer):
 		
 	def exitVideoPlayer(self):
 		if self.useVideoController:
-			self.videoPlayerController._exit_video_player()
+			self.videoPlayerController.exit_video_player()
 		else:
 			self._exitVideoPlayer()
 

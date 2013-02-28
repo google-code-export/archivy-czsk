@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: archivCZSK 0.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-02-27 10:32+0100\n"
-"PO-Revision-Date: 2013-02-27 14:58+0100\n"
+"PO-Revision-Date: 2013-02-28 18:46+0100\n"
 "Last-Translator: mx3L <mxfitsat@gmail.com>\n"
 "Language-Team: mx3L\n"
 "MIME-Version: 1.0\n"
@@ -895,14 +895,14 @@ msgid ""
 "For example if you have ASF(WMV) - OK state, it doesnt already mean that you can play WMV file, it just means that player\n"
 "can open WMV container and get ENCODED video out of it. In WMV container is used VC1 encoded video. IF your player cannot decode VC1 codec, than you cannot play this video."
 msgstr ""
-"Ak niektoré testy skončia s chybou, potom sa pokúste nainštalovať GStreamer pluginy v nasledujúcom poradí:\n"
-"1. Červené tlačidlo -> 2. Zelené tlačidlo -> Žlté tlačidlo\n"
+"Ak sú niektoré pluginy nenainštalované, potom sa pokúste nainštalovať GStreamer pluginy v nasledujúcom poradí:\n"
+"1. Červené tlačidlo -> 2. Zelené tlačidlo -> Žlté tlačidlo. V prípade že sa pluginy nainštalujú, nepokračujte v ďaľšom kroku\n"
 "\n"
 "Stav NEZNÁMY neznamená, že daný prokol/kontajner nie je podporavaný.\n"
 "\n"
 "Videá bývajú enkódované rôznymi kodekmi, pre ich prehratie je nutné aby váš prehrávač mal HW podporu pre ich dekódovanie.\n"
-"Napríklad ak máte ASF(WMV) - OK, tak to hneď neznamená že môžete prehrávať WMV súbory. Znamená to len že prehrávač \n"
-"môže otvoriť WMV kontajner a vytiahnuť z neho ENKÓDOVANÉ video. Vo WMV kontajnery sa býva VC1 enkódované video. AK váš prehrávač nevie dekódovať VC1 kodek, video neprehráte."
+"Napríklad ak máte ASF(WMV) - NAINŠTALOVANÝ, tak to hneď neznamená že môžete prehrávať WMV súbory. Znamená to len že prehrávač \n"
+"môže otvoriť WMV kontajner a vytiahnuť z neho ENKÓDOVANÉ video. Vo WMV kontajnery býva VC1 enkódované video. AK váš prehrávač nevie dekódovať VC1 kodek, video neprehráte."
 
 #: gui/info.py:251
 msgid "HTTP Protocol"
@@ -910,15 +910,15 @@ msgstr "HTTP protokol"
 
 #: gui/info.py:252
 msgid "MMS Protocol"
-msgstr "MMS Protokol"
+msgstr "MMS protokol"
 
 #: gui/info.py:253
 msgid "RTMP Protocol"
-msgstr "RTMP Protokol"
+msgstr "RTMP protokol"
 
 #: gui/info.py:254
 msgid "RTSP Protocol"
-msgstr "RTSP Protokol"
+msgstr "RTSP protokol"
 
 #: gui/info.py:262
 msgid "3GP container"
@@ -951,7 +951,7 @@ msgstr "NEZNÁMY"
 #: gui/info.py:275
 #: gui/menu.py:305
 msgid "OK"
-msgstr "OK"
+msgstr "NAINŠTALOVANÝ"
 
 #: gui/info.py:277
 msgid "FAIL"

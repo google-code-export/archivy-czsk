@@ -104,9 +104,9 @@ def PanelColorListEntry(name, value, color, sizePanelX):
 
 def PanelListDownloadListEntry(pdownload):
     res = [(pdownload.name)]
-    finishText = _('Finished: ')
+    finishText = _('Finished:  ')
     if pdownload.finish_time is not None:
-        finishText = _('Finished: ') + time.strftime("%b %d %Y %H:%M:%S", time.localtime(pdownload.finish_time))
+        finishText = _('Finished:  ') + time.strftime("%b %d %Y %H:%M:%S", time.localtime(pdownload.finish_time))
         
     sizeKB = util.BtoKB(pdownload.size)
     if sizeKB <= 1024 and sizeKB >= 0:
@@ -116,7 +116,7 @@ def PanelListDownloadListEntry(pdownload):
     else:
         size = ("%.2f GB        ", util.BtoGB(pdownload.size))
     
-    sizeText = _('Size: ') + size
+    sizeText = _('Size:  ') + size
     stateText = pdownload.textState
     
     res.append(MultiContentEntryPixmapAlphaTest(pos=(5, 5), size=(35, 25), png=loadPNG(pdownload.thumb)))
