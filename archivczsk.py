@@ -235,7 +235,7 @@ For optimal use of this plugin, you need to check if you have all neccesary vide
         # clear tmp content by shamman
         os.system("rm -rf /tmp/*.url")
         os.system("rm -rf /tmp/*.png")
-        os.system("rm -rf /tmp/*.txt")
+        #os.system("rm -rf /tmp/*.txt")
         os.system("rm -r /tmp/archivCZSK")
         
     def show_error(self, info):
