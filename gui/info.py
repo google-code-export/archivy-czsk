@@ -184,7 +184,7 @@ class VideoPlayerInfoScreen(BaseArchivCZSKScreen):
 		# initialize GUI
 		self["key_red"] = Label(_("Install GStreamer libraries"))
 		self["key_green"] = Label(_("Install GStreamer libraries (Openpli feeds)"))
-		self["key_yellow"] = Label("Re-Install GStreamer libraries")
+		self["key_yellow"] = Label(_("Re-Install GStreamer libraries"))
 		self["key_blue"] = Label(_("Refresh"))
 		
 		self["detected player"] = Label(_("Detected player:"))
