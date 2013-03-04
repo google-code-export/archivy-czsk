@@ -9,11 +9,13 @@ from Screens.PluginBrowser import *
 from Components.PluginComponent import plugins
 from Components.config import config
 
+from Plugins.Extensions.archivCZSK import _
 import gui.download as dwnld
 from archivczsk import ArchivCZSK
 from engine.downloader import DownloadManager
 from gui.search import SearchClient
 import version
+
 
 def sessionstart(reason, session):
 	dwnld.setGlobalSession(session)
