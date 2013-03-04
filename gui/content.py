@@ -542,6 +542,8 @@ class VideoAddonsContentScreen(BaseContentScreen, DownloadList, TipBar):
                 "yellow": self.showStreams,
                 "menu" : self.menu
             }, -2)
+        # after layout show update item "GUI" - edit: shamann
+        self.onLayoutFinish.append(self.updateAddonGUI)
         
     def openSettings(self):
         if not self.working:
