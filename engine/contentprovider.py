@@ -306,6 +306,7 @@ class StreamContentProvider(ContentProvider):
                 name = channel.findtext('name')
                 stream_url = channel.findtext('stream_url')
                 picon = channel.findtext('picon')
+                app = channel.findtext('app')
                 swf_url = channel.findtext('swfUrl')
                 page_url = channel.findtext('pageUrl')
                 playpath = channel.findtext('playpath')
@@ -319,6 +320,7 @@ class StreamContentProvider(ContentProvider):
                     log.debug('skipping stream, cannot find name or url')
                     continue
                 if picon is None: pass
+                if app is None: app = u''
                 if playpath is None: playpath = u''
                 if swf_url is None: swf_url = u''
                 if page_url is None: page_url = u''
@@ -330,7 +332,7 @@ class StreamContentProvider(ContentProvider):
                 if play_delay is None: play_delay = int(config.plugins.archivCZSK.videoPlayer.playDelay.getValue())
             
                 if stream_url.startswith('rtmp'):
-                    stream = RtmpStream(stream_url, playpath, page_url, swf_url, advanced)
+                    stream = RtmpStream(stream_url, app, playpath, page_url, swf_url, advanced)
                     stream.rtmpBuffer = int(rtmp_buffer)
                 else:
                     stream = Stream(stream_url)

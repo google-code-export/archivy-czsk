@@ -132,8 +132,9 @@ class Stream():
 
 class RtmpStream(Stream):
     """Parameters for RTMP Stream"""
-    def __init__(self, url, playpath, pageUrl, swfUrl, advanced):
+    def __init__(self, url, app, playpath, pageUrl, swfUrl, advanced):
         Stream.__init__(self, url)
+        self.app = app
         self.playpath = playpath
         self.pageUrl = pageUrl
         self.swfUrl = swfUrl
@@ -141,10 +142,39 @@ class RtmpStream(Stream):
         self.advanced = advanced
         
     def getUrl(self):
+        """ 
+        Creates url for librtmp from parameters according to
+        http://rtmpdump.mplayerhq.hu/librtmp.3.html
+        """
+        # Standard rtmp url format:  
+        # rtmp[t][e|s]://hostname[:port][/app[/playpath]]
+        
+        urlPart = self.url.split('://')[1].split('/')
+        # librtmp need app/playpath to be set else wont play
+        # then we can override them by app=value playpath=value
+        
+        # plain url without app and playpath
+        if len(urlPart) == 1:
+            if self.app != "" and self.playpath != "":
+                # set whatever we override it later
+                self.url += '/someapp/'
+            # url is broken
+            else:
+                print '[archivCZSK] RtmpStream %s is missing app or playpath' % self.url
+                
+        # url without playpath
+        elif len(urlPart) == 2:
+            if self.playpath != "":
+                self.url += '/'
+            else:
+                # url is broken
+                print '[archivCZSK] RtmpStream %s is missing playpath' % self.url
+        
         url = []
         url.append("%s" % self.url)
         if self.live: url.append("live=1")
         else: url.append("live=0")
+        if self.app != "":url.append("app=%s" % self.app)
         if self.swfUrl != "":url.append("swfUrl=%s" % self.swfUrl)
         if self.pageUrl != "":url.append("pageUrl=%s" % self.pageUrl)
         if self.playpath != "":url.append("playpath=%s" % self.playpath)
@@ -153,9 +183,14 @@ class RtmpStream(Stream):
         return ' '.join(url)
     
     def getRtmpgwUrl(self):
+        """ 
+        Creates url for rtmpgw/rtmpdump from parameters according to
+        http://rtmpdump.mplayerhq.hu/librtmp.3.html
+        """
         url = []
         if self.live: url.append("--live")
         url.append("--rtmp '%s'" % self.url)
+        if self.app != "":url.append("--app '%s'" % self.app)
         if self.swfUrl != "":url.append("--swfUrl '%s'" % self.swfUrl)
         if self.pageUrl != "":url.append("--pageUrl '%s'" % self.pageUrl)
         if self.playpath != "":url.append("--playpath '%s'" % self.playpath)
