@@ -4,8 +4,6 @@ Created on 28.2.2012
 
 @author: marko
 '''
-import os, traceback
-
 from Plugins.Plugin import PluginDescriptor
 from Screens.PluginBrowser import *
 from Components.PluginComponent import plugins
@@ -14,6 +12,7 @@ from Components.config import config
 import gui.download as dwnld
 from archivczsk import ArchivCZSK
 from engine.downloader import DownloadManager
+from gui.search import SearchClient
 import version
 
 def sessionstart(reason, session):
@@ -29,6 +28,12 @@ def menu(menuid, **kwargs):
 		return [(version.title, main, "mainmenu", 32)]
 	else:
 		return []
+	
+def eventinfo(session, servicelist, **kwargs):
+	ref = session.nav.getCurrentlyPlayingServiceReference()
+	print str(ref)
+	session.open(SearchClient, ref)
+	
 
 def main(session, **kwargs):
 	ArchivCZSK(session)
@@ -46,6 +51,8 @@ def Plugins(path, **kwargs):
 		list.append(PluginDescriptor(name=nameA, description=descr, where=PluginDescriptor.WHERE_EXTENSIONSMENU, fnc=main))
 	if config.plugins.archivCZSK.main_menu.getValue():
 		list.append(PluginDescriptor(name=nameA, description=descr, where=PluginDescriptor.WHERE_MENU, fnc=startSetup))
+	if config.plugins.archivCZSK.epg_menu.getValue():
+		list.append(PluginDescriptor(name=_("Search in ArchivCZSK"), description=descr, where=PluginDescriptor.WHERE_EVENTINFO, fnc=eventinfo))
 	return list
 
 

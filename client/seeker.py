@@ -6,14 +6,16 @@ Created on 11.1.2013
 #from Plugins.Plugin import PluginDescriptor
 
 import traceback
-from Screens.MessageBox import MessageBox    
+from Screens.MessageBox import MessageBox   
+from Plugins.Extensions.archivCZSK import _ 
+from Plugins.Extensions.archivCZSK.gui.common import showInfoMessage,showErrorMessage
 
 #    Napriklad:
 #   
 #    search_exp = u'Matrix'
 #    search(session, search_exp, 'plugin.video.online-files')
  
-def search(session, search_exp, addon_id, mode=None):
+def search(session, search_exp, addon_id, mode=None, cb=None):
     """
     Vyhlada v archivCZSK hladany vyraz prostrednictvom addonu s addon_id s modom vyhladavania mode
     @param : session - aktivna session
@@ -21,7 +23,11 @@ def search(session, search_exp, addon_id, mode=None):
     @param : addon_id - id addonu v ktorom chceme vyhladavat
     @param : mode - mod vyhladavania podporovany addonom
     """
-    archivCZSKSeeker = ArchivCZSKSeeker.getInstance(session)
+    if search_exp is None or search_exp =="":
+        showInfoMessage(session,_("Empty search expression"))
+        return cb()
+    
+    archivCZSKSeeker = ArchivCZSKSeeker.getInstance(session, cb)
     if archivCZSKSeeker is not None:
         archivCZSKSeeker.search(search_exp, addon_id, mode)
     
@@ -50,22 +56,23 @@ class ArchivCZSKSeeker():
     instance = None
     
     @staticmethod
-    def getInstance(session):
+    def getInstance(session, cb=None):
         if ArchivCZSKSeeker.instance is None:
             try:
-                return ArchivCZSKSeeker(session)
+                return ArchivCZSKSeeker(session, cb)
             except ImportError:
-                showInfoMessage(session, _('Cannot search, archivCZSK is not installed'), 5)
+                showInfoMessage(session, _('Cannot search, archivCZSK is not installed'), 5, cb=cb)
                 print 'cannot found archivCZSK'
                 return None
             except Exception:
                 traceback.print_exc()
-                showErrorMessage(session, _('unknown error'), 5)
+                showErrorMessage(session, _('unknown error'), 5, cb=cb)
                 return None
         return ArchivCZSKSeeker.instance
     
-    def __init__(self, session):
+    def __init__(self, session, cb=None):
         self.session = session
+        self.cb = cb
         self.archivCZSK, self.contentScreen, self.task = getArchivCZSK() 
         self.searcher = None
         self.addon = None
@@ -89,18 +96,22 @@ class ArchivCZSKSeeker():
             self.searcher = None
         self.searching = False
         self.addon = None
+        if self.cb:
+            self.cb()
         
     def _contentScreenCB(self, cp):
         if self.searcher is not None:
             self.searcher.close()
             self.searcher = None
         self.searching = False
-        self.addon = None           
+        self.addon = None
+        if self.cb:
+            self.cb()        
 
         
     def search(self, search_exp, addon_id, mode=None):
         if self.searching:
-            showInfoMessage(_("You cannot search, archivCZSK Search is already running"))
+            showInfoMessage(self.session, _("You cannot search, archivCZSK Search is already running"))
             print "%s cannot search, searching is not finished" % self
             return
         searcher = getSearcher(self.session, addon_id, self.archivCZSK, self._successSearch, self._errorSearch)
@@ -110,7 +121,7 @@ class ArchivCZSKSeeker():
             self.addon = searcher.addon
             searcher.search(search_exp, mode)
         else:
-            showInfoMessage(_("Cannot find searcher") + ' ' + addon_id.encode('utf-8'))
+            showInfoMessage(self.session, _("Cannot find searcher") + ' ' + addon_id.encode('utf-8'))
             
     def close(self):
         if self.searching:
@@ -173,32 +184,9 @@ class OnlineFilesSearch(Search):
         params = {'cp':'bezvadata.cz', 'search':search_exp, 'search-no-history':True}
         self.provider.get_content(self.session, params, self.succ_cb, self.err_cb) 
  
-    def hellspy_search(self, search_exp, succ_cb, err_cb):
+    def hellspy_search(self, search_exp):
         params = {'cp':'hellspy.cz', 'search':search_exp, 'search-no-history':True}
         self.provider.get_content(self.session, params, self.succ_cb, self.err_cb)
-
-            
-            
-
-
-
-def showInfoMessage(session, message, timeout=3, cb=None):
-    if cb is not None:
-        session.openWithCallback(cb, MessageBox, text=message, timeout=timeout, type=MessageBox.TYPE_INFO)
-    else:
-        session.open(MessageBox, text=message, timeout=timeout, type=MessageBox.TYPE_INFO)
-
-def showWarningMessage(session, message, timeout=3, cb=None):
-    if cb is not None:
-        session.openWithCallback(cb, MessageBox, text=message, timeout=timeout, type=MessageBox.TYPE_WARNING)
-    else:
-        session.open(MessageBox, text=message, timeout=timeout, type=MessageBox.TYPE_WARNING)    
-
-def showErrorMessage(session, message, timeout=3, cb=None):
-    if cb is not None:
-        session.openWithCallback(cb, MessageBox, text=message, timeout=timeout, type=MessageBox.TYPE_ERROR)
-    else:
-        session.open(MessageBox, text=message, timeout=timeout, type=MessageBox.TYPE_ERROR)
 
 
 #def main(session, **kwargs):

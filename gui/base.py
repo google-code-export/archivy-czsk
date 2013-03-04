@@ -23,7 +23,7 @@ PanelListEntry = PanelListEntryHD
 class BaseArchivCZSKScreen(Screen):
     """Base Screen for archivCZSK screens"""
     
-    def __init__(self, session):
+    def __init__(self, session, initScreen=True):
         self.HD = False
         
         #setting SD/HD skin
@@ -45,8 +45,9 @@ class BaseArchivCZSKScreen(Screen):
             else:
                 log.debug("Cannot find skin for screen %s" , self.__class__.__name__)
 
-        #Screen initialization    
-        Screen.__init__(self, session)
+        #Screen initialization
+        if initScreen:    
+            Screen.__init__(self, session)
         
         
     def setSkin(self, skinName):
@@ -63,7 +64,7 @@ class BaseArchivCZSKScreen(Screen):
         
 class BaseArchivCZSKMenuListScreen(BaseArchivCZSKScreen):
     """Base Screen for screens with menu list"""
-    def __init__(self, session,panelList = None):
+    def __init__(self, session, panelList=None):
         BaseArchivCZSKScreen.__init__(self, session)
         
         pl = PanelList

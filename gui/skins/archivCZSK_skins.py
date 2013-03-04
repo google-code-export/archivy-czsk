@@ -151,6 +151,14 @@ ContextMenuScreen = """
             <widget name="menu" position="1,81" scrollbarMode="showOnDemand" size="500,226" />
         </screen> """
         
+SearchClient = """
+        <screen name="ContextMenuScreen" position="325,163" size="500,400">
+            <widget name="menu" position="0,207" scrollbarMode="showOnDemand" size="500,196"  />
+            <widget name="search" position="57,13" size="424,69" foregroundColor="#e5b243" halign="center" font="Regular; 23" />
+            <ePixmap name="search_pixmap" position="10,13" size="35,27" zPosition="0" alphatest="blend" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/archivCZSK/gui/icon/search.png" />
+            <widget name="infolist" position="10,90" size="471,112" />
+        </screen> """
+        
 ChangelogScreen = """
         <screen position="center,center" size="720,576" title="Info" >
             <widget name="changelog" position="0,0" size="720,576" font="Regular;18" transparent="1" foregroundColor="white" />

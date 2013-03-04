@@ -24,7 +24,7 @@ LANGUAGE_SETTINGS_ID = language.getLanguage()[:2]
 ############ STB Info ###############
 
 (MANUFACTURER, MODEL, ARCH, VERSION) = stb.getBoxtype()
-AZBOX = MODEL == 'Azbox'
+AZBOX = (MODEL == 'Azbox')
 
 ######### Plugin Paths ##############
 
@@ -121,6 +121,7 @@ config.plugins.archivCZSK.videoPlayer.liveBuffer = ConfigSelection(default="6000
 
 config.plugins.archivCZSK.main_menu = ConfigYesNo(default=True)
 config.plugins.archivCZSK.extensions_menu = ConfigYesNo(default=False)
+config.plugins.archivCZSK.epg_menu = ConfigYesNo(default=True)
 config.plugins.archivCZSK.autoUpdate = ConfigYesNo(default=True)
 config.plugins.archivCZSK.preload = ConfigYesNo(default=True)
 
@@ -199,6 +200,7 @@ def get_main_settings():
     list.append(getConfigListEntry(_("Debug mode"), config.plugins.archivCZSK.debugMode))
     list.append(getConfigListEntry(_("Add to extensions menu"), config.plugins.archivCZSK.extensions_menu))
     list.append(getConfigListEntry(_("Add to main menu"), config.plugins.archivCZSK.main_menu))
+    list.append(getConfigListEntry(_("Add search option in epg menu"), config.plugins.archivCZSK.epg_menu))
     return list
     
 def get_path_settings():
@@ -216,6 +218,6 @@ def get_misc_settings():
         list.append(getConfigListEntry(_("Use link verification"), config.plugins.archivCZSK.linkVerification))
         if verification:
             list.append(getConfigListEntry(_("Verification timeout"), config.plugins.archivCZSK.linkVerificationTimeout))
-    if ARCH =='sh4':
+    if ARCH == 'sh4':
         list.append(getConfigListEntry(_("Amiko HDMU fix"), config.plugins.archivCZSK.hdmuFix))
     return list

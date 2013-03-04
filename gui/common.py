@@ -28,12 +28,13 @@ PNG_PATH = settings.IMAGE_PATH + '/'
 SPINNER_PATH = PNG_PATH + 'spinner/'
 
 class PanelList(MenuList):
-    def __init__(self, list):
+    def __init__(self, list, itemHeight=28):
         MenuList.__init__(self, list, False, eListboxPythonMultiContent)
-        self.l.setItemHeight(28)
+        self.l.setItemHeight(itemHeight)
         self.l.setFont(0, gFont("Regular", 21))
         self.l.setFont(1, gFont("Regular", 23))
         self.l.setFont(2, gFont("Regular", 18))
+        self.l.setFont(3, gFont("Regular", 19))
         
 class PanelListDownload(MenuList):
     def __init__(self, list):
@@ -98,6 +99,13 @@ def PanelColorListEntry(name, value, color, sizePanelX):
     res = [(name)]
     res.append(MultiContentEntryText(pos=(0, 5), size=(sizePanelX, 30), font=0, flags=RT_HALIGN_LEFT, text=name, color=color))
     res.append(MultiContentEntryText(pos=(0, 5), size=(sizePanelX, 30), font=0, flags=RT_HALIGN_RIGHT, text=value, color=color))
+    return res
+
+def PanelListEntry2(name, sizePanelX, png=''):
+    res = [(name)]
+    if fileExists(png):
+        res.append(MultiContentEntryPixmapAlphaTest(pos=(5, 5), size=(35, 27), png=loadPNG(png)))
+        res.append(MultiContentEntryText(pos=(60, 5), size=(sizePanelX - 60, 30), font=3, flags=RT_HALIGN_LEFT | RT_VALIGN_CENTER, text=name))
     return res
 
 
