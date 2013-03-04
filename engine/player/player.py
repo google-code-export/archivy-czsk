@@ -40,6 +40,7 @@ from infobar import ArchivCZSKMoviePlayerInfobar
 import setting
 
 from Plugins.Extensions.archivCZSK import _
+from Plugins.Extensions.archivCZSK import settings
 from Plugins.Extensions.archivCZSK import log
 from Plugins.Extensions.archivCZSK.engine.items import RtmpStream
 from Plugins.Extensions.archivCZSK.engine.tools import util
@@ -315,10 +316,10 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePl
 		# make sure that playback is unpaused otherwise the  
 		# player driver might stop working 
 		
-		# disabled because on gstreamer freezes e2 after stopping live rtmp stream
-		
-		#self.setSeekState(self.SEEK_STATE_PLAY) 
-		
+		# enabled only for eplayer because on gstreamer 
+		# freezes e2 after stopping live rtmp stream
+		if settings.videoPlayerInfo.type != 'gstreamer':
+			self.setSeekState(self.SEEK_STATE_PLAY) 
 		self.close()
 		
 	def _onClose(self):
