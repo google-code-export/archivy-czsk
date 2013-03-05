@@ -39,6 +39,7 @@ def OBSAH_SER():
     addDir('Pod povrchom','http://www.joj.sk/pod-povrchom/pod-povrchom-epizody.html',4,__dmdbase__+'podpovrchom.jpg',1)
     addDir('Profesionáli','http://profesionali.joj.sk/profesionali-epizody.html',4,__dmdbase__+'profesionali.jpg',1)
     addDir('Prvé oddelenie','http://www.joj.sk/prve-oddelenie/prve-oddelenie-epizody.html',4,__dmdbase__+'prve-oddelenie.jpg',1)
+    addDir('Dr. Dokonaly','http://www.joj.sk/dr-dokonaly/dr-dokonaly-epizody.html',4,__dmdbase__+'dr-dokonaly.jpg',1)
 
 def OBSAH_ZAB():
     addDir('Ano, šéfe!','http://anosefe.joj.sk/anosefe-epizody.html',4,__dmdbase__+'anosefe.jpg',1)
@@ -59,8 +60,12 @@ def OBSAH_ZAB():
     addDir('Šéfka','http://www.sefka.sk/epizody.html',5,__dmdbase__+'sefka-logo.jpg',1)
     addDir('Tajný sen','http://www.joj.sk/tajny-sen/tajny-sen-archiv.html',4,__dmdbase__+'tajny-sen.jpg',1)
     addDir('Riskni milión','http://risknimilion.joj.sk/archiv.html',4,__dmdbase__+'riskni.jpg',1)    
-
-
+    addDir('Supermama','http://supermama.joj.sk/supermama-archiv.html',4,__dmdbase__+'supermama.jpg',1)
+    addDir('Pali vam to?','http://www.joj.sk/pali-vam-to/pali-vam-to-tv-archiv.html',4,__dmdbase__+'pali.jpg',1)
+    addDir('Rodinne zalezitosti','http://www.joj.sk/rodinne-zalezitosti/rodinne-zalezitosti-archiv.html',4,__dmdbase__+'rz.jpg',1)
+    addDir('Buckovci','http://buckovci.joj.sk/buckovci-archiv.html',4,__dmdbase__+'buckovci.jpg',1)
+    addDir('Experti','http://experti.joj.sk/experti-archiv.html',4,__dmdbase__+'experti.jpg',1)
+    addDir('Extremne pripady','http://www.joj.sk/extremne-priprady/extremne-pripady-archiv.html',4,__dmdbase__+'extremne.jpg',1)    
     
 def LIST(url,strana):
     req = urllib2.Request(url)
