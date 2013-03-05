@@ -26,7 +26,8 @@ class XBMCSettingsXMLParser(XMLParser):
         main_category = {'label':'general', 'subentries':[]}
         for setting in settings.findall('setting'):
             main_category['subentries'].append(self.get_setting_entry(setting)) 
-            categories.append(main_category)
+        categories.append(main_category)
+        
         return categories
             
             
