@@ -125,10 +125,10 @@ class SerialyczContentProvider(ContentProvider):
             item['url'] = i['url']
             item['quality'] = i['quality']
             item['surl'] = i['surl']
-            result.append(item)     
-            if len(result)==1:
-                return result[0]
-            elif len(result) > 1 and select_cb:
-                return select_cb(result)
+            result.append(item) 
+        if len(result)==1:
+            return result[0]
+        elif len(result) > 1 and select_cb:
+            return select_cb(result)
 
 
