@@ -124,6 +124,24 @@ class VideoPlayerInfo(object):
         elif self.type == 'eplayer2':
             return True
         
+    def isHLSSupported(self):
+        """
+        @return: True if its 100% supported
+        @return: None may be supported
+        @return: False not supported
+        """
+        if self.type == 'gstreamer':
+            fragmentedlib = os.path.join(GSTREAMER_PATH, 'libgstfragmented.so')
+            if os.path.isfile(fragmentedlib):
+                return True
+            return False
+            
+        elif self.type == 'eplayer3':
+            return None
+                
+        elif self.type == 'eplayer2':
+            return None
+        
 ##########################################################################
 
 ########################### Supported Video Formats ######################
@@ -230,6 +248,8 @@ class VideoPlayerInfo(object):
                 
         elif self.type == 'eplayer2':
             return None
+        
+    
 
 #########################################################################
         

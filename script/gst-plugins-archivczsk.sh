@@ -109,6 +109,7 @@ if [ "$platform" == "mipsel" ]
 then
 	if [ "$force" == "N" ]
 	then
+		install_pkg gst-plugin-fragmented
 		install_pkg gst-plugin-matroska
 		install_pkg gst-plugin-avi
 		install_pkg gst-plugin-asf
@@ -128,6 +129,7 @@ elif [ "$platform" == "mips32el" ]
 then
 	if [ "$force" == "N" ]
 	then
+		install_pkg gst-plugins-bad-fragmented
 		install_pkg gst-plugins-good-matroska
 		install_pkg gst-plugins-good-avi
 		install_pkg gst-plugins-ugly-asf

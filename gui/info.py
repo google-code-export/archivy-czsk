@@ -249,6 +249,7 @@ can open WMV container and get ENCODED video out of it. In WMV container is used
 		if not self.HD:
 			width = self.WIDTH_SD
 		menu_list.append(self.buildEntry(_("HTTP Protocol"), videoPlayerInfo.isHTTPSupported(), width))
+		menu_list.append(self.buildEntry(_("HLS Protocol"), videoPlayerInfo.isHLSSupported(), width))
 		menu_list.append(self.buildEntry(_("MMS Protocol"), videoPlayerInfo.isMMSSupported(), width))
 		menu_list.append(self.buildEntry(_("RTMP Protocol"), videoPlayerInfo.isRTMPSupported(), width))
 		menu_list.append(self.buildEntry(_("RTSP Protocol"), videoPlayerInfo.isRTSPSupported(), width))
