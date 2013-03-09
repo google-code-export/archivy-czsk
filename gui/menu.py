@@ -2,12 +2,14 @@
 import os
 
 from Screens.Screen import Screen
+from Screens.VirtualKeyBoard import VirtualKeyBoard
 from Components.ConfigList import ConfigList, ConfigListScreen
-from Components.config import config, configfile, ConfigDirectory
+from Components.config import config, configfile, ConfigDirectory, ConfigText
 from Components.ActionMap import ActionMap
 from Components.Label import Label
 from Components.FileList import FileList
 from Components.Sources.StaticText import StaticText
+
 
 from Plugins.Extensions.archivCZSK import _
 from Plugins.Extensions.archivCZSK import settings
@@ -28,6 +30,11 @@ def openAddonMenu(session, addon, cb):
         session.openWithCallback(cb, AddonConfigScreen, addon)
     
 class BaseArchivCZSKConfigScreen(BaseArchivCZSKScreen, ConfigListScreen):
+    WIDTH_HD = 610
+    HEIGHT_HD = 435
+    
+    WIDTH_SD = 610
+    HEIGHT_SD = 435
 
     def __init__(self, session, categories=[]):
         BaseArchivCZSKScreen.__init__(self, session)
@@ -38,6 +45,7 @@ class BaseArchivCZSKConfigScreen(BaseArchivCZSKScreen, ConfigListScreen):
         self.selected_category = 0
         self.config_list_entries = []
         self.category_widgets = []
+        self.category_widgets_y = 100
         
         self.initializeCategories()
         self.initializeSkin()
@@ -57,35 +65,37 @@ class BaseArchivCZSKConfigScreen(BaseArchivCZSKScreen, ConfigListScreen):
                 "yellow": self.changelog
             }, -2)
         
+    def changedEntry(self):
+        for x in self.onChangedEntry:
+            x()
+        
     def initializeSkin(self):
         if self.HD:
             self.skin = """
-            <screen position="335,140" size="610,435" >
+            <screen position="335,140" size="%s,%s" >
                 <widget name="key_red" position="10,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" shadowOffset="-2,-2" shadowColor="black" />
                 <widget name="key_green" position="160,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#1f771f" shadowOffset="-2,-2" shadowColor="black" />
                 <widget name="key_yellow" position="310,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#a08500" shadowOffset="-2,-2" shadowColor="black" />
                 <widget name="key_blue" position="460,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#18188b" shadowOffset="-2,-2" shadowColor="black" />
-                <eLabel position="-1,55" size="612,1" backgroundColor="#999999" />"""   
+                <eLabel position="-1,55" size="612,1" backgroundColor="#999999" />""" % (self.WIDTH_HD, self.HEIGHT_HD)   
             self.skin += '\n' + self.getCategoriesWidgetString()
                 
-            self.skin += """<widget name="config" position="0,100" size="610,300" scrollbarMode="showOnDemand" />
-                        </screen>"""
+            self.skin += """<widget name="config" position="0,%s" size="%s,%s" scrollbarMode="showOnDemand" />
+                        </screen>""" % (self.category_widgets_y, self.WIDTH_HD, self.HEIGHT_HD - self.category_widgets_y - 10)
         else:
             self.skin = """
-            <screen position="335,140" size="610,435" >
+            <screen position="335,140" size="%s,%s" >
                 <widget name="key_red" position="10,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" shadowOffset="-2,-2" shadowColor="black" />
                 <widget name="key_green" position="160,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#1f771f" shadowOffset="-2,-2" shadowColor="black" />
                 <widget name="key_yellow" position="310,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#a08500" shadowOffset="-2,-2" shadowColor="black" />
                 <widget name="key_blue" position="460,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#18188b" shadowOffset="-2,-2" shadowColor="black" />
-                <eLabel position="-1,55" size="612,1" backgroundColor="#999999" />"""   
+                <eLabel position="-1,55" size="612,1" backgroundColor="#999999" />""" % (self.WIDTH_HD, self.HEIGHT_HD)
             self.skin += '\n' + self.getCategoriesWidgetString()
                 
-            self.skin += """<widget name="config" position="0,100" size="610,300" scrollbarMode="showOnDemand" />
-                        </screen>"""
+            self.skin += """<widget name="config" position="0,%s" size="%s,%s" scrollbarMode="showOnDemand" />
+                        </screen>""" % (self.category_widgets_y, self.WIDTH_SD, self.HEIGHT_SD - self.category_widgets_y - 10)
                         
         #print "initialized skin %s" % self.skin
-                        
-     
     def initializeCategories(self):
         self.createCategoryWidgets() 
      
@@ -100,10 +110,17 @@ class BaseArchivCZSKConfigScreen(BaseArchivCZSKScreen, ConfigListScreen):
         space = 5
         x_position = 5
         y_position = 60
+        width = self.WIDTH_HD
+        if not self.HD : width = self.WIDTH_SD
+        
         for idx, category in enumerate(self.categories):
             cat_widget = self.createCategoryWidget('category' + str(idx), category['label'], x_position, y_position)
             self.category_widgets.append(cat_widget)
             x_position += cat_widget.x_size + space
+            if (x_position + cat_widget.x_size + space) > width and self.categories[-1] != category:
+                x_position = 5
+                y_position += space + cat_widget.y_size
+                self.category_widgets_y += (2 * space) + cat_widget.y_size
             
 
     def getCategoriesWidgetString(self):
@@ -161,11 +178,10 @@ class BaseArchivCZSKConfigScreen(BaseArchivCZSKScreen, ConfigListScreen):
         current = self["config"].getCurrent()[1]
         if isinstance(current, ConfigDirectory):
             self.session.openWithCallback(self.pathSelected, SelectPath, current)
+        elif isinstance(current, ConfigText):
+            entryName = self["config"].getCurrent()[0]
+            self.session.openWithCallback(self.virtualKBCB, VirtualKeyBoardCFG, entryName, current)
     
-        
-    def changedEntry(self):
-        for x in self.onChangedEntry:
-            x()
         
     def keySave(self):
         self.saveAll()
@@ -175,16 +191,20 @@ class BaseArchivCZSKConfigScreen(BaseArchivCZSKScreen, ConfigListScreen):
         for x in self["config"].list:
             x[1].cancel()
         self.close()
-        
-    def pathSelected(self, res=None, config_entry=None):
-        if res is not None and config_entry is not None:
-            config_entry.setValue(res)
 
     def keyLeft(self):
         ConfigListScreen.keyLeft(self) 
 
     def keyRight(self):
         ConfigListScreen.keyRight(self)
+        
+    def pathSelected(self, res=None, config_entry=None):
+        if res is not None and config_entry is not None:
+            config_entry.setValue(res)
+            
+    def virtualKBCB(self, res=None, config_entry=None):
+        if res is not None and config_entry is not None:
+            config_entry.setValue(res)
 
 
 
@@ -239,9 +259,6 @@ class ArchiveCZSKConfigScreen(BaseArchivCZSKConfigScreen):
             super(ArchiveCZSKConfigScreen, self).keyOk()
             
         
-          
-        
- 
 class AddonConfigScreen(BaseArchivCZSKConfigScreen):
     def __init__(self, session, addon):
         self.session = session
@@ -341,6 +358,22 @@ class SelectPath(Screen):
             self["target"].setText(currFolder)
         else:
             self["target"].setText(_("Invalid Location"))
+            
+            
+class VirtualKeyBoardCFG(VirtualKeyBoard):
+    def __init__(self, session, entryName, configEntry):
+        self.configEntry = configEntry
+        VirtualKeyBoard.__init__(self, session, entryName.encode('utf-8'), configEntry.getValue().encode('utf-8'))
+        self.skinName = "VirtualKeyBoard"
+        
+    def ok(self):
+        self.close(self.text.encode("utf-8"), self.configEntry)
+        
+    def cancel(self):
+        self.close(None, None)
+
+        
+
     
     
     

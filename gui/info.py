@@ -191,10 +191,10 @@ class VideoPlayerInfoScreen(BaseArchivCZSKScreen):
 		self["detected player_val"] = Label("")
 		
 		self["protocol"] = Label(_("Supported protocols:"))
-		self["protocol_list"] = PanelList([])
+		self["protocol_list"] = PanelList([],24)
 		#self["protocol_list_info"] = PanelList([])
 		self["container"] = Label(_("Supported containers:"))
-		self["container_list"] = PanelList([])
+		self["container_list"] = PanelList([],24)
 		#self["container_list_info"] = PaneList([])
 		self["info_scrolllabel"] = ScrollLabel()
 			
