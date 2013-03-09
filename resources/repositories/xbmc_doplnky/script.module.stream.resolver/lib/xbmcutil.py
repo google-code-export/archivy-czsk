@@ -1,4 +1,3 @@
-# -*- coding: UTF-8 -*-
 #/*
 # *      Copyright (C) 2011 Libor Zoubek
 # *
@@ -209,6 +208,8 @@ def add_play(title, provider_name, quality, url, subs=None, filename=None, image
 	settings = None
 	if url.find('munkvideo') > 0:
 		settings = {"extra-headers":{"Referer":"me"}}
+	elif url.find('mail.ru') > 0:
+		settings = {"extra-headers":{"Cookie":"VID=2SlVa309oFH4; mrcu=EE18510E964723319742F901060A; p=IxQAAMr+IQAA; video_key=203516; s="}}
 		
 	if hasattr(client, "getVersion"):
 		client.add_video(name, url, subs=subs, filename=filename, image=image, infoLabels=infoLabels, menuItems=menuItems, settings=settings)
