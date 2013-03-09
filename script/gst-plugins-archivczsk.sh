@@ -6,7 +6,7 @@ openpli=$2
 BASEDIR=$(dirname $0)
 
 echo "GStreamer pluginy pre archivCZSK"
-if [ `ls -al /usr/lib/python2.7 | grep base64.py | wc -l` -gt 0 ]; then
+if [ `ls -al /usr/lib/python2.7 | grep urllib.pyo | wc -l` -gt 0 ]; then
 	platform="mips32el"
 fi
 
