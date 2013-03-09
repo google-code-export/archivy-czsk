@@ -8,7 +8,7 @@ import traceback
 import os
 
 from Screens.MessageBox import MessageBox
-from Components.config import config
+from Components.config import config, configfile
 
 from . import _, log
 
@@ -124,6 +124,8 @@ class ArchivCZSK():
         os.remove(os.path.join(settings.PLUGIN_PATH, 'firsttime'))
         config.plugins.archivCZSK.videoPlayer.useDefaultSkin.setValue(False)
         config.plugins.archivCZSK.videoPlayer.useDefaultSkin.save()
+        config.plugins.archivCZSK.linkVerification.setValue(False)
+        config.plugins.archivCZSK.linkVerification.save()
         
         text = _("""This is the first time you started archivyCZSK.
 For optimal use of this plugin, you need to check if you have all neccesary video plugins installed.""")
@@ -229,8 +231,12 @@ For optimal use of this plugin, you need to check if you have all neccesary vide
             self.__addons.clear()
             self.__repositories.clear()
             ArchivCZSK.__loaded = False
+            
         # We dont need worker thread anymore so we stop it  
         Task.stopWorkerThread()
+        
+        # finally save all cfg changes - edit by shamman
+        configfile.save()
         
         # clear tmp content by shamman
         os.system("rm -rf /tmp/*.url")
