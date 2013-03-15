@@ -22,18 +22,15 @@ class VideoPlaySettingsProvider(object):
         
     def setHTTPTimeout(self, timeout):
         self.__config.httpTimeout.setValue(str(timeout))
-        self.__config.httpTimeout.save()
     
     def setExtraHeaders(self, dictHeaders={}):
-        headersString = ','.join([(key + ' ' + value) for key, value in dictHeaders.iteritems()])
+        headersString = '#'.join([(key + ':' + value) for key, value in dictHeaders.iteritems()])
         self.__config.extraHeaders.setValue(headersString)
-        self.__config.extraHeaders.save()
         
     def setUserAgent(self, agent=""):
         if self.__config.servicemp4.getValue():
             if agent != "":
                 self.__config.userAgent.setValue(agent)
-                self.__config.userAgent.save()
         else:
             # servicemp3 uses config.mediaplayer.alternateUserAgent to set UserAgent for gstreamer
             if not hasattr(config, 'mediaplayer'):
@@ -47,19 +44,15 @@ class VideoPlaySettingsProvider(object):
                  
             if agent != "":
                 config.mediaplayer.useAlternateUserAgent.setValue(True)
-                config.mediaplayer.useAlternateUserAgent.save()
                 config.mediaplayer.alternateUserAgent.setValue(agent)
-                config.mediaplayer.alternateUserAgent.save()
             else:
                 config.mediaplayer.useAlternateUserAgent.setValue(False)
-                config.mediaplayer.useAlternateUserAgent.save()
         
     def setDownloadMode(self, mode=False):
         if mode:
             self.__config.download.setValue("True")
         else:
             self.__config.download.setValue("False")
-        self.__config.download.save()
 
 
 

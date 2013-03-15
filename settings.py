@@ -47,7 +47,7 @@ config.plugins.archivCZSK.archives = ConfigSubsection()
 config.plugins.archivCZSK.videoPlayer = ConfigSubsection()
 config.plugins.archivCZSK.videoPlayer.info = NoSave(ConfigNothing())
 playertype = [(videoPlayerInfo.type, videoPlayerInfo.getName())]
-
+config.plugins.archivCZSK.videoPlayer.exitFix = ConfigYesNo(default=False)
 config.plugins.archivCZSK.videoPlayer.detectedType = ConfigSelection(choices=playertype)
 if videoPlayerInfo.isRTMPSupported():        
     config.plugins.archivCZSK.videoPlayer.seeking = ConfigYesNo(default=True)
@@ -71,12 +71,12 @@ else:
     
 
 # downloading flag, headers, userAgent for servicemp4
-config.plugins.archivCZSK.videoPlayer.download = ConfigText(default="False")
+config.plugins.archivCZSK.videoPlayer.download = NoSave(ConfigText(default="False"))
 config.plugins.archivCZSK.videoPlayer.download.setValue("False")
 config.plugins.archivCZSK.videoPlayer.download.save()
 
-config.plugins.archivCZSK.videoPlayer.extraHeaders = ConfigText(default="")
-config.plugins.archivCZSK.videoPlayer.userAgent = ConfigText(default="")
+config.plugins.archivCZSK.videoPlayer.extraHeaders = NoSave(ConfigText(default=""))
+config.plugins.archivCZSK.videoPlayer.userAgent = NoSave(ConfigText(default=""))
 
 
 choicelist = []
@@ -146,12 +146,13 @@ config.plugins.archivCZSK.clearMemory = ConfigYesNo(default=False)
 config.plugins.archivCZSK.hdmuFix = ConfigYesNo(default=False)
 
 # we dont need linkVerification with gstreamer
-if videoPlayerInfo.type == 'gstreamer':
-    config.plugins.archivCZSK.linkVerification = ConfigYesNo(default=False)
-    config.plugins.archivCZSK.linkVerification.setValue(False)
-    config.plugins.archivCZSK.linkVerification.save()
-else:
-    config.plugins.archivCZSK.linkVerification = ConfigYesNo(default=True)
+
+#if videoPlayerInfo.type == 'gstreamer':
+config.plugins.archivCZSK.linkVerification = ConfigYesNo(default=False)
+#config.plugins.archivCZSK.linkVerification.setValue(False)
+#config.plugins.archivCZSK.linkVerification.save()
+#else:
+#    config.plugins.archivCZSK.linkVerification = ConfigYesNo(default=True)
     
 
 choicelist = []
@@ -173,6 +174,8 @@ def get_player_settings():
     if player == 'custom':
         list.append(getConfigListEntry(_("Use video controller"), config.plugins.archivCZSK.videoPlayer.useVideoController))
         list.append(getConfigListEntry(_("Use default skin"), config.plugins.archivCZSK.videoPlayer.useDefaultSkin))
+        if videoPlayerInfo.type != 'gstreamer':
+            list.append(getConfigListEntry(_("Exit fix"), config.plugins.archivCZSK.videoPlayer.exitFix))
         if videoPlayerInfo.type == 'gstreamer':
             list.append(getConfigListEntry(_("Buffer size"), config.plugins.archivCZSK.videoPlayer.bufferSize))
             #list.append(getConfigListEntry(_("Video player Buffer Mode"), config.plugins.archivCZSK.videoPlayer.bufferMode))

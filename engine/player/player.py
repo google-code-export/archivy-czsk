@@ -44,10 +44,10 @@ from Plugins.Extensions.archivCZSK import settings
 from Plugins.Extensions.archivCZSK import log
 from Plugins.Extensions.archivCZSK.engine.items import RtmpStream
 from Plugins.Extensions.archivCZSK.engine.tools import util
-from Plugins.Extensions.archivCZSK.engine.exceptions.archiveException import CustomInfoError, CustomError
+from Plugins.Extensions.archivCZSK.engine.exceptions.play import UrlNotExistError, RTMPGWMissingError
 from Plugins.Extensions.archivCZSK.gui.base import BaseArchivCZSKScreen
 
-SERVICEMP4_ID = 0x1011
+SERVICEMP4_ID = 4113
 SERVICEMRUA_ID = 4370
 
 RTMPGW_PATH = '/usr/bin/rtmpgw'
@@ -312,13 +312,14 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePl
 			self.exitVideoPlayer()
 				
 	def exitVideoPlayer(self):
-		# from tdt duckbox
-		# make sure that playback is unpaused otherwise the  
-		# player driver might stop working 
+		# not sure about this one, user with eplayer can try both modes
+		# disabled for gstreamer -> freezes e2 after stopping live rtmp stream
+		# default is disabled
 		
-		# enabled only for eplayer because on gstreamer 
-		# freezes e2 after stopping live rtmp stream
-		if settings.videoPlayerInfo.type != 'gstreamer':
+		if config.plugins.archivCZSK.videoPlayer.exitFix.getValue():
+			# from tdt duckbox
+			# make sure that playback is unpaused otherwise the  
+			# player driver might stop working 
 			self.setSeekState(self.SEEK_STATE_PLAY) 
 		self.close()
 		
@@ -699,12 +700,9 @@ class Player():
 		
 		
 		# we are downloading by wget/twisted and playing it by gstreamer/eplayer2,3
-		try:
-			self.session.openWithCallback(playNDownload, MessageBox, _("""Play and download mode is not supported by all video formats, 
+		self.session.openWithCallback(playNDownload, MessageBox, _("""Play and download mode is not supported by all video formats, 
 																		 Player can start behave unexpectedly or not play video at all. 
 																		 Do you want to continue?""") , type=MessageBox.TYPE_YESNO)
-		except CustomInfoError as er:
-			self.session.open(MessageBox, er, type=MessageBox.TYPE_ERROR, timeout=3)		
 		
 			
 	def playDownload(self, download):
@@ -723,7 +721,7 @@ class Player():
 		ret = util.check_program(RTMPGW_PATH)
 		if ret is None:
 			log.info("Cannot found rtmpgw, make sure that you have installed it, or try to use Video player with internal rtmp support")
-			raise CustomError(_("Cannot found rtmpgw, make sure that you have installed it, or try to use Video player with internal rtmp support"))
+			raise RTMPGWMissingError()
 		
 		netstat = Popen(NETSTAT_PATH + ' -tulna', stderr=STDOUT, stdout=PIPE, shell=True)
 		out, err = netstat.communicate()
@@ -771,7 +769,7 @@ class Player():
 			ret = util.url_exist(streamURL, int(config.plugins.archivCZSK.linkVerificationTimeout.getValue()))
 			if ret is not None and not ret:
 				log.debug("Video url %s doesnt exist" , streamURL)
-				raise CustomInfoError(_("Video url doesnt exist"))
+				raise UrlNotExistError()
 		
 		self.session.nav.stopService()
 		
