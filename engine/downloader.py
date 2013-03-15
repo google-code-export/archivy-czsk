@@ -9,6 +9,8 @@ from twisted.python import failure
 from twisted.web import client
 from twisted.internet import reactor
 import urlparse, urllib2
+from tools import util
+from exceptions.download import NotSupportedProtocolError
 
 try:
     from enigma import eConsoleAppContainer
@@ -20,11 +22,12 @@ except ImportError:
 RTMP_DUMP_PATH = '/usr/bin/rtmpdump'
 WGET_PATH = 'wget'
 USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:18.0) Gecko/20100101 Firefox/18.0'
-VIDEO_EXTENSIONS = ('.avi', '.flv', '.mp4', '.mkv', '.mpeg', 'mpg', '.asf', '.wmv', '.divx')
 
-class NotSupportedProtocolException(Exception):
-    pass
-
+VIDEO_EXTENSIONS = ('.3gp', '3g2', '.asf', '.avi', '.flv', '.mp4', '.mkv', '.mpeg', '.mov' '.mpg', '.wmv', '.divx', '.vob', '.iso', '.ts')
+AUDIO_EXTENSIONS = ('.mp2', '.mp3', '.wma', '.ogg', '.dts', '.flac', '.wave')
+PLAYLIST_EXTENSIONS = ('.m3u','.m3u8')
+ARCHIVE_EXTENSIONS = ('.rar', '.zip', '.7zip')
+MEDIA_EXTENSIONS = VIDEO_EXTENSIONS + AUDIO_EXTENSIONS + ARCHIVE_EXTENSIONS + PLAYLIST_EXTENSIONS
 
 def toUTF8(text):
     if isinstance(text, unicode):
@@ -74,11 +77,12 @@ def getFileInfo(url, localFileName=None, headers={}):
             url_ext = '.' + url.split('.')[-1]
             localName = localName + url_ext
             
-    # we didnt get playable video extensions so we add one
-    if os.path.splitext(localName)[1] not in VIDEO_EXTENSIONS:
+    # we didnt get valid extensions so we add one
+    if os.path.splitext(localName)[1] not in MEDIA_EXTENSIONS:
         localName = os.path.splitext(localName)[0] + '.mp4'
         
     localName = localName.replace(' ', '_')
+    #localName = util.removeDiacritics(localName)
     return localName, length
 
 
@@ -156,6 +160,10 @@ class DownloadManager(object):
             except (urllib2.HTTPError, urllib2.URLError) as e:
                 print "[Downloader] cannot create download %s - %s error" % (toUTF8(filename), str(e))
                 raise
+            
+            # for now we cannot download hls streams
+            if filename.endswith('m3u8'):
+                raise NotSupportedProtocolError('HLS')
             # only for EPLAYER3(ffmpeg demux)
             # When playing and downloading avi/mkv container then use HTTPTwistedDownload instead of wget
             # Reason is that when we use wget download, downloading file is progressively increasing its size, and ffmpeg isnt updating size of file accordingly
@@ -182,7 +190,8 @@ class DownloadManager(object):
             
         else:
             print '[Downloader] cannot create download %s - not supported protocol' % toUTF8(filename)
-            raise NotSupportedProtocolException()
+            protocol = filename.split('://')[0].upper()
+            raise NotSupportedProtocolError(protocol)
         
 class DownloadStatus():
     def __init__(self, download):
