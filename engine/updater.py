@@ -6,7 +6,7 @@ Created on 25.6.2012
 import os, shutil
 
 from tools import unzip, util, parser
-from exceptions import archiveException as archiveException
+from Plugins.Extensions.archivCZSK.engine.exceptions.updater import UpdateXMLVersionError
 from Plugins.Extensions.archivCZSK import log
 
 def removePyOC(pyfile):
@@ -84,7 +84,7 @@ class Updater(object):
                 if local_addon.check_update(False):
                     update_needed.append(local_addon)
             elif new:
-                log.debug("%s not in local repository, adding dummy Addon to update",remote_addon['name'])
+                log.debug("%s not in local repository, adding dummy Addon to update", remote_addon['name'])
                 new_addon = DummyAddon(self.repository, remote_addon['id'], remote_addon['name'], remote_addon['version'])
                 update_needed.append(new_addon)
             else:
@@ -148,7 +148,7 @@ class Updater(object):
             util.download_to_file(self.update_xml_url, self.update_xml_file, debugfnc=log.debug)
         except Exception:
             log.debug('cannot download %s update xml', self.repository.name)
-            raise archiveException.UpdateXMLVersionException()
+            raise UpdateXMLVersionError()
         
 
 class DummyAddon(object):

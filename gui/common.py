@@ -337,24 +337,24 @@ class ButtonLabel(MultiColorLabel):
 
 def showInfoMessage(session, message, timeout=3, cb=None):
     if cb is not None:
-        session.openWithCallback(cb, MessageBox, text=message, timeout=timeout, type=MessageBox.TYPE_INFO)
+        session.openWithCallback(cb, MessageBox, text=toUTF8(message), timeout=timeout, type=MessageBox.TYPE_INFO)
     else:
-        session.open(MessageBox, text=message, timeout=timeout, type=MessageBox.TYPE_INFO)
+        session.open(MessageBox, text=toUTF8(message), timeout=timeout, type=MessageBox.TYPE_INFO)
 
 def showWarningMessage(session, message, timeout=3, cb=None):
     if cb is not None:
-        session.openWithCallback(cb, MessageBox, text=message, timeout=timeout, type=MessageBox.TYPE_WARNING)
+        session.openWithCallback(cb, MessageBox, text=toUTF8(message), timeout=timeout, type=MessageBox.TYPE_WARNING)
     else:
-        session.open(MessageBox, text=message, timeout=timeout, type=MessageBox.TYPE_WARNING)    
+        session.open(MessageBox, text=toUTF8(message), timeout=timeout, type=MessageBox.TYPE_WARNING)    
 
 def showErrorMessage(session, message, timeout=3, cb=None):
     if cb is not None:
-        session.openWithCallback(cb, MessageBox, text=message, timeout=timeout, type=MessageBox.TYPE_ERROR)
+        session.openWithCallback(cb, MessageBox, text=toUTF8(message), timeout=timeout, type=MessageBox.TYPE_ERROR)
     else:
-        session.open(MessageBox, text=message, timeout=timeout, type=MessageBox.TYPE_ERROR)
+        session.open(MessageBox, text=toUTF8(message), timeout=timeout, type=MessageBox.TYPE_ERROR)
         
 def showYesNoDialog(session, message, cb):
-    session.openWithCallback(cb, MessageBox, text=message, type=MessageBox.TYPE_YESNO)
+    session.openWithCallback(cb, MessageBox, text=toUTF8(message), type=MessageBox.TYPE_YESNO)
         
         
         

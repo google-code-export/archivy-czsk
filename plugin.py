@@ -15,10 +15,10 @@ from archivczsk import ArchivCZSK
 from engine.downloader import DownloadManager
 from gui.search import SearchClient
 import version
-
+from gsession import GlobalSession
 
 def sessionstart(reason, session):
-	dwnld.setGlobalSession(session)
+	GlobalSession.setSession(session)
 	#saving active downloads to session
 	if not hasattr(session, 'archivCZSKdownloads'):
 		session.archivCZSKdownloads = []	

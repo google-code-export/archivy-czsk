@@ -18,7 +18,7 @@ from gui.common import showYesNoDialog, showInfoMessage, showErrorMessage
 from gui.content import VideoAddonsContentScreen
 from engine.items import PVideoAddon
 from engine.addon import VideoAddon, XBMCAddon
-from engine.exceptions import archiveException
+from engine.exceptions.updater import UpdateXMLVersionError
 from engine.tools.task import Task
 
 nova = 'plugin.video.dmd-czech.voyo'
@@ -144,7 +144,7 @@ For optimal use of this plugin, you need to check if you have all neccesary vide
             repository = self.__repositories[repo_key]
             try:
                 self.toupdate_addons += repository.check_updates()
-            except archiveException.UpdateXMLVersionException:
+            except UpdateXMLVersionError:
                 log.info('cannot retrieve update xml for repository %s', repository)
                 #self.show_error(_("Cannot retrieve update xml for repository") + " [%s]" % repository.name.encode('utf-8'))
                 continue

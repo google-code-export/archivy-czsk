@@ -12,7 +12,7 @@ from twisted.python import log, context, failure
 from enigma import eTimer
 from Components.config import config
 from Plugins.Extensions.archivCZSK import log
-from Plugins.Extensions.archivCZSK.engine.exceptions import archiveException as exceptions
+from Plugins.Extensions.archivCZSK.engine.exceptions.addon import AddonThreadException
         
 # object for stopping workerThread        
 WorkerStop = object()
@@ -181,7 +181,7 @@ class Task():
         #To make sure that, when we abort processing of task, that its always the same type of failure
         if self._aborted:
             success = False
-            result = failure.Failure(exceptions.ArchiveThreadException())
+            result = failure.Failure(AddonThreadException())
         self.finish(success, result)
     
             

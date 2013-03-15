@@ -14,10 +14,8 @@ from Plugins.Extensions.archivCZSK.resources.libraries import simplejson as json
 from Plugins.Extensions.archivCZSK.engine.contentprovider import VideoAddonContentProvider
 from Plugins.Extensions.archivCZSK.engine.tools import util
 from Plugins.Extensions.archivCZSK.engine.tools.task import callFromThread, Task
-from Plugins.Extensions.archivCZSK.engine.exceptions.archiveException import CustomInfoError, CustomWarningError, CustomError, ArchiveThreadException
+from Plugins.Extensions.archivCZSK.engine.exceptions.addon import AddonInfoError, AddonWarningError, AddonError, AddonThreadException
 from Plugins.Extensions.archivCZSK.engine.items import PFolder, PVideo, PNotSupportedVideo, PSearch, PSearchItem, PContextMenuItem, Stream
-
-
 
 
 GItem_lst = VideoAddonContentProvider.gui_item_list
@@ -68,13 +66,13 @@ def openSettings(session, addon):
     return d
 
 def showInfo(info):
-    raise CustomInfoError(info)
+    raise AddonInfoError(info)
 
 def showError(error):
-    raise CustomError(error)
+    raise AddonError(error)
 
 def showWarning(warning):
-    raise CustomWarningError(warning)
+    raise AddonWarningError(warning)
     
     
 @callFromThread        
@@ -117,7 +115,7 @@ def add_dir(name, params={}, image=None, infoLabels={}, menuItems={}, search_fol
     #controlling if task shouldnt be _aborted(ie. we pushed exit button when loading)
     task = Task.getInstance()
     if task and task._aborted:
-        raise ArchiveThreadException
+        raise AddonThreadException
     
     if search_item: it = PSearchItem()
     elif search_folder: it = PSearch()
@@ -169,7 +167,7 @@ def add_video(name, url, subs=None, image=None, infoLabels={}, menuItems={}, fil
     #controling if task shouldnt be _aborted(ie. we pushed exit button when loading)
     task = Task.getInstance()
     if task and task._aborted:
-        raise ArchiveThreadException
+        raise AddonThreadException
     
     #if util.isSupportedVideo(url): it = PVideo()
     #else: it = PNotSupportedVideo()
@@ -231,60 +229,5 @@ def add_video(name, url, subs=None, image=None, infoLabels={}, menuItems={}, fil
             it.settings = settings
         
     GItem_lst[0].append(it)
-    
-        
-        
-# source from xbmc_doplnky
-def get_searches(addon, server):
-        local = os.path.join(config.plugins.archivCZSK.dataPath.getValue(), addon.id)
-        if not os.path.exists(local):
-                os.makedirs(local)
-        local = os.path.join(local, server)
-        if not os.path.exists(local):
-                return []
-        f = open(local, 'r')
-        data = f.read()
-        searches = json.loads(unicode(data.decode('utf-8', 'ignore')))
-        f.close()
-        return searches
-
-# source from xbmc_doplnky
-def add_search(addon, server, search, maximum):
-        searches = []
-        local = os.path.join(config.plugins.archivCZSK.dataPath.getValue(), addon.id)
-        if not os.path.exists(local):
-                os.makedirs(local)
-        local = os.path.join(local, server)
-        if os.path.exists(local):
-                f = open(local, 'r')
-                data = f.read()
-                searches = json.loads(unicode(data.decode('utf-8', 'ignore')))
-                f.close()
-        if search in searches:
-                searches.remove(search)
-        searches.insert(0, search)
-        remove = len(searches) - maximum
-        if remove > 0:
-                for i in range(remove):
-                        searches.pop()
-        f = open(local, 'w')
-        f.write(json.dumps(searches, ensure_ascii=True))
-        f.close()
-
-# source from xbmc_doplnky
-def remove_search(addon, server, search):
-        local = os.path.join(config.plugins.archivCZSK.dataPath.getValue(), addon.id)
-        if not os.path.exists(local):
-                return
-        local = os.path.join(local, server)
-        if os.path.exists(local):
-                f = open(local, 'r')
-                data = f.read()
-                searches = json.loads(unicode(data.decode('utf-8', 'ignore')))
-                f.close()
-                searches.remove(search)
-                f = open(local, 'w')
-                f.write(json.dumps(searches, ensure_ascii=True))
-                f.close()    
 
 

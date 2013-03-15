@@ -11,11 +11,10 @@ from Components.config import config
 
 from Plugins.Extensions.archivCZSK import _
 from Plugins.Extensions.archivCZSK import log
-from Plugins.Extensions.archivCZSK.engine.exceptions.archiveException import CustomInfoError
 from Plugins.Extensions.archivCZSK import settings
-import xmlshortcuts 
+import xmlshortcuts
 from tools import task, util
-from downloader import DownloadManager, NotSupportedProtocolException
+from downloader import DownloadManager
 from items import PVideo, PFolder, PDownload, Stream, RtmpStream, PExit
 
 VIDEO_EXTENSIONS = ['.avi', '.mkv', '.mp4', '.flv', '.mpg', '.mpeg', '.wmv']
@@ -86,19 +85,15 @@ class ContentProvider(object):
         headers = item.settings['extra-headers']
         log.debug("Download headers %s", headers)
         downloadManager = DownloadManager.getInstance()
-        try:
-            d = downloadManager.createDownload(name=item.name, url=item.url, stream=item.stream, filename=item.filename,
+        d = downloadManager.createDownload(name=item.name, url=item.url, stream=item.stream, filename=item.filename,
                                            live=item.live, destination=self.downloads_path,
                                            startCB=startCB, finishCB=finishCB, quiet=quiet,
                                            playDownload=playDownload, headers=headers, mode=mode)
-        except NotSupportedProtocolException:
-            raise CustomInfoError(_("Cannot download") + item.name.encode('utf-8') + _("not supported protocol"))
-        else:
-            if item.subs is not None and item.subs != '':
-                log.debug('subtitles link: %s' , item.subs)
-                subs_file_path = os.path.splitext(d.local)[0] + '.srt'
-                util.download_to_file(item.subs, subs_file_path)
-            downloadManager.addDownload(d) 
+        if item.subs is not None and item.subs != '':
+            log.debug('subtitles link: %s' , item.subs)
+            subs_file_path = os.path.splitext(d.local)[0] + '.srt'
+            util.download_to_file(item.subs, subs_file_path)
+        downloadManager.addDownload(d) 
         
 class SysPath(list):
     """to append sys path only to addon which belongs to""" 
@@ -152,6 +147,7 @@ class VideoAddonContentProvider(ContentProvider):
         self.dependencies = [video_addon]
         self.resolved_dependencies = False
         self.addon_sys.add_addon(video_addon)
+        
         
     def refresh_paths(self):
         self.video_addon.refresh_provider_paths()

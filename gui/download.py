@@ -18,6 +18,7 @@ from Components.Button import Button
 from Components.Label import Label, MultiColorLabel
 
 from Plugins.Extensions.archivCZSK import _
+from Plugins.Extensions.archivCZSK.gsession import GlobalSession
 from Plugins.Extensions.archivCZSK.engine.downloader import DownloadManager
 from Plugins.Extensions.archivCZSK.engine.tools import util
 
@@ -34,37 +35,33 @@ def openAddonDownloads(session, addon, cb):
     openDownloads(session, addon.name, addon.provider, cb)
 
 
-def setGlobalSession(session):
-    DownloadManagerMessages.session = session
-
-
 class DownloadManagerMessages(object):
     session = None
 
     @staticmethod
     def finishDownloadCB(download):
-        session = DownloadManagerMessages.session
+        session = GlobalSession.getSession()
         def updateDownloadList(callback=None):
             if DownloadListScreen.instance is not None:
                 DownloadListScreen.instance.refreshList()
         if download.downloaded:
             session.openWithCallback(updateDownloadList, MessageBox, _("ArchivCZSK - Download:") + ' ' + \
                                       download.name.encode('utf-8', 'ignore') + ' ' + _("successfully finished."), \
-                                      type=MessageBox.TYPE_INFO, timeout=5)
+                                      type=MessageBox.TYPE_INFO, timeout=0)
         else:
             session.openWithCallback(updateDownloadList, MessageBox, _("ArchivCZSK - Download:") + ' ' + \
                                       download.name.encode('utf-8', 'ignore') + ' ' + _("finished with errors."), \
-                                      type=MessageBox.TYPE_ERROR, timeout=5)  
+                                      type=MessageBox.TYPE_ERROR, timeout=0)  
     @staticmethod
     def startDownloadCB(download):
-        session = DownloadManagerMessages.session
+        session = GlobalSession.getSession()
         session.open(MessageBox, _("ArchivCZSK - Download:") + ' ' + \
                      download.name.encode('utf-8', 'ignore') + ' ' + _("started."), \
                      type=MessageBox.TYPE_INFO, timeout=5)
         
     @staticmethod
     def askOverrideDownloadCB(download):
-        session = DownloadManagerMessages.session
+        session = GlobalSession.getSession()
         def overrideDownload(callback=None):
             if callback:
                 download.remove()

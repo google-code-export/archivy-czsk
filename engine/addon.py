@@ -8,7 +8,7 @@ from Tools.LoadPixmap import LoadPixmap
 from Components.config import config, ConfigSubsection, ConfigSelection, ConfigYesNo, ConfigText, ConfigDirectory, configfile, getConfigListEntry
 
 from tools import util, parser
-from Plugins.Extensions.archivCZSK import log
+from Plugins.Extensions.archivCZSK import _, log
 from Plugins.Extensions.archivCZSK import settings
 from Plugins.Extensions.archivCZSK.resources.repositories import config as addon_config
 from Plugins.Extensions.archivCZSK.gui import menu
@@ -223,7 +223,7 @@ class AddonLanguage(object):
             if os.path.isfile(language_file_path):
                 self.languages[language_id] = None
             else:
-                log.debug("%s cannot find language file %s",self, language_file_path)
+                log.debug("%s cannot find language file %s", self, language_file_path)
                 log.debug("skipping language %s", language_dir)
                 
     def __repr__(self):
@@ -322,11 +322,11 @@ class AddonSettings(object):
     
     def initialize_settings(self):
         for entry in self.category_entries:
-            if entry['label'] == 'general': 
+            if entry['label'] == 'general':
                 if len(entry['subentries']) == 0 :
                     continue
                 else:
-                    category = {'label':'general', 'subentries':[]}
+                    category = {'label':_('general'), 'subentries':[]}
             else:
                 category = {'label':self._get_label(entry['label']), 'subentries':[]}
                 
