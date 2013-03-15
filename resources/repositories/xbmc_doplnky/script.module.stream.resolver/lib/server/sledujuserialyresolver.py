@@ -20,7 +20,7 @@
 # *
 # */
 import re,util,urllib2,traceback
-__name__ = 'sledujuserialy'
+__name__ = 'zkouknito.cz'
 def supports(url):
     return not _regex(url) == None
 

@@ -40,7 +40,7 @@ RESOLVERS = sorted(RESOLVERS,key=lambda m: -m.__priority__)
 util.debug('done')
 
 def item():
-    return {'name':'','url':'','quality':'???','surl':'','subs':''}
+    return {'name':'','url':'','quality':'???','surl':'','subs':'','headers':{}}
 
 def resolve(url):
     url = util.decode_html(url)
@@ -111,7 +111,7 @@ def findstreams(data,regexes):
             if streams == []:
                 util.debug('There was an error resolving '+rurl)
                 error = True
-            if not streams == None:
+            if streams is not None:
                 if len(streams) > 0:
                     for stream in streams:
                         resolved.append(stream)
@@ -122,6 +122,7 @@ def findstreams(data,regexes):
     resolved = sorted(resolved,key=lambda i:i['quality'])
     resolved = sorted(resolved,key=lambda i:len(i['quality']))
     resolved.reverse()
+    
     return resolved
 
 q_map = {'3':'720p','4':'480p','5':'360p'}
@@ -189,7 +190,7 @@ def findstreams_multi(data,regexes):
             if streams == []:
                 util.debug('There was an error resolving '+match.group('url'))
                 error = True
-            if not streams == None:
+            if streams is not None:
                 if len(streams) > 0:
                     for stream in streams:
                         resolved.append(stream)

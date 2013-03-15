@@ -35,7 +35,9 @@ def resolve(url):
                   }
         # header "Cookie" with parameters need to be set for your download/playback
         quality = "???"
-        data = util.request('http://api.video.mail.ru/videos/' + m.group('url') + '.json', headers=headers)
+        vurl = m.group('url')
+        vurl = re.sub('\&[^$]*','',vurl)
+        data = util.request('http://api.video.mail.ru/videos/' + vurl + '.json', headers=headers)
         item = util.json.loads(data)
         for qual in item[u'videos']:
             if qual == 'sd':
@@ -45,8 +47,8 @@ def resolve(url):
             else:
                 quality = "???"
             link = item[u'videos'][qual]
-            items.append({'quality':quality, 'url':link})
+            items.append({'quality':quality, 'url':link, 'headers':headers})
         return items
 
 def _regex(url):
-    return re.search('http://img\.mail\.ru.*?<param.value=\"movieSrc=(?P<url>[^\"]+)', url, re.IGNORECASE | re.DOTALL)
+    return re.search('http://img\.mail\.ru.*?<param.+?value=\"movieSrc=(?P<url>[^\"]+)', url, re.IGNORECASE | re.DOTALL)

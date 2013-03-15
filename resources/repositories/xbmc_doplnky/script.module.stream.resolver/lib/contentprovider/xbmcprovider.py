@@ -23,6 +23,8 @@ import sys, os, re, traceback, util, xbmcutil, resolver, time
 from Plugins.Extensions.archivCZSK.engine import client
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
 
+from provider import ResolveException
+
 class XBMContentProvider(object):
 	'''
 	ContentProvider class provides an internet content. It should NOT have any xbmc-related imports
@@ -107,15 +109,38 @@ class XBMContentProvider(object):
 		if streams is not None:
 			if type(streams) == type([]):
 				for stream in streams:
-					xbmcutil.add_play(params['title'], stream['title'], stream['quality'], stream['url'], subs=stream['subs'], filename=params['title'])
+					if 'headers' in stream.keys():
+						xbmcutil.add_play(params['title'], stream['title'], stream['quality'], stream['url'], subs=stream['subs'], filename=params['title'], headers=stream['headers'])
+					else:
+						xbmcutil.add_play(params['title'], stream['title'], stream['quality'], stream['url'], subs=stream['subs'], filename=params['title'], headers={})
+						
 			else:
 				#ulozto,bezvadata..
-				xbmcutil.add_play(params['title'], streams['title'], streams['quality'], streams['url'], subs=streams['subs'], filename=params['title'])
+				if 'headers' in streams.keys():
+					xbmcutil.add_play(params['title'], streams['title'], streams['quality'], streams['url'], subs=streams['subs'], filename=params['title'], headers=streams['headers'])
+				else:
+					xbmcutil.add_play(params['title'], streams['title'], streams['quality'], streams['url'], subs=streams['subs'], filename=params['title'], headers={})
+					
 
+
+	def _handle_exc(self, e):
+		msg = e.message
+		if msg.find('$') == 0:
+			try:
+				msg = self.addon.getLocalizedString(int(msg[1:]))
+			except:
+				pass
+		client.showError(msg)
+
+	
 	def resolve(self, url):
 		item = self.provider.video_item()
 		item.update({'url':url})
-		return self.provider.resolve(item)
+		try:
+			return self.provider.resolve(item)
+		except ResolveException, e:
+			self._handle_exc(e)
+
 
 	def search(self, keyword):
 		self.list(self.provider.search(keyword))
@@ -157,7 +182,7 @@ class XBMContentProvider(object):
 		menuItems = {}
 		if 'menu' in item.keys():
 			menuItems.update(item['menu'])
-		xbmcutil.add_dir(title,params,img,infoLabels=self._extract_infolabels(item),menuItems=menuItems)
+		xbmcutil.add_dir(title, params, img, infoLabels=self._extract_infolabels(item), menuItems=menuItems)
 
 	def _extract_infolabels(self, item):
 		infoLabels = {}
@@ -204,7 +229,10 @@ class XBMCMultiResolverContentProvider(XBMContentProvider):
 
 		item = self.provider.video_item()
 		item.update({'url':url})
-		return self.provider.resolve(item, select_cb=select_cb)
+		try:
+			return self.provider.resolve(item, select_cb=select_cb)
+		except ResolveException, e:
+			self._handle_exc(e)
 	
 
 class XBMCLoginRequiredContentProvider(XBMContentProvider):
@@ -244,7 +272,11 @@ class XBMCLoginOptionalContentProvider(XBMContentProvider):
 			if not self.provider.login():
 				client.showInfo(xbmcutil.__lang__(30011))
 				return
-		return self.provider.resolve(item, captcha_cb=self.ask_for_captcha)
+		try:
+			return self.provider.resolve(item, captcha_cb=self.ask_for_captcha)
+		except ResolveException, e:
+			self._handle_exc(e)
+
 	
 	
 
@@ -269,4 +301,8 @@ class XBMCLoginOptionalDelayedContentProvider(XBMCLoginOptionalContentProvider):
             if not self.provider.login():
                 client.showInfo(xbmcutil.__lang__(30011))
                 return
-        return self.provider.resolve(item, captcha_cb=self.ask_for_captcha, wait_cb=self.wait_cb)
+        try:
+        	return self.provider.resolve(item, captcha_cb=self.ask_for_captcha, wait_cb=self.wait_cb)
+        except ResolveException, e:
+        	self._handle_exc(e)
+

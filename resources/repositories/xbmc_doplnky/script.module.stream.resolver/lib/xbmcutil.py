@@ -200,17 +200,12 @@ def add_video(name, params={}, logo=None, infoLabels={}, menuItems={}):
 		params[key] = value
 	add_dir(name, params, logo=logo, infoLabels=infoLabels, menuItems=menuItems)
     
-def add_play(title, provider_name, quality, url, subs=None, filename=None, image=None, infoLabels={}, menuItems={}):
+def add_play(title, provider_name, quality, url, subs=None, filename=None, image=None, infoLabels={}, menuItems={},headers={}):
 	name = '%s - %s[%s]' % (decode_html(title), decode_html(provider_name), decode_html(quality))
 	if not 'title' in infoLabels:
 		infoLabels['title'] = name
 		
-	settings = None
-	if url.find('munkvideo') > 0:
-		settings = {"extra-headers":{"Referer":"me"}}
-	elif url.find('mail.ru') > 0:
-		settings = {"extra-headers":{"Cookie":"VID=2SlVa309oFH4; mrcu=EE18510E964723319742F901060A; p=IxQAAMr+IQAA; video_key=203516; s="}}
-		
+	settings = {"extra-headers":headers}
 	if hasattr(client, "getVersion"):
 		client.add_video(name, url, subs=subs, filename=filename, image=image, infoLabels=infoLabels, menuItems=menuItems, settings=settings)
 	else:

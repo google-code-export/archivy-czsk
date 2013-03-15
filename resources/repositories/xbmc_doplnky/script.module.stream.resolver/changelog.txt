@@ -1,3 +1,10 @@
+[B]1.5.1:[/B]
+- when downloaded file does not have extension, it is autoappened (.mp4)
+[B]1.5.0:[/B]
+- added resolvers flashx, videomail (ivo, mx3L)
+- resolvers can now return headers (if required for playing/downloading)
+- ContentProviders can now raise ResolveException
+- ulozto provider raises ResolveException when ulozto server is overloaded
 [B]1.4.6:[/B]
 - fixed youtube resolver
 - subtitles now work in munkvideo resolver
@@ -16,7 +23,7 @@
 - added eserialresolver
 - resolvers have now priority (higher=resolver is asked fist)
 [B]1.3.10:[/B]
-- fixed #127 - searchings does not work on frodo beta1
+- fixed #127 - searching does not work on frodo beta1
 - fixed ulozto to show search results again
 - fixed sledujuserialy resolver (to resolve mp4 videos)
 [B]1.3.9:[/B]

@@ -30,6 +30,7 @@ class BefunContentProvider(ContentProvider):
         ContentProvider.__init__(self,'befun.cz','http://befun.cz/',username,password,filter)
         opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookielib.LWPCookieJar()))
         urllib2.install_opener(opener)
+        self.order_by = ''
 
     def capabilities(self):
         return ['categories','resolve','search']
@@ -38,14 +39,20 @@ class BefunContentProvider(ContentProvider):
         return self.list_page('vyhledat/results?q='+keyword+'&c=filmy','<h2>Výsledky vyhledávání</h2>','</section')
 
     def list(self,url):
+        if url.find(self.order_by) < 0:
+            if url.find('?') > 0:
+                url+='&'+self.order_by
+            else:
+                url+='?'+self.order_by
         if url.find('#cat#') == 0:
-            return self._categories(url[5:])
+            url = url[5:]
+            return self._categories(util.request(self._url(url)),url)
         if url.find('#show#') == 0:
-            return self.list_episodes(url[6:])
-        return self.list_page(url,'<!-- Movies','</section')
+            url = url[6:]
+            return self.list_episodes(util.request(self._url(url)))
+        return self.list_page(util.request(self._url(url)),'<!-- Movies','</section')
 
-    def list_episodes(self,url):
-        page = util.request(self._url(url))
+    def list_episodes(self,page):
         page = util.substr(page,'<h3>Epizody','</article>')
         result = []
         for m in re.finditer('<li class=\"controls[^<]+<a href=\"(?P<url>[^\"]+)[^>]+>(?P<name>[^<]+)',page,re.IGNORECASE|re.DOTALL):
@@ -56,15 +63,14 @@ class BefunContentProvider(ContentProvider):
         return result
 
 
-    def list_page(self,url,start,end):
-        page = util.request(self._url(url))
+    def list_page(self,page,start,end):
         next = re.search('<a href=\"(?P<url>[^\"]+)\" class=\"ajax\">Další',page)
         page = util.substr(page,start,end)
         result = []
         for m in re.finditer('<article[^>]+(.+?)</article>',page,re.IGNORECASE|re.DOTALL):
             data =  m.group(1)
             url = re.search('<a href=\"([^\"]+)',data)
-            img = re.search('<img src=\"(?P<img>[^\"]+).+?alt=\"(?P<name>[^\"]+)',data)
+            img = re.search('<div class=\"img[^<]+<img src=\"(?P<img>[^\"]+).+?alt=\"(?P<name>[^\"]+)',data)
             if img and url:
                 item = self.video_item()
                 item['url'] = url.group(1)
@@ -74,33 +80,37 @@ class BefunContentProvider(ContentProvider):
         if next:
             item = self.dir_item()
             item['type'] = 'next'
-            item['url'] = next.group('url')
+            item['url'] = next.group('url').replace('&amp;','&')
             result.append(item)
         return result
 
-    def _categories(self,url):
-        data = util.request(self._url(url))
-        data = util.substr(data,'<ul id=\"menu_kategorie','</ul')
+    def _categories(self,page,url):
+        data = util.substr(page,'<ul id=\"menu_kategorie','</ul')
         prefix = ''
+        mask = '[B]%s[/B]'
         if url.find('serialy') >= 0:
             prefix = '#show#'
+            mask = '%s'
         result = []
         for m in re.finditer('<a href=\"(?P<url>[^\"]+)[^<]+<span[^>]*>(?P<name>[^<]+)',data,re.IGNORECASE | re.DOTALL ):
             item = self.dir_item()
-            item['title'] = m.group('name')
+            item['title'] = mask % m.group('name')
             item['url'] = prefix+m.group('url')
             result.append(item)
+        if prefix == '':
+            # when listing movie categories, we also list movies on 'main' page
+            return result + self.list_page(page,'<!-- Movies','</section')
         return result
 
     def categories(self):
         result = []
         item = self.dir_item()
         item['title'] = 'Filmy'
-        item['url'] = '#cat#filmy'
+        item['url'] = '#cat#filmy/'
         result.append(item)
         item = self.dir_item()
         item['title'] = 'Seriály'
-        item['url'] = '#cat#serialy'
+        item['url'] = '#cat#serialy/'
         result.append(item)
         return result
 
@@ -128,6 +138,7 @@ class BefunContentProvider(ContentProvider):
             item['quality'] = i['quality']
             item['surl'] = i['surl']
             item['subs'] = i['subs']
+            item['headers'] = i['headers']
             result.append(item)	
         if len(result)==1:
             return result[0]

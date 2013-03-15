@@ -19,7 +19,7 @@
 # *  http://www.gnu.org/copyleft/gpl.html
 # *
 # */
-import re, util
+import re,util
 __name__ = 'rutube'
 def supports(url):
 	return not _regex(url) == None
@@ -28,14 +28,14 @@ def supports(url):
 def url(url):
 	m = _regex(url)
 	if m:
-		data = util.request('http://rutube.ru/trackinfo/' + m.group('id') + '.xml')
-		n = re.search('<m3u8>([^<]+)', data, re.IGNORECASE | re.DOTALL)
+		data = util.request('http://rutube.ru/trackinfo/'+m.group('id')+'.xml')
+		n = re.search('<m3u8>([^<]+)',data,re.IGNORECASE | re.DOTALL)
 		if not n == None:
 			return [n.group(1).strip()]
 
 def resolve(u):
 	stream = url(u)
 	if stream:
-		return [{'name':__name__, 'quality':'640p', 'url':stream[0], 'surl':u}]
+		return [{'name':__name__,'quality':'640p','url':stream[0],'surl':u}]
 def _regex(url):
-	return re.search('rutube\.ru/(video/embed|embed)/(?P<id>[^$]+)', url, re.IGNORECASE | re.DOTALL)
+	return re.search('rutube\.ru/(video/embed|embed)/(?P<id>[^$]+)',url,re.IGNORECASE | re.DOTALL)

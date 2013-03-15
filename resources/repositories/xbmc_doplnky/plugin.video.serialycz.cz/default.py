@@ -20,15 +20,15 @@
 # *
 # */
 import os
-import util,xbmcprovider
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
-__scriptid__   = 'plugin.video.serialycz.cz'
+import util, xbmcprovider, xbmcutil
+__scriptid__ = 'plugin.video.serialycz.cz'
 __scriptname__ = 'serialycz.cz'
 __addon__ = ArchivCZSK.get_xbmc_addon(__scriptid__)
 __language__ = __addon__.getLocalizedString
 
-sys.path.append( os.path.join ( __addon__.get_info('path'), 'resources','lib') )
+sys.path.append(os.path.join (__addon__.getAddonInfo('path'), 'resources', 'lib'))
 import serialy
-settings = {'quality':__addon__.get_setting('quality')}
+settings = {'quality':__addon__.getSetting('quality')}
 
-xbmcprovider.XBMCMultiResolverContentProvider(serialy.SerialyczContentProvider(tmp_dir=__addon__.get_info('profile')),settings,__addon__,session).run(params)
+xbmcprovider.XBMCMultiResolverContentProvider(serialy.SerialyczContentProvider(tmp_dir=__addon__.getAddonInfo('profile')), settings, __addon__,session).run(params)
