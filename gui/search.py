@@ -22,16 +22,6 @@ from Plugins.Extensions.archivCZSK.client import seeker
 from Plugins.Extensions.archivCZSK.gui.common import showInfoMessage, PanelList, PanelListEntryHD, PanelListEntry2
 from Plugins.Extensions.archivCZSK.gui.base import BaseArchivCZSKMenuListScreen
 
-
-
-def createSearchList():
-    list = []
-    list.append((_('Search in OnlineFiles'), 'plugin.video.online-files', 'all'))
-    list.append((_('Search in Ulozto.cz'), 'plugin.video.online-files', 'ulozto.cz'))
-    list.append((_('Search in Bezvadata.cz'), 'plugin.video.online-files', 'bezvadata.cz'))
-    list.append((_('Search in Hellspy.cz'), 'plugin.video.online-files', 'hellspy.cz'))
-    return list
-
     
 class SearchClient(BaseArchivCZSKMenuListScreen):
     WIDTH_HD = 400
@@ -40,7 +30,7 @@ class SearchClient(BaseArchivCZSKMenuListScreen):
         BaseArchivCZSKMenuListScreen.__init__(self, session)
         self.session = session
         self.currService = currService
-        self.searchList = createSearchList()
+        self.searchList = seeker.getCapabilities()
         self.searchExp = EventInfo(session.nav, EventInfo.NOW).getEvent().getEventName()
         self["infolist"] = PanelList([], 30)
         self['search'] = Label(self.searchExp)

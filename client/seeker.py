@@ -8,7 +8,21 @@ Created on 11.1.2013
 import traceback
 from Screens.MessageBox import MessageBox   
 from Plugins.Extensions.archivCZSK import _ 
-from Plugins.Extensions.archivCZSK.gui.common import showInfoMessage,showErrorMessage
+from Plugins.Extensions.archivCZSK.gui.common import showInfoMessage, showErrorMessage
+
+
+
+def getCapabilities():
+    """
+    Vrati zoznam vsetkych moznosti vyhladavania: tuple(nazov_vyhladavania, id_doplnku, mod_vyhladavania)
+    """
+    list = []
+    list.append((_('Search in OnlineFiles'), 'plugin.video.online-files', 'all'))
+    list.append((_('Search in Ulozto.cz'), 'plugin.video.online-files', 'ulozto.cz'))
+    list.append((_('Search in Bezvadata.cz'), 'plugin.video.online-files', 'bezvadata.cz'))
+    list.append((_('Search in Hellspy.cz'), 'plugin.video.online-files', 'hellspy.cz'))
+    list.append((_('Search in Befun.cz'), 'plugin.video.befun.cz', 'all'))
+    return list
 
 #    Napriklad:
 #   
@@ -23,8 +37,8 @@ def search(session, search_exp, addon_id, mode=None, cb=None):
     @param : addon_id - id addonu v ktorom chceme vyhladavat
     @param : mode - mod vyhladavania podporovany addonom
     """
-    if search_exp is None or search_exp =="":
-        showInfoMessage(session,_("Empty search expression"))
+    if search_exp is None or search_exp == "":
+        showInfoMessage(session, _("Empty search expression"))
         return cb()
     
     archivCZSKSeeker = ArchivCZSKSeeker.getInstance(session, cb)
@@ -136,6 +150,8 @@ class ArchivCZSKSeeker():
 def getSearcher(session, addon_name, archivczsk, succ_cb, err_cb):
     if addon_name == 'plugin.video.online-files':
         return OnlineFilesSearch(session, archivczsk, succ_cb, err_cb)
+    elif addon_name == 'plugin.video.befun.cz':
+        return BefunSearch(session, archivczsk, succ_cb, err_cb)
     else:
         return None
             
@@ -187,6 +203,16 @@ class OnlineFilesSearch(Search):
     def hellspy_search(self, search_exp):
         params = {'cp':'hellspy.cz', 'search':search_exp, 'search-no-history':True}
         self.provider.get_content(self.session, params, self.succ_cb, self.err_cb)
+        
+        
+class BefunSearch(Search):
+    addon_id = 'plugin.video.befun.cz'
+    
+    def search(self, search_exp, mode='all'):
+        params = {'search':search_exp, 'search-no-history':True}
+        self.provider.get_content(self.session, params, self.succ_cb, self.err_cb)
+        
+        
 
 
 #def main(session, **kwargs):
