@@ -15,6 +15,7 @@ from Components.config import config
 from Components.Pixmap import Pixmap, PixmapConditional
 from Tools.LoadPixmap import LoadPixmap
 
+
 from Plugins.Extensions.archivCZSK import _
 from Plugins.Extensions.archivCZSK import log
 from Plugins.Extensions.archivCZSK import settings
@@ -32,6 +33,7 @@ from common import MyConditionalLabel, ButtonLabel, PanelList, PanelListEntryHD,
 from download import DownloadManagerMessages, DownloadList
 from menu import ArchiveCZSKConfigScreen
 from base import  BaseArchivCZSKMenuListScreen
+from exception import AddonExceptionHandler, DownloadExceptionHandler, PlayExceptionHandler
 
 PanelListEntry = PanelListEntryHD
 
@@ -77,7 +79,7 @@ class VideoAddonItemHandler(ItemHandler):
                 self.content_screen.stopLoading()
                 self.open_video_addon(item.addon, list_items)
                 
-            @self.content_screen.exception_dec
+            @AddonExceptionHandler()
             def open_item_error_cb(failure):
                 self.open_video_addon_cb(item.addon.provider)
                 self.content_screen.stopLoading()
@@ -198,7 +200,7 @@ class ContentItemHandler(ItemHandler):
                 self.content_screen.showList()
                 self.content_screen.workingFinished()
             
-        @self.content_screen.exception_dec
+        @AddonExceptionHandler()
         def open_item_error_cb(failure):
             self.content_screen.stopLoading()
             self.content_screen.showList()
@@ -222,7 +224,8 @@ class ContentItemHandler(ItemHandler):
         
 
     def play_item(self, item, mode='play'):
-        @self.content_screen.exception_dec
+        
+        @PlayExceptionHandler()
         def play(mode):
             if mode == 'play_and_download':
                 if item.url.startswith('rtmp'):
@@ -282,7 +285,7 @@ class ContentItemHandler(ItemHandler):
             list_items, screen_command, args = result
             self.content_screen.resolveCommand(screen_command, args)
             
-        @self.content_screen.exception_dec
+        @AddonExceptionHandler()
         def run_item_error_cb(failure):
             self.content_screen.stopLoading()
             self.content_screen.showList()
@@ -296,7 +299,7 @@ class ContentItemHandler(ItemHandler):
         
     
     def download_item(self, item, mode=""):
-        @self.content_screen.exception_dec
+        @DownloadExceptionHandler()
         def start_download():
             self.content_provider.download(item, startCB=startCB, finishCB=finishCB, mode=mode)
             

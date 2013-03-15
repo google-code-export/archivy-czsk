@@ -16,7 +16,6 @@ from skins import archivCZSK_skins
 from common import PanelList, PanelListEntryHD, PanelListEntrySD
 from Plugins.Extensions.archivCZSK import _
 from Plugins.Extensions.archivCZSK import log
-from Plugins.Extensions.archivCZSK.engine.exceptions.archiveException import CustomInfoError, CustomWarningError, CustomError, ArchiveThreadException
 
 PanelListEntry = PanelListEntryHD
 
@@ -27,7 +26,7 @@ class BaseArchivCZSKScreen(Screen):
         self.HD = False
         
         #setting SD/HD skin
-        if getDesktop(0).size().width() == 1280:
+        if getDesktop(0).size().width() >= 1280:
             self.HD = True
         if self.HD and hasattr(archivCZSK_skins, self.__class__.__name__ + '_HD'):
             log.debug('setting %s skin' , self.__class__.__name__ + '_HD')
@@ -136,7 +135,6 @@ class BaseArchivCZSKMenuListScreen(BaseArchivCZSKScreen):
         self["menu"].show()  
 
     
-    # returns selected item from menu list
     def getSelectedItem(self):
         if len(self.lst_items) > 0:
             idx = self["menu"].getSelectedIndex()
@@ -147,7 +145,6 @@ class BaseArchivCZSKMenuListScreen(BaseArchivCZSKScreen):
     
     def updateMenuList(self):
         pass
-        
     
     def ok(self):
         pass
@@ -159,19 +156,18 @@ class BaseArchivCZSKMenuListScreen(BaseArchivCZSKScreen):
     def up(self):
         if not self.working:
             self["menu"].up()
-            #self.updateGUI()
     
     def down(self):
         if not self.working:
             self["menu"].down()
-            #self.updateGUI()
             
-    def open_screen(self, *args, **kwargs):
-        self.session.open(*args, **kwargs)
-        
-    def open_screen_with_cb(self, cb, *args, **kwargs):
-        self.session.openWithCallback(cb, *args, **kwargs)
-        
+    def right(self):
+        if not self.working:
+            self["menu"].right()
+            
+    def left(self):
+        if not self.working:
+            self["menu"].left()
         
     ### Messages ###
             
@@ -189,41 +185,6 @@ class BaseArchivCZSKMenuListScreen(BaseArchivCZSKScreen):
         if isinstance(info, unicode):
             info = info.encode('utf-8', 'ignore')
         self.session.openWithCallback(self.workingFinished, MessageBox, info, type=MessageBox.TYPE_INFO, timeout=timeout)
-
-        
-    #############
-    
-    
-    # exception decorator to handle addon exceptions
-    def exception_dec(self, func):
-        def wrapped(*args, **kwargs):
-            try:
-                func(*args, **kwargs) 
-                
-            # addon specific exceptions
-            except CustomInfoError as er:
-                self.showInfo(er.value, self.timeout)
-            except CustomWarningError as er:
-                self.showWarning(er.value, self.timeout)
-            except CustomError as er:
-                self.showError(er.value, self.timeout)
-    
-            # loading exceptions
-            except HTTPError, e:
-                self.showError("%s\n%s:%d" % (_("Error in loading"), _("HTTP Error"), e.code), self.timeout)
-            except URLError, e:
-                self.showError("%s\n%s:%s" % (_("Error in loading"), _("URL Error"), str(e.reason)), self.timeout)
-                
-            # cancel loading task
-            except ArchiveThreadException:
-                self.workingFinished()
-            
-            # unknown exception       
-            except Exception, e:
-                self.showError(_("Script error, author of this addon needs to update it"))
-                traceback.print_exc()
-                #self.showError("%s:%s" % (_("Unknown Error"), str(e)), self.timeout)
-        return wrapped
         
             
         
