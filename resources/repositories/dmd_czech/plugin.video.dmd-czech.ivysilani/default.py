@@ -17,7 +17,7 @@ swfurl = 'http://img.ceskatelevize.cz/libraries/player/flashPlayer.swf?version=1
 __settings__ = ArchivCZSK.get_addon('plugin.video.dmd-czech.ivysilani')
 home = __settings__.get_info('path')
 icon = os.path.join(home, 'icon.png')
-nexticon = os.path.join(home, 'nextpage.png') 
+nexticon = os.path.join(home, 'nextpage.png')
 page_pole_url = []
 page_pole_no = []
 
@@ -40,17 +40,17 @@ def OBSAH():
 def KATEGORIE():
     addDir('Filmy', __baseurl__ + '/filmy/', 3, icon)
     addDir('Seriály', __baseurl__ + '/serialy/', 3, icon)
-    addDir('Dokumenty', __baseurl__ + '/dokumenty/', 3, icon)   
-    addDir('Sport', __baseurl__ + '/sportovni/', 3, icon)   
-    addDir('Hudba', __baseurl__ + '/hudebni/', 3, icon)   
-    addDir('Zábava', __baseurl__ + '/zabavne/', 3, icon)   
-    addDir('Děti a mládež', __baseurl__ + '/deti/', 3, icon)   
-    addDir('Vzdělání', __baseurl__ + '/vzdelavaci/', 3, icon)   
-    addDir('Zpravodajství', __baseurl__ + '/zpravodajske/', 3, icon)   
-    addDir('Publicistika', __baseurl__ + '/publicisticke/', 3, icon)   
-    addDir('Magazíny', __baseurl__ + '/magaziny/', 3, icon)   
-    addDir('Náboženské', __baseurl__ + '/nabozenske/', 3, icon)   
-    addDir('Všechny', __baseurl__ + '/zanr-vse/', 3, icon)   
+    addDir('Dokumenty', __baseurl__ + '/dokumenty/', 3, icon)  
+    addDir('Sport', __baseurl__ + '/sportovni/', 3, icon)  
+    addDir('Hudba', __baseurl__ + '/hudebni/', 3, icon)  
+    addDir('Zábava', __baseurl__ + '/zabavne/', 3, icon)  
+    addDir('Děti a mládež', __baseurl__ + '/deti/', 3, icon)  
+    addDir('Vzdělání', __baseurl__ + '/vzdelavaci/', 3, icon)  
+    addDir('Zpravodajství', __baseurl__ + '/zpravodajske/', 3, icon)  
+    addDir('Publicistika', __baseurl__ + '/publicisticke/', 3, icon)  
+    addDir('Magazíny', __baseurl__ + '/magaziny/', 3, icon)  
+    addDir('Náboženské', __baseurl__ + '/nabozenske/', 3, icon)  
+    addDir('Všechny', __baseurl__ + '/zanr-vse/', 3, icon)  
 
 def LIVE_OBSAH(url):
     program = [r'ČT1 - ', r'ČT2 - ', r'ČT24 - ', r'ČT4 - ']
@@ -76,7 +76,7 @@ def LIVE_OBSAH(url):
             prehrano = prehrano[(prehrano.find('width:') + len('width:') + 1):]
             #name_a = item.find('p')
             try:
-                name_a = item.find('a') 
+                name_a = item.find('a')
                 name = program[i] + name_a.getText(" ").encode('utf-8') + '- Přehráno: ' + prehrano.encode('utf-8')
                 url = 'http://www.ceskatelevize.cz' + str(item.a['href'])
                 thumb = str(item.img['src'])
@@ -116,7 +116,7 @@ def DAY_LIST(url):
     for item in items:
         item = item.find('div', 'logo')    
         item = item.find('img')
-	icons = item['src']
+        icons = item['src']
         name = item['alt'].encode('utf-8').strip()
         addDir(name, url, 9, icons)
 
@@ -125,22 +125,22 @@ def DAY_PROGRAM_LIST(url, chnum):
     doc = read_page(url)
     items = doc.findAll('div', 'logo clearfix')    
     for item in items:
-    	item = item.find('img')
-    	name = item['alt'].encode('utf-8').strip()
-    	if name == chnum:
-		items2 = item.findParent()
-		items2 = items2.findParent()
-		for item2 in items2.findAll('a'):
-			item3 = item2.findParent()
-			item3 = item3.findParent()
-			item3 = item3.findParent()
-			cas = item3.find('div', 'time')
-			cas = cas.getText(" ").encode('utf-8')
-        		name = item2.getText(" ").encode('utf-8')
-        		link = str(item2['href'])
-			icons = item['src']
-			if link != "#add":
-       				addDir(cas + ' ' + name, 'http://www.ceskatelevize.cz' + link, 10, icon)
+        item = item.find('img')
+        name = item['alt'].encode('utf-8').strip()
+        if name == chnum:
+                items2 = item.findParent()
+                items2 = items2.findParent()
+                for item2 in items2.findAll('a'):
+                        item3 = item2.findParent()
+                        item3 = item3.findParent()
+                        item3 = item3.findParent()
+                        cas = item3.find('div', 'time')
+                        cas = cas.getText(" ").encode('utf-8')
+                        name = item2.getText(" ").encode('utf-8')
+                        link = str(item2['href'])
+                        icons = item['src']
+                        if link != "#add":
+                                addDir(cas + ' ' + name, 'http://www.ceskatelevize.cz' + link, 10, icon)
 
 
 def date2label(date):
@@ -155,12 +155,12 @@ def DATE_LIST(url):
          date = datetime.date(*time.strptime(date, DATE_FORMAT)[:3])
      else:
          date = datetime.date.today()
-     # Add link to previous month virtual folder 
+     # Add link to previous month virtual folder
      pdate = date - datetime.timedelta(days=30)
      addDir('Předchozí měsíc (%s)' % date2label(pdate).encode('utf-8'), __baseurl__ + '/' + pdate.strftime(DATE_FORMAT), 5, icon)
      for i in range(0, 30):
            pdate = date - datetime.timedelta(i)
-     	   addDir(date2label(pdate).encode('utf-8'), __baseurl__ + '/' + pdate.strftime(DATE_FORMAT), 8, icon)
+           addDir(date2label(pdate).encode('utf-8'), __baseurl__ + '/' + pdate.strftime(DATE_FORMAT), 8, icon)
 
 
 # vypis nejsledovanejsi za tyden
@@ -169,7 +169,7 @@ def MOSTVISITED(url):
     #items = doc.find('ul', 'clearfix content','mostWatchedBox')    
     items = doc.find(id="mostWatchedBox")    
     for item in items.findAll('a'):
-       	    name = item.getText(" ").encode('utf-8')
+            name = item.getText(" ").encode('utf-8')
             link = str(item['href'])
             item = item.find('img')
             icons = item['src']
@@ -181,7 +181,7 @@ def NEWEST(url):
     doc = read_page(url)
     items = doc.find(id="newestBox")    
     for item in items.findAll('a'):
-       	    name = item.getText(" ").encode('utf-8')
+            name = item.getText(" ").encode('utf-8')
             link = str(item['href'])
             item = item.find('img')
             icons = item['src']
@@ -208,26 +208,36 @@ def VIDEO_LIST(url, video_listing= -1):
     if re.search('Ouha', str(items), re.U):
         bonuslink = url + 'bonusy/'
         BONUSY(bonuslink)
-    for item in items.findAll('li', 'itemBlock clearfix'):
-        try:
-            name_a = item.find('h3')
-            name_a = name_a.find('a')
-            name = name_a.getText(" ").encode('utf-8')
-            if len(name) < 2:
-                name = 'Titul bez názvu'
-            popis_a = item.find('p') 
-            popis = popis_a.getText(" ").encode('utf-8')
-            popis = re.sub('mdash;', '-', popis)
-            if re.match('Reklama:', popis, re.U):
-                popis = 'Titul bez názvu'
-            url = 'http://www.ceskatelevize.cz' + str(item.a['href'])
-            url = re.sub('porady', 'ivysilani', url)
-            thumb = str(item.img['src'])
-            #print name+' '+popis, thumb, url
-            addDir(name + ' ' + popis, url, 10, thumb)
-        except:
-            #print 'Licence pro internetové vysílání již skončila.', thumb, 'http://www.ceskatelevize.cz'
-            addDir('Licence pro internetové vysílání již skončila.', link, 60, thumb)
+    if items is None:
+        item = doc.find("div", {"id": "programmeInfoDetail"})
+        name = item.find('h2').getText(" ").encode('utf-8')
+        popis = item.find('p',recursive=False).getText(" ").encode('utf-8')
+        url = str(item.find("div", {"id": "programmeInfo"}).a['href'])
+        url = 'http://www.ceskatelevize.cz' + url
+        url = re.sub('porady', 'ivysilani', url)
+        print name,popis,url
+        addDir(name + ' ' + popis, url, 10, None)
+    else:
+        for item in items.findAll('li', 'itemBlock clearfix'):
+            try:
+                name_a = item.find('h3')
+                name_a = name_a.find('a')
+                name = name_a.getText(" ").encode('utf-8')
+                if len(name) < 2:
+                    name = 'Titul bez názvu'
+                popis_a = item.find('p') 
+                popis = popis_a.getText(" ").encode('utf-8')
+                popis = re.sub('mdash;', '-', popis)
+                if re.match('Reklama:', popis, re.U):
+                    popis = 'Titul bez názvu'
+                url = 'http://www.ceskatelevize.cz' + str(item.a['href'])
+                url = re.sub('porady', 'ivysilani', url)
+                thumb = str(item.img['src'])
+                #print name+' '+popis, thumb, url
+                addDir(name + ' ' + popis, url, 10, thumb)
+            except:
+                #print 'Licence pro internetové vysílání již skončila.', thumb, 'http://www.ceskatelevize.cz'
+                addDir('Licence pro internetové vysílání již skončila.', link, 60, thumb)
                
     try:
         pager = doc.find('div', 'pagingContent')
@@ -239,20 +249,20 @@ def VIDEO_LIST(url, video_listing= -1):
         next_url = next_page_i.a['href']
         next_label = 'Další strana (Zobrazena videa ' + act_page[0] + '-' + act_page[2] + ' ze ' + act_page[4] + ')'
         #print next_label,next_url
-        video_listing_setting = int(__settings__.get_setting('video-listing')) 
-	if video_listing_setting > 0:
-		next_label = 'Další strana (celkem ' + act_page[4] + ' videí)'
-	if (video_listing_setting > 0 and video_listing == -1):
-		if video_listing_setting == 3:
-			video_listing = 99999
-		elif video_listing_setting == 2:
-			video_listing = 3
-		else:
-			video_listing = video_listing_setting
-	if (video_listing_setting > 0 and video_listing > 0):
-		VIDEO_LIST('http://ceskatelevize.cz' + next_url, video_listing - 1)
-	else:
-		addDir(next_label, 'http://www.ceskatelevize.cz' + next_url, 6, nexticon)
+        video_listing_setting = int(__settings__.get_setting('video-listing'))
+        if video_listing_setting > 0:
+                next_label = 'Další strana (celkem ' + act_page[4] + ' videí)'
+        if (video_listing_setting > 0 and video_listing == -1):
+                if video_listing_setting == 3:
+                        video_listing = 99999
+                elif video_listing_setting == 2:
+                        video_listing = 3
+                else:
+                        video_listing = video_listing_setting
+        if (video_listing_setting > 0 and video_listing > 0):
+                VIDEO_LIST('http://ceskatelevize.cz' + next_url, video_listing - 1)
+        else:
+                addDir(next_label, 'http://www.ceskatelevize.cz' + next_url, 6, nexticon)
     except:
         print 'STRANKOVANI NENALEZENO!'
 
@@ -286,8 +296,8 @@ def BONUSY(link):
         addDir(next_label, 'http://www.ceskatelevize.cz' + next_url, 7, nexticon)
     except:
         print 'STRANKOVANI NENALEZENO!'
-        
-        
+       
+       
 def HLEDAT(url):
     #https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=filtered_cse&num=20&hl=cs&prettyPrint=false&source=gcsc&gss=.cz&sig=981037b0e11ff304c7b2bfd67d56a506&cx=000499866030418304096:fg4vt0wcjv0&q=vypravej+tv&googlehost=www.google.com&callback=google.search.Search.apiary6680&nocache=1360011801862
     #https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=filtered_cse&num=20&start=20&hl=cs&prettyPrint=false&source=gcsc&gss=.cz&sig=981037b0e11ff304c7b2bfd67d56a506&cx=000499866030418304096:fg4vt0wcjv0&q=vypravej+tv&googlehost=www.google.com&callback=google.search.Search.apiary6680&nocache=1360011801862
@@ -335,7 +345,7 @@ def HLEDAT(url):
 
 
 
-                
+               
 def VIDEOLINK(url, name):
     req = urllib2.Request(url)
     req.add_header('User-Agent', _UserAgent_)
@@ -374,7 +384,7 @@ def VIDEOLINK(url, name):
         match = re.compile('<switchitem id="(.+?)" base="(.+?)"').findall(str(item))
         for id, base in match:
             base = re.sub('&amp;', '&', base)
-            if re.search('AD', id, re.U): 
+            if re.search('AD', id, re.U):
                 continue
             video = re.compile('<video src="(.+?)" system-bitrate=".+?" label="(.+?)" enabled=".+?"').findall(str(item))
             for cesta, kvalita in video:
@@ -389,7 +399,7 @@ def VIDEOLINK(url, name):
 
 def http_build_query(params, topkey=''):
     from urllib import quote_plus
-    
+   
     if len(params) == 0:
        return ""
  
@@ -430,8 +440,8 @@ def http_build_query(params, topkey=''):
 
     # remove the last '&'
     if (result) and (topkey == '') and (result[-1] == '&'):
-       result = result[:-1]       
-  
+       result = result[:-1]      
+ 
     return result
 
 
@@ -509,9 +519,7 @@ elif mode == 11:
 elif mode == 12:
         print "" + url
         NEWEST(url)
-        
+       
 elif mode == 13:
         print "" + url
         HLEDAT(url)
-
-
