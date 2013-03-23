@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import urllib2,urllib,re,os
 from parseutils import *
-from urlparse import urlparse
+from urlparse import urlparse,parse_qs
 from util import addDir, addLink, getSearch
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
 
@@ -55,24 +55,20 @@ def VIDEOLINK(url,name):
     response = urllib2.urlopen(req)
     httpdata = response.read()
     response.close()
-    playlist = re.compile('playlistfile=(.+?)&autostart').findall(httpdata)
     title = re.compile('<title>(.+?)</title>').findall(httpdata)
-    streamxml = re.sub('%26','&',playlist[0])  
-    req = urllib2.Request(streamxml)
-    req.add_header('User-Agent', _UserAgent_)
-    response = urllib2.urlopen(req)
-    doc = response.read()
-    response.close()
-    location = re.compile('<location>(.+?)</location>').findall(str(doc))
-    streamer = re.compile('<meta rel="streamer">(.+?)</meta>').findall(str(doc))
-    print location[0], streamer[0]
-    cesta = 'mp4:'+location[0]
-    server = re.compile('<!\[CDATA\[(.+?)\]\]>').findall(str(streamer[0]))[0]
     title = title[0] + ' ' + name
-    swfurl = 'http://www.stv.sk/online/player/player-licensed-sh.swf'
-    rtmp_url = server+' playpath='+cesta+' pageUrl='+url+' swfUrl='+swfurl+' swfVfy=true'  
-    print rtmp_url
-    addLink(title,rtmp_url,icon,name)
+    
+    parsed = urlparse(url)
+    video_id = parse_qs(parsed.query)['id'][0]
+    url = 'rtmp://e6.stv.livebox.sk:80/stv-tv-arch/_definst_/mp4:' + video_id + '?auth=b64:X2FueV98MTM2NDA3OTUwNHxkZjA3OWJkZjcwZjFhNzFiMjYyNmUyODc3MzE1ZjUxY2Y1YmQzY2Q1'
+    #title = name
+    swfurl = 'http://embed.stv.livebox.sk/v1/LiveboxPlayer.swf'
+    #swfurl = 'http://www.stv.sk/online/player/player-licensed-sh.swf'
+    rtmp_url = url + ' swfUrl=' + swfurl + ' swfVfy=true'  
+    #quality = ''
+    #m3u8_url = 'http://e6.stv.livebox.sk:80/stv-tv-arch/_definst_/' + video_id + '' + quality + '.smil/playlist.m3u8?auth=b64:X2FueV98MTM2NDA3OTUwNHxkZjA3OWJkZjcwZjFhNzFiMjYyNmUyODc3MzE1ZjUxY2Y1YmQzY2Q1'
+    addLink(title, rtmp_url, icon, name)
+    #addLink(name, m3u8_url, icon, name)
 
 url=None
 name=None
