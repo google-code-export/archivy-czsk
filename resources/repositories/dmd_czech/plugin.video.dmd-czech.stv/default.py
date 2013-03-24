@@ -49,7 +49,7 @@ def OBSAH_RELACE(url):
         print '>> Novější' ,'http://' + cast_url[1] + cast_url[2] + dalsical
         addDir('>> Novější','http://' + cast_url[1] + cast_url[2] + dalsical,2,nexticon)   
                 
-def VIDEOLINK(url,name):
+def VIDEOLINK(url, name):
     req = urllib2.Request(url)
     req.add_header('User-Agent', _UserAgent_)
     response = urllib2.urlopen(req)
@@ -57,18 +57,31 @@ def VIDEOLINK(url,name):
     response.close()
     title = re.compile('<title>(.+?)</title>').findall(httpdata)
     title = title[0] + ' ' + name
+    video_id = re.search('.*?LiveboxPlayer.flash\(.+?stream_id:+.\"(.+?)\"', httpdata, re.IGNORECASE | re.DOTALL)
+    video_id = video_id.group(1)
+    print video_id
     
-    parsed = urlparse(url)
-    video_id = parse_qs(parsed.query)['id'][0]
-    url = 'rtmp://e6.stv.livebox.sk:80/stv-tv-arch/_definst_/mp4:' + video_id + '?auth=b64:X2FueV98MTM2NDA3OTUwNHxkZjA3OWJkZjcwZjFhNzFiMjYyNmUyODc3MzE1ZjUxY2Y1YmQzY2Q1'
-    #title = name
+    req = urllib2.Request("http://embed.stv.livebox.sk/v1/tv-arch.js")
+    req.add_header('User-Agent', _UserAgent_)
+    req.add_header('Referer', url)
+    response = urllib2.urlopen(req)
+    keydata = response.read()
+    #print keydata
+    response.close()
+    auth = re.search(".*?auth=b64:(.+?)\'", keydata, re.IGNORECASE | re.DOTALL)
+    auth = base64.decodestring(auth.group(1))
+    #print auth
+    
+    
+    url = 'rtmp://e6.stv.livebox.sk:80/stv-tv-arch/_definst_/mp4:' + video_id + '?auth=' + auth
+    #title = namehttp://embed.stv.livebox.sk/v1/LiveboxPlayer.swf?nocache=1364079106732
     swfurl = 'http://embed.stv.livebox.sk/v1/LiveboxPlayer.swf'
     #swfurl = 'http://www.stv.sk/online/player/player-licensed-sh.swf'
-    rtmp_url = url + ' swfUrl=' + swfurl + ' swfVfy=true'  
+    rtmp_url = '"' + url + '"' + ' swfUrl=' + swfurl + ' swfVfy=true'
+    print rtmp_url 
     #quality = ''
     #m3u8_url = 'http://e6.stv.livebox.sk:80/stv-tv-arch/_definst_/' + video_id + '' + quality + '.smil/playlist.m3u8?auth=b64:X2FueV98MTM2NDA3OTUwNHxkZjA3OWJkZjcwZjFhNzFiMjYyNmUyODc3MzE1ZjUxY2Y1YmQzY2Q1'
     addLink(title, rtmp_url, icon, name)
-    #addLink(name, m3u8_url, icon, name)
 
 url=None
 name=None
