@@ -5,7 +5,7 @@ Created on 21.10.2012
 '''
 import os, traceback, sys, imp
 from Tools.LoadPixmap import LoadPixmap
-from Components.config import config, ConfigSubsection, ConfigSelection, ConfigYesNo, ConfigText, ConfigDirectory, configfile, getConfigListEntry
+from Components.config import config, ConfigSubsection, ConfigSelection, ConfigYesNo, ConfigText, ConfigNumber, ConfigIP, ConfigDirectory, configfile, getConfigListEntry
 
 from tools import util, parser
 from Plugins.Extensions.archivCZSK import _, log
@@ -78,13 +78,8 @@ class Addon(object):
     def get_localized_string(self, id_language):
         return self.language.get_localized_string(id_language)
     
-    def get_setting(self, setting):
-        try:
-            setting = getattr(self.settings.main, '%s' % setting)
-        except Exception, e:
-            log.debug('%s cannot retrieve setting %s\nreason %s', self, setting, str(e))
-        else:
-            return setting.getValue()
+    def get_setting(self, setting_id):
+        return self.settings.get_setting(setting_id)
     
     def get_info(self, info):
         try:
@@ -339,7 +334,17 @@ class AddonSettings(object):
                             
     def get_configlist_categories(self):
         return self.categories
-             
+    
+    def get_setting(self, setting_id):
+        try:
+            setting = getattr(self.main, '%s' % setting_id)
+        except ValueError:
+            log.debug('%s cannot retrieve setting %s,  Invalid setting id', self, setting_id)
+            return None
+        else:
+            if isinstance(setting, ConfigIP):
+                return setting.getText()
+            return setting.getValue()
 
     def _get_label(self, label):
         log.debug('resolving label: %s', label)
@@ -376,6 +381,14 @@ class AddonSettings(object):
         elif entry['type'] == 'labelenum':
             choicelist = [(self._get_label(e).encode('utf-8'), self._get_label(e).encode('utf-8')) for e in entry['values'].split("|")]
             setattr(setting, entry['id'], ConfigSelection(default=entry['default'], choices=choicelist))
+            entry['setting_id'] = getattr(setting, entry['id'])
+            
+        elif entry['type'] == 'ipaddress':
+            setattr(setting, entry['id'], ConfigIP(default=map(int, entry['default'].split('.')), auto_jump=True))
+            entry['setting_id'] = getattr(setting, entry['id'])
+            
+        elif entry['type'] == 'number':
+            setattr(setting, entry['id'], ConfigNumber(default=int(entry['default'])))
             entry['setting_id'] = getattr(setting, entry['id'])
         else:
             log.debug('%s cannot initialize unknown entry %s', self, entry['type'])
