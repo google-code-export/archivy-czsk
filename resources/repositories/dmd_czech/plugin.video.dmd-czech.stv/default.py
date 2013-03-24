@@ -68,20 +68,24 @@ def VIDEOLINK(url, name):
     keydata = response.read()
     #print keydata
     response.close()
-    auth = re.search(".*?auth=b64:(.+?)\'", keydata, re.IGNORECASE | re.DOTALL)
-    auth = base64.decodestring(auth.group(1))
-    #print auth
+    auth = re.search(".*?auth=(.+?)\'", keydata, re.IGNORECASE | re.DOTALL)
+    #auth = re.search(".*?auth=b64:(.+?)\'", keydata, re.IGNORECASE | re.DOTALL)
+    auth = auth.group(1)#base64.decodestring(auth.group(1))
+    streamer = re.search(".*?rtmp:\/\/(.+?)\/", keydata, re.IGNORECASE | re.DOTALL)
+    streamer = streamer.group(1)
     
-    
-    url = 'rtmp://e6.stv.livebox.sk:80/stv-tv-arch/_definst_/mp4:' + video_id + '?auth=' + auth
+    url = 'rtmp://' + streamer + '/stv-tv-arch/_definst_/mp4:' + video_id + '?auth=' + auth
     #title = namehttp://embed.stv.livebox.sk/v1/LiveboxPlayer.swf?nocache=1364079106732
     swfurl = 'http://embed.stv.livebox.sk/v1/LiveboxPlayer.swf'
     #swfurl = 'http://www.stv.sk/online/player/player-licensed-sh.swf'
-    rtmp_url = '"' + url + '"' + ' swfUrl=' + swfurl + ' swfVfy=true'
-    print rtmp_url 
-    #quality = ''
-    #m3u8_url = 'http://e6.stv.livebox.sk:80/stv-tv-arch/_definst_/' + video_id + '' + quality + '.smil/playlist.m3u8?auth=b64:X2FueV98MTM2NDA3OTUwNHxkZjA3OWJkZjcwZjFhNzFiMjYyNmUyODc3MzE1ZjUxY2Y1YmQzY2Q1'
-    addLink(title, rtmp_url, icon, name)
+    rtmp_url = '"' + url + '"' + '-W ' + swfurl
+    #print rtmp_url
+    m3u8_url = 'http://'+streamer+'/stv-tv-arch/_definst_/' + video_id +  '/playlist.m3u8?auth='+ auth
+    print m3u8_url
+    
+    # rtmp stream mi nefunguje, len hls...
+    #addLink(title, rtmp_url, icon, name)
+    addLink(name, m3u8_url, icon, name)
 
 url=None
 name=None
