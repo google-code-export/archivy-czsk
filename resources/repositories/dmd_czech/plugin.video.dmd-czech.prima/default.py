@@ -118,6 +118,7 @@ def INDEX(url,page,kanal):
                 #print '>> Další strana >>',url,1,next_page
                 addDir('>> Další strana ('+str(next_page+1)+' z '+max_page+')',url,4,nexticon,next_page,kanal)
 
+
         
 def VIDEOLINK(url,name):
     strquery = '?method=json&action=video'
@@ -159,6 +160,13 @@ def VIDEOLINK(url,name):
             hd_url = 'rtmp://bcasts1w.livebox.cz:80/iprima_token_'+geo_zone[0]+'?auth=_any_'+keydata[1]+' playpath=mp4:hq/'+hd_stream+ ' live=true'
             hq_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token_'+geo_zone[0]+'?auth=_any_'+keydata[1]+'/mp4:'+hq_stream[0]
             lq_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token_'+geo_zone[0]+'?auth=_any_'+keydata[1]+'/mp4:'+lq_stream[0]
+            
+            if __settings__.get_setting('proxy_use'):
+                proxy_ip = __settings__.get_setting('proxy_ip')
+                proxy_port = str(__settings__.get_setting('proxy_port'))
+                hd_url = hd_url + ' socks=' + proxy_ip+':'+proxy_port
+                hq_url = hq_url + ' socks=' + proxy_ip+':'+proxy_port
+                lq_url = lq_url + ' socks=' + proxy_ip+':'+proxy_port
         else:
             if re.match('Prima', hq_stream[0], re.U):
                 #hd_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token?auth=_any_'+keydata[1]+'/mp4:hq/'+hd_stream[0]
@@ -168,7 +176,8 @@ def VIDEOLINK(url,name):
             else:
                 hd_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token?auth=_any_'+keydata[1]+'/'+hd_stream
                 hq_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token?auth=_any_'+keydata[1]+'/'+hq_stream[0]
-                lq_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token?auth=_any_'+keydata[1]+'/'+lq_stream[0]              
+                lq_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token?auth=_any_'+keydata[1]+'/'+lq_stream[0]
+                             
 
         #print nahled, hq_url, lq_url
         if kvalita == "HD":
