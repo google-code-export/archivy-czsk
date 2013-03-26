@@ -100,9 +100,13 @@ def ABC(url):
 def CAT_LIST(url):
     doc = read_page(url)
     items = doc.find('div', 'clearfix programmesList')    
-    for item in items.findAll('a'):
-        name = item.getText(" ").encode('utf-8')
-        link = str(item['href'])
+    for item in items.findAll('li'):
+        item_a = item.find('a')
+        name = item_a.getText(" ").encode('utf-8')
+        bonus = item.find('span', 'labelBonus')
+        if bonus:
+            name = name + ' (pouze bonusy)'
+        link = str(item_a['href'])
         #print name,__baseurl__+link
         addDir(name, 'http://www.ceskatelevize.cz' + link, 6, icon)
 

@@ -16,7 +16,7 @@ _UserAgent_ = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko
 __settings__ = ArchivCZSK.get_addon('plugin.video.dmd-czech.voyo')
 home = __settings__.get_info('path')
 icon = os.path.join(home, 'icon.png')
-nexticon = os.path.join(home, 'nextpage.png') 
+nexticon = os.path.join(home, 'nextpage.png')
 page_pole_url = []
 page_pole_no = []
 secret_token = __settings__.get_setting('secret_token')
@@ -29,7 +29,7 @@ if secret_token == '':
 def OBSAH():
     addDir('Seriály', 'http://voyo.nova.cz/serialy/', 5, icon, 1)
     addDir('Pořady', 'http://voyo.nova.cz/porady/', 5, icon, 1)
-    addDir('Zprávy', 'http://voyo.nova.cz/zpravy/', 4, icon, 1)
+    addDir('Zprávy', 'http://voyo.nova.cz/zpravy/', 5, icon, 1)
     
 def CATEGORIES_OLD(url, page):
     doc = read_page(url)
@@ -235,16 +235,16 @@ def VIDEOLINK(url, name):
             except:
                 rtmp_url_hd = 0
         if __settings__.get_setting('kvalita_sel') == "HQ":
-            addLink(name, rtmp_url_hq, icon, desc)
+            addLink("HQ "+name, rtmp_url_hq, icon, desc)
         elif __settings__.get_setting('kvalita_sel') == "LQ":
-            addLink(name, rtmp_url_lq, icon, desc)
+            addLink("LQ "+name, rtmp_url_lq, icon, desc)
         elif __settings__.get_setting('kvalita_sel') == "HD":
             if rtmp_url_hd == 0:
-                addLink(name, rtmp_url_hq, icon, desc)                
+                addLink("HQ "+name, rtmp_url_hq, icon, desc)                
             else:
-                addLink(name, rtmp_url_hd, icon, desc)
+                addLink("HD "+name, rtmp_url_hd, icon, desc)
         else:
-            addLink(name, rtmp_url_hq, icon, desc)                
+            addLink("HQ "+name, rtmp_url_hq, icon, desc)                
 
 
 
@@ -293,8 +293,9 @@ elif mode == 5:
        
 elif mode == 2:
         print "" + url
-        print "" + str(page)        
+        print "" + str(page)     
         INDEX(url, page)
+            
 elif mode == 4:
         print "" + url
         print "" + str(page)                
@@ -303,4 +304,7 @@ elif mode == 4:
         
 elif mode == 3:
         print "" + url
-        VIDEOLINK(url, name)
+        try:
+            VIDEOLINK(url, name)
+        except IndexError:
+            INDEX(url, name)
