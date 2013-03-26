@@ -2,6 +2,7 @@
 import urllib2, urllib, re, os
 from parseutils import *
 from urlparse import urlparse
+from random import randint
 from util import addDir, addLink
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
 __dmdbase__ = 'http://iamm.netuje.cz/emulator/joj/image/'
@@ -21,10 +22,10 @@ SERIALY_FIX = []
 VYMENIT_LINK = {'csmatalent':'http://www.csmatalent.cz/video-cz.html'}
 
 LIST_MOD = {'mamaozenma':7,
-          'farmarhladazenu':8,
-          'csmatalent':6,
-          'sefka':5,
-          'hotelparadise':20, }
+            'farmarhladazenu':8,
+            'csmatalent':6,
+            'sefka':5,
+            'hotelparadise':20, }
 
 def zakazane(title):
     if title in ZAKAZANE:
@@ -351,7 +352,7 @@ def VIDEOLINK(url, name):
                 server = 'n09.joj.sk'
             else:
                 if int(serverno)>20:
-                    serverno=str(int(serverno)/10)
+                    serverno=str(randint(1,19))
                 if len(serverno)==2:
                     server = 'n' + serverno + '.joj.sk'
                 else:
@@ -385,7 +386,7 @@ def VIDEOLINK(url, name):
                 server = 'n09.joj.sk'
             else:
                 if int(serverno)>20:
-                    serverno=str(int(serverno)/10)
+                    serverno=str(randint(1,19))
                 if len(serverno)==2:
                     server = 'n' + serverno + '.joj.sk'
                 else:
