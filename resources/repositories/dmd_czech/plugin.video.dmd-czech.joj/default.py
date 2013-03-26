@@ -350,7 +350,12 @@ def VIDEOLINK(url, name):
             if __settings__.get_setting('stream_server'):
                 server = 'n09.joj.sk'
             else:
-                server = 'n0' + serverno + '.joj.sk'
+                if int(serverno)>20:
+                    serverno=str(int(serverno)/10)
+                if len(serverno)==2:
+                    server = 'n' + serverno + '.joj.sk'
+                else:
+                    server = 'n0' + serverno + '.joj.sk'
             tcurl = 'rtmp://' + server
             swfurl = 'http://player.joj.sk/JojPlayer.swf?no_cache=137034'
             port = '1935'
@@ -379,7 +384,12 @@ def VIDEOLINK(url, name):
             if __settings__.get_setting('stream_server'):
                 server = 'n09.joj.sk'
             else:
-                server = 'n0' + serverno + '.joj.sk'
+                if int(serverno)>20:
+                    serverno=str(int(serverno)/10)
+                if len(serverno)==2:
+                    server = 'n' + serverno + '.joj.sk'
+                else:
+                    server = 'n0' + serverno + '.joj.sk'
             tcurl = 'rtmp://' + server
             swfurl = basepath + 'fileadmin/templates/swf/csmt_player.swf?no_cache=171307'
             port = '1935'
