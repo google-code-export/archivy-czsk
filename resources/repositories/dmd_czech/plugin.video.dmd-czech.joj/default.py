@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import urllib2,urllib,re,os
+import urllib2, urllib, re, os
 from parseutils import *
 from urlparse import urlparse
 from util import addDir, addLink
@@ -11,6 +11,120 @@ home = __settings__.get_info('path')
 icon = os.path.join(home, 'icon.png')
 nexticon = os.path.join(home, 'nextpage.png') 
 
+
+JOJ_URL = 'http://www.joj.sk'
+JOJ_PLUS_URL = 'http://plus.joj.sk'
+ZAKAZANE = []
+
+RELACIE_FIX = ['anosefe']
+SERIALY_FIX = []
+VYMENIT_LINK = {'csmatalent':'http://www.csmatalent.cz/video-cz.html'}
+
+LIST_MOD = {'mamaozenma':7,
+          'farmarhladazenu':8,
+          'csmatalent':6,
+          'sefka':5,
+          'hotelparadise':20, }
+
+def zakazane(title):
+    if title in ZAKAZANE:
+        return True
+    return False
+   
+def fix_link(url):
+    if url in SERIALY_FIX:
+        url = url[:url.rfind('-')] + '-epizody.html'
+    elif url in RELACIE_FIX:
+        url = url[:url.rfind('-')] + '-archiv.html'
+    else:
+        for rel in VYMENIT_LINK.keys():
+            if rel in url:
+                return VYMENIT_LINK[rel] 
+    return url
+
+def list_mod(url):
+    for rel in LIST_MOD.keys():
+        if rel in url:
+            return LIST_MOD[rel]
+    return 4
+
+def image(url):
+    return icon
+
+
+def OBSAH():
+    addDir('JOJ', JOJ_URL, 1, icon, 1)
+    addDir('JOJ Plus', JOJ_PLUS_URL, 2, icon, 1)
+    addDir('Videoportal.sk', 'http://www.videoportal.sk/kategorie.html', 9, icon, 1)
+    
+def OBSAH_JOJ():
+    addDir('Relácie', JOJ_URL + '/archiv.html', 3, icon, 1)
+    addDir('Seriály', JOJ_URL + '/archiv.html', 3, icon, 0)
+    
+def OBSAH_JOJ_PLUS():
+    addDir('Relácie', JOJ_PLUS_URL + '/plus-archiv.html', 3, icon, 1)
+    addDir('Seriály', JOJ_PLUS_URL + '/plus-archiv.html', 3, icon, 0)
+
+def OBSAH_RELASER(url, rel):
+    zoznam = []
+    req = urllib2.Request(url)
+    req.add_header('User-Agent', _UserAgent_)
+    response = urllib2.urlopen(req)
+    httpdata = response.read()
+    response.close()
+    doc = BeautifulSoup(httpdata, convertEntities=BeautifulSoup.HTML_ENTITIES)
+    # vysielane relacie a serialy
+    for item in doc.findAll('div', 'j-filter-item'):
+        description = item.find('div', 'description')
+        if description:
+            title = description.find('strong').a['title'].encode('utf-8')
+            archiv = description.find('li', 'trailer')
+            link = archiv.a['href']
+            if rel and archiv.a.getText(' ').encode('utf-8') == 'Archív relácie':
+                if not zakazane(title):
+                    mod = list_mod(link)
+                    img = image(url)
+                    zoznam.append((title,link,mod,img,1))
+                    #print title, link
+            elif not rel and archiv.a.getText(' ').encode('utf-8') == 'Archív seriálu':
+                if not zakazane(title):
+                    mod = list_mod(link)
+                    img = image(url)
+                    zoznam.append((title,link,mod,img,1))
+                    #print title, link
+    # nevysielane relacie a serialy
+    for item in doc.findAll('li', 'i c j-filter-item'):
+        num = item.find('span', 'j-data').getText(' ')
+        title = item.a['title'].encode('utf-8')
+        link = item.a['href']
+        #print title,link
+        if rel and num.startswith(('65', '50')):
+            link = link[:link.rfind('-')]
+            if link.split('-')[-1] == 'o':
+                link = link[:link.rfind('-')]
+            link += '-archiv.html'
+            link = fix_link(link)
+            mod = list_mod(link)
+            img = image(url)
+            if not zakazane(title):
+                zoznam.append((title,link,mod,img,1))
+                #print title, link
+        elif not rel and num.startswith('497'):
+            link = link[:link.rfind('-')]
+            if link.split('-')[-1] == 'o':
+                link = link[:link.rfind('-')]
+            link += '-epizody.html'
+            mod = list_mod(link)
+            img = image(url)
+            if not zakazane(title):
+                zoznam.append((title,link,mod,img,1))
+                #print title, link
+    zoznam.sort(key=lambda x:x[0])
+    for title,link,mod,img,page in zoznam:
+        addDir(title,link,mod,img,1)
+
+
+"""
 def OBSAH():
     addDir('Publicistika','http://www.joj.sk',1,icon,1)
     addDir('Seriály','http://www.joj.sk',2,icon,1)
@@ -66,26 +180,28 @@ def OBSAH_ZAB():
     addDir('Buckovci','http://buckovci.joj.sk/buckovci-archiv.html',4,__dmdbase__+'buckovci.jpg',1)
     addDir('Experti','http://experti.joj.sk/experti-archiv.html',4,__dmdbase__+'experti.jpg',1)
     addDir('Extremne pripady','http://www.joj.sk/extremne-priprady/extremne-pripady-archiv.html',4,__dmdbase__+'extremne.jpg',1)    
-    
-def LIST(url,strana):
+"""
+
+
+def LIST(url, strana):
     req = urllib2.Request(url)
     req.add_header('User-Agent', _UserAgent_)
     response = urllib2.urlopen(req)
     httpdata = response.read()
     response.close()
-    if strana !=1:
+    if strana != 1:
         strankovani = re.compile('<form action="services(.+?)">').findall(httpdata)  
         cast_url = urlparse(url)
-        paging = re.sub('&amp;','&',strankovani[0])        
-        paging = 'http://'+cast_url[1]+'/services'+paging
-        data = "paging=1&pagingOffset="+str(strana)       
+        paging = re.sub('&amp;', '&', strankovani[0])        
+        paging = 'http://' + cast_url[1] + '/services' + paging
+        data = "paging=1&pagingOffset=" + str(strana)       
         request = urllib2.Request(paging)
         request.add_data(data)
-        request.add_header("Referer",url)    
-        request.add_header("Origin","http://"+cast_url[1])
-        request.add_header("X-Requested-With","XMLHttpRequest")
-        request.add_header("User-Agent",_UserAgent_)
-        request.add_header("Content-Type","application/x-www-form-urlencoded")
+        request.add_header("Referer", url)    
+        request.add_header("Origin", "http://" + cast_url[1])
+        request.add_header("X-Requested-With", "XMLHttpRequest")
+        request.add_header("User-Agent", _UserAgent_)
+        request.add_header("Content-Type", "application/x-www-form-urlencoded")
         con = urllib2.urlopen(request)
         data = con.read()
         con.close()
@@ -93,14 +209,14 @@ def LIST(url,strana):
         match = re.compile('<td><strong><a title=".+?" href="(.+?)">(.+?)</a>').findall(httpdata)
     else:        
         match = re.compile('<td><strong><a title=".+?" href="(.+?)">(.+?)</a>').findall(httpdata)        
-    for link,name in match:
+    for link, name in match:
         #print link,name
-        addDir(name,link,10,icon,1)
+        addDir(name, link, 10, icon, 1)
     try:
         strankovani = re.compile('title="Nasledujúce" href="#" data-name="pagingOffset" data-value="(.+?)"').findall(httpdata)
         next_page = strankovani[0]
         print next_page                
-        addDir('>> Další strana >>',url,4,nexticon,str(next_page))
+        addDir('>> Další strana >>', url, 4, nexticon, str(next_page))
     except:
         print 'strankovani nenalezeno'
 
@@ -115,7 +231,7 @@ def LIST_2(url):
             name = 'Bezejmenný titul'
         url = str(item.a['href']) 
         thumb = str(item.img['src'])   
-        addDir(name,'http://www.sefka.sk/'+url,10,thumb,1)
+        addDir(name, 'http://www.sefka.sk/' + url, 10, thumb, 1)
 
 def LIST_3(url):
     doc = read_page(url)
@@ -127,13 +243,13 @@ def LIST_3(url):
             name = 'Bezejmenný titul'
         url = str(item.a['href']) 
         thumb = str(item.img['src'])   
-        addDir(name,'http://www.csmatalent.cz/'+url,11,thumb,1)
+        addDir(name, 'http://www.csmatalent.cz/' + url, 11, thumb, 1)
     try:
         items = doc.find('ul', 'b-box b-pager-x c')
         dalsi = items.find('li', 'next')
         if len(dalsi) != 0:
             next_url = str(dalsi.a['href']) 
-            addDir('>> Další strana >>','http://www.csmatalent.cz/'+next_url,6,nexticon,1)
+            addDir('>> Další strana >>', 'http://www.csmatalent.cz/' + next_url, 6, nexticon, 1)
     except:
         print 'strankovani nenalezeno'
 
@@ -147,45 +263,45 @@ def LIST_4(url):
             name = 'Bezejmenný titul'
         url = str(item.a['href']) 
         thumb = str(item.img['src'])   
-        addDir(name,'http://www.mamaozenma.sk/'+url,10,thumb,1)
+        addDir(name, 'http://www.mamaozenma.sk/' + url, 10, thumb, 1)
     try:
         items = doc.find('ul', 'b-box b-pager-x c')
         dalsi = items.find('li', 'next')
         if len(dalsi) != 0:
             next_url = str(dalsi.a['href']) 
-            addDir('>> Další strana >>','http://www.mamaozenma.sk/'+next_url,7,nexticon,1)
+            addDir('>> Další strana >>', 'http://www.mamaozenma.sk/' + next_url, 7, nexticon, 1)
     except:
         print 'strankovani nenalezeno'
 
 def LIST_5(url):
     doc = read_page(url)
     items = doc.find('ul', 'l c')
-    for item in items.findAll('li','i'):
+    for item in items.findAll('li', 'i'):
         try:
             name = item.a['title'].encode('utf-8')
         except:
             name = 'Bezejmenný titul'
         url = str(item.a['href']) 
         thumb = str(item.img['src'])   
-        addDir(name,'http://www.farmarhladazenu.sk/'+url,10,'http://www.farmarhladazenu.sk/'+thumb,1)
+        addDir(name, 'http://www.farmarhladazenu.sk/' + url, 10, 'http://www.farmarhladazenu.sk/' + thumb, 1)
     try:
         items = doc.find('ul', 'b-box b-pager-x c')
         dalsi = items.find('li', 'next')
         if len(dalsi) != 0:
             next_url = str(dalsi.a['href']) 
-            addDir('>> Další strana >>','http://www.farmarhladazenu.sk/'+next_url,8,nexticon,1)
+            addDir('>> Další strana >>', 'http://www.farmarhladazenu.sk/' + next_url, 8, nexticon, 1)
     except:
         print 'strankovani nenalezeno'
 
 def VIDEOPORTAL(url):
     doc = read_page(url)
     items = doc.find('div', 'c-full c')
-    for item in items.findAll('div','b-wrap b-video b-video-grid b-video-category'):
+    for item in items.findAll('div', 'b-wrap b-video b-video-grid b-video-category'):
         name = item.find('a')
         name = name.getText(" ").encode('utf-8')
         url = str(item.a['href']) 
         #print name,url
-        addDir(name,'http://www.videoportal.sk/'+url,12,icon,1)
+        addDir(name, 'http://www.videoportal.sk/' + url, 12, icon, 1)
 
 def VP_LIST(url):
     doc = read_page(url)
@@ -198,15 +314,15 @@ def VP_LIST(url):
         url = str(item.a['href']) 
         thumb = str(item.img['src'])
         #print name,url, thumb
-        addDir(name,'http://www.videoportal.sk/'+url,13,thumb,1)
+        addDir(name, 'http://www.videoportal.sk/' + url, 13, thumb, 1)
     try:
         items = doc.find('ul', 'm-move right c')
         match = re.compile('<li><a class="next" href="(.+?)"').findall(str(items))
-        addDir('>> Další strana >>','http://www.videoportal.sk/'+match[0],12,nexticon,1)
+        addDir('>> Další strana >>', 'http://www.videoportal.sk/' + match[0], 12, nexticon, 1)
     except:
         print 'strankovani nenalezeno'
         
-def VIDEOLINK(url,name):
+def VIDEOLINK(url, name):
     req = urllib2.Request(url)
     req.add_header('User-Agent', _UserAgent_)
     response = urllib2.urlopen(req)
@@ -217,9 +333,9 @@ def VIDEOLINK(url,name):
         videoid = re.compile('videoId: "(.+?)"').findall(httpdata)
         pageid = re.compile('pageId: "(.+?)"').findall(httpdata)
         if len (pageid[0]) != 0:
-          playlisturl = basepath[0]+'services/Video.php?clip='+videoid[0]+'pageId='+pageid[0]
+          playlisturl = basepath[0] + 'services/Video.php?clip=' + videoid[0] + 'pageId=' + pageid[0]
         else:
-          playlisturl = basepath[0]+'services/Video.php?clip='+videoid[0]
+          playlisturl = basepath[0] + 'services/Video.php?clip=' + videoid[0]
         print playlisturl
         req = urllib2.Request(playlisturl)
         req.add_header('User-Agent', _UserAgent_)
@@ -229,27 +345,27 @@ def VIDEOLINK(url,name):
         title = re.compile('title="(.+?)"').findall(doc)
         thumb = re.compile('large_image="(.+?)"').findall(doc)
         joj_file = re.compile('<file type=".+?" quality="(.+?)" id="(.+?)" label=".+?" path="(.+?)"/>').findall(doc)
-        for kvalita,serverno,cesta in joj_file:
-            name = str.swapcase(kvalita)+ ' - ' + title[0]
+        for kvalita, serverno, cesta in joj_file:
+            name = str.swapcase(kvalita) + ' - ' + title[0]
             if __settings__.get_setting('stream_server'):
                 server = 'n09.joj.sk'
             else:
-                server = 'n0'+serverno+'.joj.sk'
-            tcurl = 'rtmp://'+server
+                server = 'n0' + serverno + '.joj.sk'
+            tcurl = 'rtmp://' + server
             swfurl = 'http://player.joj.sk/JojPlayer.swf?no_cache=137034'
             port = '1935'
-            rtmp_url = tcurl+' playpath='+cesta+' pageUrl='+url+' swfUrl='+swfurl+' swfVfy=true'
-            addLink(name,rtmp_url,thumb[0],name)
+            rtmp_url = tcurl + ' playpath=' + cesta + ' pageUrl=' + url + ' swfUrl=' + swfurl + ' swfVfy=true'
+            addLink(name, rtmp_url, thumb[0], name)
     except:
         try:
             basepath = re.compile('basePath=(.+?)&amp').findall(httpdata)
-            basepath = re.sub('%3A',':',basepath[0])
-            basepath = re.sub('%2F','/',basepath)
+            basepath = re.sub('%3A', ':', basepath[0])
+            basepath = re.sub('%2F', '/', basepath)
             videoid = re.compile('videoId=(.+?)&amp').findall(httpdata)
         except:
             videoid = re.compile('video:(.+?).html').findall(str(url))
             basepath = 'http://hotelparadise.joj.sk/'
-        playlisturl = basepath+'services/Video.php?clip='+videoid[0]
+        playlisturl = basepath + 'services/Video.php?clip=' + videoid[0]
         print playlisturl
         req = urllib2.Request(playlisturl)
         req.add_header('User-Agent', _UserAgent_)
@@ -258,18 +374,18 @@ def VIDEOLINK(url,name):
         response.close()
         title = re.compile('title="(.+?)"').findall(doc)
         joj_file = re.compile('<file type=".+?" quality="(.+?)" id="(.+?)" label=".+?" path="(.+?)"/>').findall(doc)
-        for kvalita,serverno,cesta in joj_file:
-            name = str.swapcase(kvalita)+ ' - ' + title[0]
+        for kvalita, serverno, cesta in joj_file:
+            name = str.swapcase(kvalita) + ' - ' + title[0]
             if __settings__.get_setting('stream_server'):
                 server = 'n09.joj.sk'
             else:
-                server = 'n0'+serverno+'.joj.sk'
-            tcurl = 'rtmp://'+server
-            swfurl = basepath+'fileadmin/templates/swf/csmt_player.swf?no_cache=171307'
+                server = 'n0' + serverno + '.joj.sk'
+            tcurl = 'rtmp://' + server
+            swfurl = basepath + 'fileadmin/templates/swf/csmt_player.swf?no_cache=171307'
             port = '1935'
-            rtmp_url = tcurl+' playpath='+cesta+' pageUrl='+url+' swfUrl='+swfurl+' swfVfy=true'
-            addLink(name,rtmp_url,icon,name)
-def TALENT(url,name):
+            rtmp_url = tcurl + ' playpath=' + cesta + ' pageUrl=' + url + ' swfUrl=' + swfurl + ' swfVfy=true'
+            addLink(name, rtmp_url, icon, name)
+def TALENT(url, name):
     req = urllib2.Request(url)
     req.add_header('User-Agent', _UserAgent_)
     response = urllib2.urlopen(req)
@@ -277,7 +393,7 @@ def TALENT(url,name):
     response.close()
     basepath = re.compile('basePath: "(.+?)"').findall(httpdata)
     videoid = re.compile('videoId: "(.+?)"').findall(httpdata)
-    playlisturl = basepath[0]+'services/Video.php?clip='+videoid[0]
+    playlisturl = basepath[0] + 'services/Video.php?clip=' + videoid[0]
     req = urllib2.Request(playlisturl)
     req.add_header('User-Agent', _UserAgent_)
     response = urllib2.urlopen(req)
@@ -285,26 +401,26 @@ def TALENT(url,name):
     response.close()
     thumb = re.compile('thumb="(.+?)"').findall(doc)
     joj_file = re.compile('<file type=".+?" quality="(.+?)" id="(.+?)" label=".+?" path="(.+?)"/>').findall(doc)
-    for kvalita,serverno,cesta in joj_file:
-        titul = str.swapcase(kvalita)+ ' - ' + name
+    for kvalita, serverno, cesta in joj_file:
+        titul = str.swapcase(kvalita) + ' - ' + name
         if __settings__.get_setting('stream_server'):
             server = 'n09.joj.sk'
         else:
-                server = 'n0'+serverno+'.joj.sk'
-        tcurl = 'rtmp://'+server
+                server = 'n0' + serverno + '.joj.sk'
+        tcurl = 'rtmp://' + server
         swfurl = 'http://b.static.csmatalent.sk/fileadmin/templates/swf/CsmtPlayer.swf?no_cache=168842'
         port = '1935'
-        rtmp_url = tcurl+' playpath='+cesta+' pageUrl='+url+' swfUrl='+swfurl+' swfVfy=true'
-        addLink(titul,rtmp_url,thumb[0],titul)
+        rtmp_url = tcurl + ' playpath=' + cesta + ' pageUrl=' + url + ' swfUrl=' + swfurl + ' swfVfy=true'
+        addLink(titul, rtmp_url, thumb[0], titul)
 
-def VP_PLAY(url,name):
+def VP_PLAY(url, name):
     req = urllib2.Request(url)
     req.add_header('User-Agent', _UserAgent_)
     response = urllib2.urlopen(req)
     httpdata = response.read()
     response.close()
     videoid = re.compile('videoId=(.+?)&').findall(httpdata)
-    playlisturl = 'http://www.videoportal.sk/services/Video.php?clip='+videoid[0]+'&article=undefined'
+    playlisturl = 'http://www.videoportal.sk/services/Video.php?clip=' + videoid[0] + '&article=undefined'
     req = urllib2.Request(playlisturl)
     req.add_header('User-Agent', _UserAgent_)
     response = urllib2.urlopen(req)
@@ -313,17 +429,17 @@ def VP_PLAY(url,name):
     thumb = re.compile('image="(.+?)"').findall(doc)
 
     joj_file = re.compile('<file type=".+?" quality="(.+?)" id="(.+?)" label=".+?" path="(.+?)"/>').findall(doc)
-    for kvalita,serverno,cesta in joj_file:
-        titul = str.swapcase(kvalita)+ ' - ' + name
+    for kvalita, serverno, cesta in joj_file:
+        titul = str.swapcase(kvalita) + ' - ' + name
         if __settings__.get_setting('stream_server'):
             server = 'n09.joj.sk'
         else:
-                server = 'n'+serverno+'.joj.sk'
-        tcurl = 'rtmp://'+server
+                server = 'n' + serverno + '.joj.sk'
+        tcurl = 'rtmp://' + server
         swfurl = 'http://player.joj.sk/VideoportalPlayer.swf?no_cache=173329'
         port = '1935'
-        rtmp_url = tcurl+' playpath='+cesta+' pageUrl='+url+' swfUrl='+swfurl+' swfVfy=true'
-        addLink(titul,rtmp_url,thumb[0],titul)
+        rtmp_url = tcurl + ' playpath=' + cesta + ' pageUrl=' + url + ' swfUrl=' + swfurl + ' swfVfy=true'
+        addLink(titul, rtmp_url, thumb[0], titul)
 
 def PARADISE_CAT_LIST(url):
     doc = read_page(url)
@@ -331,13 +447,13 @@ def PARADISE_CAT_LIST(url):
     for item in items.findAll('a'):
         link = item['href'].encode('utf-8')
         name = item['title'].encode('utf-8')
-        print link,name
-        addDir(name,link,21,icon,1)
+        print link, name
+        addDir(name, link, 21, icon, 1)
 
 def PARADISE_LIST(url):
     doc = read_page(url)
     items = doc.find('div', 'c-630 c')
-    for item in items.findAll('li','i c'):
+    for item in items.findAll('li', 'i c'):
         try:
             name = item.img['alt'].encode('utf-8')
             if re.search('image not found', name, re.U):
@@ -347,102 +463,102 @@ def PARADISE_LIST(url):
         url = str(item.a['href']) 
         thumb = str(item.img['src'])   
         #print name,url,thumb
-        addDir(name,url,10,thumb,1)
+        addDir(name, url, 10, thumb, 1)
     try:
         items = doc.find('ul', 'x-pager x-pager-center j-centerer-bull c')
         dalsi = items.find('li', 'next')
         if len(dalsi) != 0:
             next_url = str(dalsi.a['href']) 
-            addDir('>> Další strana >>',next_url,21,nexticon,1)
+            addDir('>> Další strana >>', next_url, 21, nexticon, 1)
     except:
         print 'strankovani nenalezeno'
 
-url=None
-name=None
-thumb=None
-mode=None
-page=None
+url = None
+name = None
+thumb = None
+mode = None
+page = None
 
 try:
-        url=urllib.unquote_plus(params["url"])
+        url = urllib.unquote_plus(params["url"])
 except:
         pass
 try:
-        name=urllib.unquote_plus(params["name"])
+        name = urllib.unquote_plus(params["name"])
 except:
         pass
 try:
-        page=int(params["page"])
+        page = int(params["page"])
 except:
         pass
 try:
-        mode=int(params["mode"])
+        mode = int(params["mode"])
 except:
         pass
 
-print "Mode: "+str(mode)
-print "URL: "+str(url)
-print "Name: "+str(name)
-print "Page: "+str(page)
+print "Mode: " + str(mode)
+print "URL: " + str(url)
+print "Name: " + str(name)
+print "Page: " + str(page)
 
-if mode==None or url==None or len(url)<1:
+if mode == None or url == None or len(url) < 1:
         print ""
         OBSAH()
        
-elif mode==1:
+elif mode == 1:
         print ""
-        OBSAH_PUB()
+        OBSAH_JOJ()
 
-elif mode==2:
+elif mode == 2:
         print ""
-        OBSAH_SER()
+        OBSAH_JOJ_PLUS()
 
-elif mode==3:
+elif mode == 3:
         print ""
-        OBSAH_ZAB()
+        OBSAH_RELASER(url, page)
 
-elif mode==4:
-        print ""+url
-        print ""+str(page)        
-        LIST(url,page)
+elif mode == 4:
+        print "" + url
+        print "" + str(page)        
+        LIST(url, page)
 
-elif mode==5:
-        print ""+url
+elif mode == 5:
+        print "" + url
         LIST_2(url)
 
-elif mode==6:
-        print ""+url
+elif mode == 6:
+        print "" + url
         LIST_3(url)        
 
-elif mode==7:
-        print ""+url
+elif mode == 7:
+        print "" + url
         LIST_4(url) 
 
-elif mode==8:
-        print ""+url
+elif mode == 8:
+        print "" + url
         LIST_5(url)
 
-elif mode==9:
-        print ""+url
+elif mode == 9:
+        print "" + url
         VIDEOPORTAL(url)
 
         
-elif mode==10:
-        print ""+url
-        VIDEOLINK(url,name)
-elif mode==11:
-        print ""+url
-        TALENT(url,name)
-elif mode==12:
-        print ""+url
+elif mode == 10:
+        print "" + url
+        VIDEOLINK(url, name)
+elif mode == 11:
+        print "" + url
+        TALENT(url, name)
+elif mode == 12:
+        print "" + url
         VP_LIST(url)
-elif mode==13:
-        print ""+url
-        VP_PLAY(url,name)
+elif mode == 13:
+        print "" + url
+        VP_PLAY(url, name)
 
-elif mode==20:
-        print ""+url
+elif mode == 20:
+        print "" + url
         PARADISE_CAT_LIST(url)
-elif mode==21:
-        print ""+url
+elif mode == 21:
+        print "" + url
         PARADISE_LIST(url)
