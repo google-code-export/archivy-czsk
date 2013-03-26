@@ -274,7 +274,7 @@ def findvideo(data):
 
 	if debug: 
 		print "6d) Novamov ..."
-	pattern  = "src='(http://embed.novamov.com/embed.php\?[^']+)"
+	pattern  = "src=['|\"](http://embed.novamov.com/embed.php\?[^'|^\"]+)"
 	matches = re.compile(pattern,re.DOTALL).findall(data)
 
 	for match in matches:
@@ -487,4 +487,41 @@ def findvideo(data):
 				print "  url duplicate="+url
 
 
+	if debug: 
+		print "16) IFRAME ..."
+	pattern  = "<iframe.+?src=[\"|'](/iframe/iframe.php\?id=.+?)['|\"]" 
+	matches = re.compile(pattern,re.DOTALL).findall(data)
+	
+	for match in matches:
+		server = "IFrame"
+		url = match
+
+		if url not in seznam:
+			print "16) IFRAME  url="+url
+			adresy.append( [ server , url  ] )
+			seznam.add(url)
+		else:
+			print "  url duplicate="+url
+	
+
+	
+	if debug: 
+		print "17) VIDEOMAIL ..."
+	pattern = '<param name="flashvars".+?value="(movieSrc=.+?)"'
+	matches = re.compile(pattern,re.DOTALL).findall(data)
+	print matches
+	
+	for match in matches:
+		server = "Videomail"
+		url = match
+
+		if url not in seznam:
+			print "16) VIDEOMAIL  url="+url
+			adresy.append( [ server , url  ] )
+			seznam.add(url)
+		else:
+			print "  url duplicate="+url
+	
+
 	return adresy
+

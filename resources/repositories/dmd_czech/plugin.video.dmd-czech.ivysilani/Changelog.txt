@@ -1,3 +1,7 @@
+2013-03-26:
+ * přidáno upozornění na bonus video
+2013-02-06:
+ * vyhledavani v archivu (beta) nyni zobrazuje max 100 vysledku hledani na 5 stranach
 2013-02-05:
  * vyhledavani v archivu (beta)
 2013-02-04:

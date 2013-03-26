@@ -1,7 +1,15 @@
+2013-03-21
+ * resolver vmail.ru
+2013-03-06
+ * oprava resolveru youtube
+ * oprava resolveru novamov
+ * download souboru
+2013-01-06:
+ * oprava resolveru youtube
 2012-11-29:
  * oprava resolveru vk.com
 2012-08-14:
- * oprava vyhledávání a položky Seriály
+ * oprava vyhledávání a polo¸ky Seriály
 2012-08-07:
  * doplneni info o filmu, oprava vk.com a 24video.net
 2012-05-27:

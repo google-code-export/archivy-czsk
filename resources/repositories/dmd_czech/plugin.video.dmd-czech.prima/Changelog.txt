@@ -1,3 +1,7 @@
+2013-03-26:
+ * pøidána možnost proxy pro zahranièní diváky
+2013-02-13:
+ * oficialni pridani HD kvality
 2013-02-04:
  * oprava zobrazovani videi, pridan archiv ZOOM
 2012-11-26:

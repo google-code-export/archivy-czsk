@@ -4,7 +4,7 @@ from parseutils import *
 from util import addDir, addLink, addSearch, getSearch
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
 import vk, novamov, videobb
-import videonet, youtube
+import videonet, ytube, videomail
 import servertools
 
 __baseurl__ = 'http://filmycz.com'
@@ -218,13 +218,37 @@ def VIDEONET_LINK(url, name):
                 print "24VIDEO.NET URL: " + url
 #==========================================================================
 
+def VIDEOMAIL_LINK(url,name):
+        try:
+                videourl=videomail.getURL(url)
+                addLink(name+" - videomail.ru",videourl,'','')
+        except:
+                print "VIDEOMAIL.RU URL: "+url
+
 #==========================================================================
 def YOUTUBE_LINK(url, name):
         try:
-                videourl = youtube.getURL(url)
+                videourl = ytube.getURL(url)
                 addLink(name + " - youtube.com", videourl, '', '')
         except:
                 print "YOUTUBE.COM URL: " + url
+#==========================================================================
+#==========================================================================
+def IFRAME_LINK(url,name):
+        try:
+                data  = getUrlData(__baseurl__+url)
+                match = re.compile('<a href="(.+?)"').findall(data)
+                data  = getUrlData(match[0])
+                match = re.compile('location\.replace\("(.+?)"\)').findall(data)
+                data  = getUrlData(match[0])
+                items = servertools.findvideo(data)
+                for server,adresa in items:
+                        adresa = adresa.replace('&amp;','&')
+                        server = server.lower()
+                        if server == "youtube":
+                                YOUTUBE_LINK(adresa,name)
+        except:
+                print "IFRAME URL: "+url
 #==========================================================================
 
 
@@ -244,7 +268,6 @@ def VIDEOLINK(url, name):
        
                 if server == "youtube":
                         YOUTUBE_LINK(adresa, name + ' - UKAZKA')
-
                 if server == "24video":
                         VIDEONET_LINK(adresa, name)
                 if server == "videobb":
@@ -253,6 +276,11 @@ def VIDEOLINK(url, name):
                         NOVAMOV_LINK(adresa, name)
                 if server == "vk":
                         VKCOM_LINK(adresa, name)
+                if server == "iframe":
+                        IFRAME_LINK(adresa,name)
+                if server == "videomail":
+                        VIDEOMAIL_LINK(adresa,name)
+
                 #else:
                 #       print "VIDEOLINK URL: "+url
     else:

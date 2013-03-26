@@ -1,3 +1,5 @@
+2013-03-26:
+ * oprava zpráv a listingu nìkterých poøadù,zobrazení pøehrávané kvality
 2012-08-28:
  * opraveno strankovani poradu, opet lze prohlizet vice neuz poslednich 35 epizod
 2012-08-23:
