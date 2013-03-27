@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-import urllib2,urllib,re,os
+import urllib2, urllib, re, os
 from parseutils import *
-from urlparse import urlparse,parse_qs
+from urlparse import urlparse, parse_qs
 from util import addDir, addLink, getSearch
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
 
@@ -13,12 +13,12 @@ icon = os.path.join(home, 'icon.png')
 nexticon = os.path.join(home, 'nextpage.png') 
 
 def OBSAH():
-    doc = read_page(__baseurl__+'/online/archiv/')
+    doc = read_page(__baseurl__ + '/online/archiv/')
     doc = doc.find('select', id='sel3')
     match = re.compile('<option value="(.+?)">(.+?)</option>').findall(str(doc))
-    for link,name in match:
-            print name,link
-            addDir(name,__baseurl__+link,2,icon)    
+    for link, name in match:
+            print name, link
+            addDir(name, __baseurl__ + link, 2, icon)    
 
 
 def OBSAH_RELACE(url):
@@ -38,16 +38,16 @@ def OBSAH_RELACE(url):
     porady = re.compile('<a href="(.+?)" class=".+?">(.+?)</a>').findall(str(doc2))    
     if len(porady) < 1:
         porady = re.compile('<a href="(.+?)" class=".+?" title=".+?">(.+?)</a>').findall(str(doc2))      
-    print '<< Starší','http://' + cast_url[1] + cast_url[2] + starsical
-    addDir('<< Starší','http://' + cast_url[1] + cast_url[2] + starsical,2,nexticon)   
+    print '<< Starší', 'http://' + cast_url[1] + cast_url[2] + starsical
+    addDir('<< Starší', 'http://' + cast_url[1] + cast_url[2] + starsical, 2, nexticon)   
     for poradlink, poradden in porady:
-        poradlink = re.sub('&amp;','&',poradlink)
-        poradden = poradden +' '+ nazevcal
-        print poradlink,poradden
-        addDir(poradden,'http://' + cast_url[1] + cast_url[2] + poradlink,10,icon)   
+        poradlink = re.sub('&amp;', '&', poradlink)
+        poradden = poradden + ' ' + nazevcal
+        print poradlink, poradden
+        addDir(poradden, 'http://' + cast_url[1] + cast_url[2] + poradlink, 10, icon)   
     if next == 1:
-        print '>> Novější' ,'http://' + cast_url[1] + cast_url[2] + dalsical
-        addDir('>> Novější','http://' + cast_url[1] + cast_url[2] + dalsical,2,nexticon)   
+        print '>> Novější' , 'http://' + cast_url[1] + cast_url[2] + dalsical
+        addDir('>> Novější', 'http://' + cast_url[1] + cast_url[2] + dalsical, 2, nexticon)   
                 
 def VIDEOLINK(url, name):
     req = urllib2.Request(url)
@@ -59,65 +59,67 @@ def VIDEOLINK(url, name):
     title = title[0] + ' ' + name
     video_id = re.search('.*?LiveboxPlayer.flash\(.+?stream_id:+.\"(.+?)\"', httpdata, re.IGNORECASE | re.DOTALL)
     video_id = video_id.group(1)
-    print video_id
     
     req = urllib2.Request("http://embed.stv.livebox.sk/v1/tv-arch.js")
     req.add_header('User-Agent', _UserAgent_)
     req.add_header('Referer', url)
     response = urllib2.urlopen(req)
     keydata = response.read()
-    #print keydata
     response.close()
-    auth = re.search(".*?auth=(.+?)\'", keydata, re.IGNORECASE | re.DOTALL)
-    #auth = re.search(".*?auth=b64:(.+?)\'", keydata, re.IGNORECASE | re.DOTALL)
-    auth = auth.group(1)#base64.decodestring(auth.group(1))
-    streamer = re.search(".*?rtmp:\/\/(.+?)\/", keydata, re.IGNORECASE | re.DOTALL)
-    streamer = streamer.group(1)
     
-    url = 'rtmp://' + streamer + '/stv-tv-arch/_definst_/mp4:' + video_id + '?auth=' + auth
-    #title = namehttp://embed.stv.livebox.sk/v1/LiveboxPlayer.swf?nocache=1364079106732
-    swfurl = 'http://embed.stv.livebox.sk/v1/LiveboxPlayer.swf'
-    #swfurl = 'http://www.stv.sk/online/player/player-licensed-sh.swf'
-    rtmp_url = '"' + url + '"' + '-W ' + swfurl
-    #print rtmp_url
-    m3u8_url = 'http://'+streamer+'/stv-tv-arch/_definst_/' + video_id +  '/playlist.m3u8?auth='+ auth
-    print m3u8_url
+    rtmp_url_regex="'(rtmp:\/\/[^']+)'\+videoID\+'([^']+)'"
+    m3u8_url_regex="'(http:\/\/[^']+)'\+videoID\+'([^']+)'"
+    rtmp = re.search(rtmp_url_regex,keydata,re.DOTALL)
+    m3u8 = re.search(m3u8_url_regex,keydata,re.DOTALL)
     
-    # rtmp stream mi nefunguje, len hls...
-    #addLink(title, rtmp_url, icon, name)
-    addLink(name, m3u8_url, icon, name)
+    m3u8_url = m3u8.group(1) + video_id + m3u8.group(2)
+    
+    # rtmp[t][e|s]://hostname[:port][/app[/playpath]]
+    # tcUrl=url URL of the target stream. Defaults to rtmp[t][e|s]://host[:port]/app. 
+    
+    # rtmp url- fix podla mponline2 projektu
+    rtmp_url = rtmp.group(1)+video_id+rtmp.group(2)
+    stream_part = 'mp4:'+video_id
+    playpath = rtmp_url[rtmp_url.find(stream_part):]
+    tcUrl = rtmp_url[:rtmp_url.find(stream_part)-1]+rtmp_url[rtmp_url.find(stream_part)+len(stream_part):]
+    app = tcUrl[tcUrl.find('/',tcUrl.find('/')+2)+1:]
 
-url=None
-name=None
-thumb=None
-mode=None
+    rtmp_url = '-r "'+rtmp_url+'"'+ ' --playpath=' + playpath + ' --tcUrl=' + tcUrl + ' --app=' + app
+    
+    addLink(name+' [rtmp]', rtmp_url, icon, name)
+    addLink(name+' [hls]', m3u8_url, icon, name)
+
+url = None
+name = None
+thumb = None
+mode = None
 
 try:
-        url=urllib.unquote_plus(params["url"])
+        url = urllib.unquote_plus(params["url"])
 except:
         pass
 try:
-        name=urllib.unquote_plus(params["name"])
+        name = urllib.unquote_plus(params["name"])
 except:
         pass
 try:
-        mode=int(params["mode"])
+        mode = int(params["mode"])
 except:
         pass
 
-print "Mode: "+str(mode)
-print "URL: "+str(url)
-print "Name: "+str(name)
+print "Mode: " + str(mode)
+print "URL: " + str(url)
+print "Name: " + str(name)
 
-if mode==None or url==None or len(url)<1:
+if mode == None or url == None or len(url) < 1:
         print ""
         OBSAH()
        
-elif mode==2:
-        print ""+url
+elif mode == 2:
+        print "" + url
         OBSAH_RELACE(url)
 
       
-elif mode==10:
-        print ""+url
-        VIDEOLINK(url,name)
+elif mode == 10:
+        print "" + url
+        VIDEOLINK(url, name)

@@ -2,7 +2,6 @@
 import urllib2, urllib, re, os
 from parseutils import *
 from urlparse import urlparse
-from random import randint
 from util import addDir, addLink
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
 __dmdbase__ = 'http://iamm.netuje.cz/emulator/joj/image/'
@@ -73,8 +72,58 @@ def OBSAH_RELASER(url, rel):
     response = urllib2.urlopen(req)
     httpdata = response.read()
     response.close()
-    doc = BeautifulSoup(httpdata, convertEntities=BeautifulSoup.HTML_ENTITIES)
+    # velmi pomale cez Beautifulsoup
+    #doc = BeautifulSoup(httpdata, convertEntities=BeautifulSoup.HTML_ENTITIES)
     # vysielane relacie a serialy
+    
+    iter_re_vys='<div class=\"j-filter-item\">.+?<a.+?title=\"(.+?)\".+?</a>.+?<li class=\"trailer\".+?<a href=\"(.+?)\".+?>(.+?)</a>'
+    iter_re_nevys='<li class=\"i c j-filter-item\">.+?<span class=\"j-data\">(.+?)</span>.+?<a href=\"(.+?)\".+?title=\"(.+?)\"'
+    
+    for item in re.compile(iter_re_vys,re.DOTALL).finditer(httpdata):
+        title = item.group(1).encode('utf-8')
+        link = item.group(2)
+        st = item.group(3).encode('utf-8')
+        if rel and st == 'Archív relácie':
+            if not zakazane(title):
+                mod = list_mod(link)
+                img = image(url)
+                zoznam.append((title,link,mod,img,1))
+                #print title, link
+        elif not rel and st == 'Archív seriálu':
+            if not zakazane(title):
+                mod = list_mod(link)
+                img = image(url)
+                zoznam.append((title,link,mod,img,1))
+                #print title, link
+        
+    for item in re.compile(iter_re_nevys,re.DOTALL).finditer(httpdata):
+        num = item.group(1)
+        title = item.group(3).encode('utf-8')
+        link = item.group(2)
+        #print title,link
+        if rel and num.startswith(('65','50')):
+            link = link[:link.rfind('-')]
+            if link.split('-')[-1] == 'o':
+                link = link[:link.rfind('-')]
+            link += '-archiv.html'
+            mod = list_mod(link)
+            img = image(url)
+            if not zakazane(title):
+                zoznam.append((title,link,mod,img,1))
+                #print title, link
+        elif not rel and num.startswith('497'):
+            link = link[:link.rfind('-')]
+            if link.split('-')[-1] == 'o':
+                link = link[:link.rfind('-')]
+            link += '-epizody.html'
+            mod = list_mod(link)
+            img = image(url)
+            if not zakazane(title):
+                zoznam.append((title,link,mod,img,1))
+                #print title, link
+    
+    
+    """
     for item in doc.findAll('div', 'j-filter-item'):
         description = item.find('div', 'description')
         if description:
@@ -120,9 +169,10 @@ def OBSAH_RELASER(url, rel):
             if not zakazane(title):
                 zoznam.append((title,link,mod,img,1))
                 #print title, link
+    """
     zoznam.sort(key=lambda x:x[0])
     for title,link,mod,img,page in zoznam:
-        addDir(title,link,mod,img,1)
+        addDir(title,link,mod,img,page)
 
 
 """
@@ -352,7 +402,7 @@ def VIDEOLINK(url, name):
                 server = 'n09.joj.sk'
             else:
                 if int(serverno)>20:
-                    serverno=str(randint(1,19))
+                    serverno=str(int(serverno)/2)
                 if len(serverno)==2:
                     server = 'n' + serverno + '.joj.sk'
                 else:
@@ -386,7 +436,7 @@ def VIDEOLINK(url, name):
                 server = 'n09.joj.sk'
             else:
                 if int(serverno)>20:
-                    serverno=str(randint(1,19))
+                    serverno=str(int(serverno)/2)
                 if len(serverno)==2:
                     server = 'n' + serverno + '.joj.sk'
                 else:
