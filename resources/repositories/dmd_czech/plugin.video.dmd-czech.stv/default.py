@@ -84,7 +84,7 @@ def VIDEOLINK(url, name):
     tcUrl = rtmp_url[:rtmp_url.find(stream_part)-1]+rtmp_url[rtmp_url.find(stream_part)+len(stream_part):]
     app = tcUrl[tcUrl.find('/',tcUrl.find('/')+2)+1:]
 
-    rtmp_url = '-r "'+rtmp_url+'"'+ ' --playpath=' + playpath + ' --tcUrl=' + tcUrl + ' --app=' + app
+    rtmp_url = rtmp_url+ ' playpath=' + playpath + ' tcUrl=' + tcUrl + ' app=' + app
     
     addLink(name+' [rtmp]', rtmp_url, icon, name)
     addLink(name+' [hls]', m3u8_url, icon, name)
