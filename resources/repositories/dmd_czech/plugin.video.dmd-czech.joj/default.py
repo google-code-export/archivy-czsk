@@ -51,19 +51,19 @@ def list_mod(url):
 def image(url):
     return icon
 
-
 def OBSAH():
-    addDir('JOJ', JOJ_URL, 1, icon, 1)
-    addDir('JOJ Plus', JOJ_PLUS_URL, 2, icon, 1)
+    addDir('JOJ', JOJ_URL, 31, icon, 1)
+    addDir('JOJ Plus', JOJ_PLUS_URL, 32, icon, 1)
+    addDir('JOJ Povodna', JOJ_PLUS_URL, 30, icon, 1)
     addDir('Videoportal.sk', 'http://www.videoportal.sk/kategorie.html', 9, icon, 1)
     
 def OBSAH_JOJ():
-    addDir('Relácie', JOJ_URL + '/archiv.html', 3, icon, 1)
-    addDir('Seriály', JOJ_URL + '/archiv.html', 3, icon, 0)
+    addDir('Relácie', JOJ_URL + '/archiv.html', 33, icon, 1)
+    addDir('Seriály', JOJ_URL + '/archiv.html', 33, icon, 0)
     
 def OBSAH_JOJ_PLUS():
-    addDir('Relácie', JOJ_PLUS_URL + '/plus-archiv.html', 3, icon, 1)
-    addDir('Seriály', JOJ_PLUS_URL + '/plus-archiv.html', 3, icon, 0)
+    addDir('Relácie', JOJ_PLUS_URL + '/plus-archiv.html', 33, icon, 1)
+    addDir('Seriály', JOJ_PLUS_URL + '/plus-archiv.html', 33, icon, 0)
 
 def OBSAH_RELASER(url, rel):
     zoznam = []
@@ -175,8 +175,8 @@ def OBSAH_RELASER(url, rel):
         addDir(title,link,mod,img,page)
 
 
-"""
-def OBSAH():
+# zaloha ak sa nieco na stranke pokafre :)
+def OBSAH2():
     addDir('Publicistika','http://www.joj.sk',1,icon,1)
     addDir('Seriály','http://www.joj.sk',2,icon,1)
     addDir('Zábava','http://www.joj.sk',3,icon,1)
@@ -231,7 +231,7 @@ def OBSAH_ZAB():
     addDir('Buckovci','http://buckovci.joj.sk/buckovci-archiv.html',4,__dmdbase__+'buckovci.jpg',1)
     addDir('Experti','http://experti.joj.sk/experti-archiv.html',4,__dmdbase__+'experti.jpg',1)
     addDir('Extremne pripady','http://www.joj.sk/extremne-priprady/extremne-pripady-archiv.html',4,__dmdbase__+'extremne.jpg',1)    
-"""
+
 
 
 def LIST(url, strana):
@@ -565,16 +565,31 @@ print "Page: " + str(page)
 if mode == None or url == None or len(url) < 1:
         print ""
         OBSAH()
+        
+elif mode==30:
+        OBSAH2()
+        
+elif mode==1:
+        print ""
+        OBSAH_PUB()
+
+elif mode==2:
+        print ""
+        OBSAH_SER()
+
+elif mode==3:
+        print ""
+        OBSAH_ZAB()
        
-elif mode == 1:
+elif mode == 31:
         print ""
         OBSAH_JOJ()
 
-elif mode == 2:
+elif mode == 32:
         print ""
         OBSAH_JOJ_PLUS()
 
-elif mode == 3:
+elif mode == 33:
         print ""
         OBSAH_RELASER(url, page)
 

@@ -98,6 +98,30 @@ def ABC(url):
         addDir(name, 'http://www.ceskatelevize.cz' + link, 3, icon)
 
 def CAT_LIST(url):
+    req = urllib2.Request(url)
+    req.add_header('User-Agent', _UserAgent_)
+    response = urllib2.urlopen(req)
+    httpdata = response.read()
+    response.close()
+    
+    cat_iter_regex='<li>(.+?a class=\"toolTip\".+?)</li>'
+    cat_regex='.+?href=\"(.+?)\".*?title=\"(.*?)\".*?>(.+?)<'
+    httpdata= httpdata[httpdata.find('clearfix programmesList'):]
+    for item in re.compile(cat_iter_regex, re.DOTALL).finditer(httpdata):
+        #print item.group(1)
+        it = re.search(cat_regex,item.group(1),re.DOTALL)
+        #print item.group(1),item.group(2),item.group(3)
+        link =it.group(1)
+        desc = it.group(2).encode('utf-8')
+        name = it.group(3).encode('utf-8')
+        if item.group(1).find('labelBonus')!=-1:
+            name = name + ' (pouze bonusy)'
+        infoLabels={'title':name,'plot':desc}
+        #print name,link
+        addDir(name, 'http://www.ceskatelevize.cz' + link, 6, icon,infoLabels=infoLabels)
+            
+        
+    """
     doc = read_page(url)
     items = doc.find('div', 'clearfix programmesList')    
     for item in items.findAll('li'):
@@ -109,6 +133,8 @@ def CAT_LIST(url):
         link = str(item_a['href'])
         #print name,__baseurl__+link
         addDir(name, 'http://www.ceskatelevize.cz' + link, 6, icon)
+        
+    """
 
 
 # =============================================
@@ -219,8 +245,8 @@ def VIDEO_LIST(url, video_listing= -1):
         url = str(item.find("div", {"id": "programmeInfo"}).a['href'])
         url = 'http://www.ceskatelevize.cz' + url
         url = re.sub('porady', 'ivysilani', url)
-        print name,popis,url
-        addDir(name + ' ' + popis, url, 10, None)
+        infoLabels={'title':name,'plot':popis}
+        addDir(name, url, 10, None,infoLabels=infoLabels)
     else:
         for item in items.findAll('li', 'itemBlock clearfix'):
             try:
