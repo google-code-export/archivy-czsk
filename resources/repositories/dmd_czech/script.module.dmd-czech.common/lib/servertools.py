@@ -504,24 +504,5 @@ def findvideo(data):
 			print "  url duplicate="+url
 	
 
-	
-	if debug: 
-		print "17) VIDEOMAIL ..."
-	pattern = '<param name="flashvars".+?value="(movieSrc=.+?)"'
-	matches = re.compile(pattern,re.DOTALL).findall(data)
-	print matches
-	
-	for match in matches:
-		server = "Videomail"
-		url = match
-
-		if url not in seznam:
-			print "16) VIDEOMAIL  url="+url
-			adresy.append( [ server , url  ] )
-			seznam.add(url)
-		else:
-			print "  url duplicate="+url
-	
 
 	return adresy
-

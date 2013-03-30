@@ -78,4 +78,3 @@ class BaseScraper(object):
         raise NotImplemented()    
     def next_page(self):
         return None
-    
