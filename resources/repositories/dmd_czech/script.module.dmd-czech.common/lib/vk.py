@@ -55,5 +55,3 @@ def getURL(page_url):
                         return ret[-1]
                     ret.append(url+'.'+resolution+'.mp4')
                     print("[vk.py] %s - %s" % (resolution+'p',url+'.'+resolution+'.mp4'))
-                    
-        

@@ -47,4 +47,3 @@ def getURL( page_url ):
     match=re.compile("<videos><video url=\'(.+?)[^ ] rating").findall(data)
    
     return match[0]
-

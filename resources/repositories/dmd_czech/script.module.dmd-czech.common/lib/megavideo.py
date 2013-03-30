@@ -307,4 +307,3 @@ def decrypt(str1, key1, key2):
 
     endstr = ajoin(__reg2)
     return endstr
-

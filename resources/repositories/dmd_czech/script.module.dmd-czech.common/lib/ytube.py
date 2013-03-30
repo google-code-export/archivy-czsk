@@ -151,5 +151,3 @@ def getURL(url):
 
 	for format_param, video_real_url in video_url_list:
 		return video_real_url.decode('utf-8')
-
-		
