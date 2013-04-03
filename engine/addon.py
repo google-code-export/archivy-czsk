@@ -5,7 +5,7 @@ Created on 21.10.2012
 '''
 import os, traceback, sys, imp
 from Tools.LoadPixmap import LoadPixmap
-from Components.config import config, ConfigSubsection, ConfigSelection, ConfigYesNo, ConfigText, ConfigNumber, ConfigIP, ConfigDirectory, configfile, getConfigListEntry
+from Components.config import config, ConfigSubsection, ConfigSelection, ConfigYesNo, ConfigText, ConfigNumber, ConfigIP, ConfigPassword, ConfigDirectory, configfile, getConfigListEntry
 
 from tools import util, parser
 from Plugins.Extensions.archivCZSK import _, log
@@ -81,6 +81,9 @@ class Addon(object):
     def get_setting(self, setting_id):
         return self.settings.get_setting(setting_id)
     
+    def set_setting(self, setting_id, value):
+        return self.settings.set_setting(setting_id, value)
+    
     def get_info(self, info):
         try:
             atr = getattr(self.info, '%s' % info)
@@ -134,6 +137,11 @@ class XBMCAddon(object):
                 else:
                     return 'false'
             return val
+
+    def setSetting(self, setting, value):
+        return self._addon.set_setting(setting, value)
+        
+    
         
 class ToolsAddon(Addon):
     def __init__(self, info, repository):
@@ -327,7 +335,8 @@ class AddonSettings(object):
                 
             for subentry in entry['subentries']:
                 self.initialize_entry(self.main, subentry)
-                category['subentries'].append(getConfigListEntry(self._get_label(subentry['label']).encode('utf-8'), subentry['setting_id']))
+                if subentry['visible'] == 'true':
+                    category['subentries'].append(getConfigListEntry(self._get_label(subentry['label']).encode('utf-8'), subentry['setting_id']))
             log.debug("initialized category %s", str(category))
             self.categories.append(category)                                      
 
@@ -345,6 +354,17 @@ class AddonSettings(object):
             if isinstance(setting, ConfigIP):
                 return setting.getText()
             return setting.getValue()
+        
+    def set_setting(self, setting_id, value):
+        try:
+            setting = getattr(self.main, '%s' % setting_id)
+        except ValueError:
+            log.debug('%s cannot retrieve setting %s,  Invalid setting id', self, setting_id)
+            return False
+        else:
+            setting.setValue(value)
+            setting.save()
+            return True
 
     def _get_label(self, label):
         log.debug('resolving label: %s', label)
@@ -370,7 +390,10 @@ class AddonSettings(object):
             entry['setting_id'] = getattr(setting, entry['id'])
             
         elif entry['type'] == 'text':
-            setattr(setting, entry['id'], ConfigText(default=entry['default'], fixed_size=False))
+            if entry['option'] == 'true':
+                setattr(setting, entry['id'], ConfigPassword(default=entry['default'], fixed_size=False))
+            else:
+                setattr(setting, entry['id'], ConfigText(default=entry['default'], fixed_size=False))
             entry['setting_id'] = getattr(setting, entry['id'])
             
         elif entry['type'] == 'enum':
@@ -391,7 +414,7 @@ class AddonSettings(object):
             setattr(setting, entry['id'], ConfigNumber(default=int(entry['default'])))
             entry['setting_id'] = getattr(setting, entry['id'])
         else:
-            log.debug('%s cannot initialize unknown entry %s', self, entry['type'])
+            log.error('%s cannot initialize unknown entry %s', self, entry['type'])
             
     def close(self):
         self.addon = None

@@ -44,6 +44,9 @@ class XBMCSettingsXMLParser(XMLParser):
         entry['id'] = setting.attrib.get('id')
         entry['type'] = setting.attrib.get('type')
         entry['default'] = setting.attrib.get('default')
+        entry['visible'] = setting.attrib.get('visible') or 'true'
+        if entry['type'] == 'text':
+            entry['option'] = setting.attrib.get('option') or 'false'
         if entry['type'] == 'enum':
             entry['lvalues'] = setting.attrib.get('lvalues')
         elif entry['type'] == 'labelenum':
