@@ -89,16 +89,14 @@ class KoukniContentProvider(ContentProvider):
 		item = item.copy()
 		url = self._url(item['url'])
 		data = util.request(url)
-		video = re.search('=\"player\" href=\"(?P<url>[^\"]+)',data,re.IGNORECASE | re.DOTALL)
+		video = re.search('clip.+?url\: \'(?P<url>[^\']+)',data,re.IGNORECASE | re.DOTALL)
+		conn = re.search('netConnectionUrl\: \'(?P<url>[^\']+)',data,re.IGNORECASE | re.DOTALL)
 		subs = re.search('captionUrl\: \'(?P<url>[^\']+)',data,re.IGNORECASE | re.DOTALL)
-		if video:
-			req = urllib2.Request(self._url(video.group('url')))
-			req.add_header('User-Agent',util.UA)
-			response = urllib2.urlopen(req)
-			response.close()
-			item['url'] = response.geturl()
+		if video and conn:
+			item['url'] = '%s playpath=%s' % (conn.group('url'),video.group('url'))
 			item['surl'] = url
 			item['quality'] = '720p'
 			if subs:
 				item['subs'] = self._url(subs.group('url'))
+			print item
 			return item

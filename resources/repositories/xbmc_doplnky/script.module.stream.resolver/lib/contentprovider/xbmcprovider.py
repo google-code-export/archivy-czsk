@@ -146,8 +146,8 @@ class XBMContentProvider(object):
 		self.list(self.provider.search(keyword))
 	
 	def list(self, items):
-		params = self.params()
 		for item in items:
+			params = self.params()
 			if item['type'] == 'dir':
 				self.render_dir(item)
 			elif item['type'] == 'next':
