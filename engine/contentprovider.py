@@ -4,6 +4,7 @@ Created on 3.10.2012
 @author: marko
 '''
 import os
+import socket
 from twisted.internet import defer
 from xml.etree.cElementTree import ElementTree
 
@@ -21,6 +22,7 @@ VIDEO_EXTENSIONS = ['.avi', '.mkv', '.mp4', '.flv', '.mpg', '.mpeg', '.wmv']
 SUBTITLES_EXTENSIONS = ['.srt']    
         
 class ContentProvider(object):
+    
     def __init__(self, downloads_path):
         self.downloads_path = downloads_path
         
@@ -128,7 +130,7 @@ class AddonSys():
             
 
 class VideoAddonContentProvider(ContentProvider):
-    
+  
     gui_item_list = [[], None, {}] #[0] for items, [1] for command to GUI [2] arguments for command
     addon_sys = AddonSys()
         
@@ -213,8 +215,12 @@ class VideoAddonContentProvider(ContentProvider):
         return self.content_deferred
     
     def run_script(self, session, params):
+        # setting timeout for resolving content
+        loading_timeout = int(self.video_addon.get_setting('loading_timeout'))
+        if loading_timeout>0:
+            socket.setdefaulttimeout(loading_timeout)
+        
         script_path = os.path.join(self.video_addon.path, self.video_addon.script)
-        #globals_dict = 
         execfile(script_path, {'session':session,
                                'params':params,
                                '__file__':script_path,
@@ -227,6 +233,8 @@ class VideoAddonContentProvider(ContentProvider):
         
     def _get_content_cb(self, success, result):
         log.debug('get_content_cb success:%s result: %s' % (success, result))
+        # resetting timeout for resolving content
+        socket.setdefaulttimeout(None)
         if success:
             log.debug("successfully loaded %d items" % len(self.gui_item_list[0]))
             lst_itemscp = [[], None, {}]
@@ -313,7 +321,7 @@ class StreamContentProvider(ContentProvider):
                 play_delay = channel.findtext('playDelay')
             
                 if name is None or stream_url is None:
-                    log.debug('skipping stream, cannot find name or url')
+                    log.info('skipping stream, cannot find name or url')
                     continue
                 if picon is None: pass
                 if app is None: app = u''

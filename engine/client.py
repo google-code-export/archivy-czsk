@@ -65,13 +65,13 @@ def openSettings(session, addon):
     addon.open_settings(session, addon, getSettingsCB)
     return d
 
-def showInfo(info):
+def showInfo(info,timeout=5):
     raise AddonInfoError(info)
 
-def showError(error):
+def showError(error,timeout=5):
     raise AddonError(error)
 
-def showWarning(warning):
+def showWarning(warning,timeout=5):
     raise AddonWarningError(warning)
     
     

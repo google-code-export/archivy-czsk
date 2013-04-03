@@ -25,7 +25,7 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:18.0) Gecko/20100101 Firefo
 
 VIDEO_EXTENSIONS = ('.3gp', '3g2', '.asf', '.avi', '.flv', '.mp4', '.mkv', '.mpeg', '.mov' '.mpg', '.wmv', '.divx', '.vob', '.iso', '.ts')
 AUDIO_EXTENSIONS = ('.mp2', '.mp3', '.wma', '.ogg', '.dts', '.flac', '.wave')
-PLAYLIST_EXTENSIONS = ('.m3u','.m3u8')
+PLAYLIST_EXTENSIONS = ('.m3u', '.m3u8')
 ARCHIVE_EXTENSIONS = ('.rar', '.zip', '.7zip')
 MEDIA_EXTENSIONS = VIDEO_EXTENSIONS + AUDIO_EXTENSIONS + ARCHIVE_EXTENSIONS + PLAYLIST_EXTENSIONS
 
@@ -143,7 +143,7 @@ class DownloadManager(object):
                 urlList = url.split()
                 rtmp_url = []
                 for url in urlList[1:]:
-                    rtmp = url.split('=')
+                    rtmp = url.split('=', 1)
                     rtmp_url.append(' --' + rtmp[0])
                     rtmp_url.append("'%s'" % rtmp[1])
                 url = "'%s'" % urlList[0] + ' '.join(rtmp_url)
