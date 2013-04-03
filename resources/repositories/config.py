@@ -8,6 +8,12 @@ from Components.config import config, ConfigSubsection, ConfigSelection, ConfigY
 
 import os
 
+choicelist_timeout = []
+for i in range(10, 360, 5):
+    choicelist_timeout.append(("%d" % i, "%d s" % i))
+choicelist_timeout.append(("0", _("infinite")))
+
+
 #define settings which will apply for every addon
 global_addon_settings = [{'label':_('playing'),
                              'subentries':[
@@ -19,7 +25,13 @@ global_addon_settings = [{'label':_('playing'),
                              'subentries':[
                                         {'label':_("download path"), 'id':'download_path'},
                                         ]
+                            },
+                            {'label':_('loading'),
+                                'subentries':[
+                                        {'label':_("timeout"), 'id':'loading_timeout', 'entry':ConfigSelection(default="240", choices=choicelist_timeout)},
+                                        ]
                             }
+                         
                            ]
 
 
@@ -27,7 +39,7 @@ def add_global_addon_specific_setting(addon, addon_config, setting):
     
     if setting['id'] == 'download_path':
         download_path = os.path.join(config.plugins.archivCZSK.downloadsPath.getValue(), addon.id)
-        print '[ArchivCZSK] adding download_path %s to %s' % (download_path, addon.id)
+        #print '[ArchivCZSK] adding download_path %s to %s' % (download_path, addon.id)
         setattr(addon_config, setting['id'], ConfigDirectory(default=download_path))
         
 
