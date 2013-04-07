@@ -17,7 +17,7 @@ class GUIExceptionHandler(object):
     warningName = _("Unknown Warning")
     infoName = _("Unknown Info")
     
-    def __init__(self, timeout=3):
+    def __init__(self, timeout=6):
         self.timeout = timeout
         self.session = GlobalSession.getSession()
         self.messageFormat = "[%s]\n%s"
