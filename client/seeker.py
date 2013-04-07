@@ -21,6 +21,7 @@ def getCapabilities():
     list.append((_('Search in Ulozto.cz'), 'plugin.video.online-files', 'ulozto.cz'))
     list.append((_('Search in Bezvadata.cz'), 'plugin.video.online-files', 'bezvadata.cz'))
     list.append((_('Search in Hellspy.cz'), 'plugin.video.online-files', 'hellspy.cz'))
+    list.append((_('Search in Fastshare.cz'), 'plugin.video.online-files', 'fastshare.cz'))
     list.append((_('Search in Befun.cz'), 'plugin.video.befun.cz', 'all'))
     return list
 
@@ -185,6 +186,8 @@ class OnlineFilesSearch(Search):
             self.ulozto_search(search_exp)
         elif mode == 'hellspy.cz':
             self.hellspy_search(search_exp)
+        elif mode == 'fastshare.cz':
+            self.fastshare_search(search_exp)
         else:
             self.search_all(search_exp)
     
@@ -202,6 +205,10 @@ class OnlineFilesSearch(Search):
  
     def hellspy_search(self, search_exp):
         params = {'cp':'hellspy.cz', 'search':search_exp, 'search-no-history':True}
+        self.provider.get_content(self.session, params, self.succ_cb, self.err_cb)
+        
+    def fastshare_search(self, search_exp):
+        params = {'cp':'fastshare.cz', 'search':search_exp, 'search-no-history':True}
         self.provider.get_content(self.session, params, self.succ_cb, self.err_cb)
         
         
