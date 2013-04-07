@@ -332,10 +332,7 @@ def url_exist(url, timeout=20):
     if os.path.isfile(url):
         return True
     # for now we cannot determine existence of url in rtmp or mms protocol
-    if url.startswith('rtmp') or \
-        url.startswith('mms') or \
-        url.startswith('rtsp') or \
-        url.startswith('rtp'): 
+    if url.startswith(('rtmp', 'rtsp', 'rtp', 'mms')):
         return None
     
     if not url.startswith('http'):
