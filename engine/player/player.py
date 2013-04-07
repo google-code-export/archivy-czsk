@@ -36,6 +36,7 @@ from Components.Sources.StaticText import StaticText
 
 from subtitles.subtitles import SubsSupport
 from controller import VideoPlayerController, GStreamerDownloadController
+from info import videoPlayerInfo
 from infobar import ArchivCZSKMoviePlayerInfobar
 import setting
 
@@ -47,6 +48,8 @@ from Plugins.Extensions.archivCZSK.engine.tools import util
 from Plugins.Extensions.archivCZSK.engine.exceptions.play import UrlNotExistError, RTMPGWMissingError
 from Plugins.Extensions.archivCZSK.gui.base import BaseArchivCZSKScreen
 
+SERVICEDVB_ID = 0x1
+SERVICEMP3_ID = 4197
 SERVICEMP4_ID = 4113
 SERVICEMRUA_ID = 4370
 
@@ -226,7 +229,8 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePl
 		self["actions"] = HelpableActionMap(self, "ArchivCZSKMoviePlayerActions",
         	{
          	"leavePlayer": (self.leavePlayer, _("leave player?")),
-         	"toggleShow": (self.toggleShow, _("show/hide infobar"))
+         	"toggleShow": (self.toggleShow, _("show/hide infobar")),
+         	"audioSelection":(self.audioSelection, _("show audio selection menu"))
           	}, -3) 
 			
 		## bindend some video events to functions
@@ -693,7 +697,7 @@ class Player():
 			
 			# set prebuffering settings and play..
 			prebufferSeconds = 0
-			prebufferPercent = 2
+			prebufferPercent = 1
 			self.gstDownload = GStreamerDownload(path, prebufferSeconds, prebufferPercent)
 			self._playStream(self.playUrl, self.subtitles, playAndDownloadGst=True)
 			return
@@ -736,7 +740,7 @@ class Player():
 			urlList = self.playUrl.split()
 			rtmp_url = []
 			for url in urlList[1:]:
-				rtmp = url.split('=')
+				rtmp = url.split('=', 1)
 				rtmp_url.append(' --' + rtmp[0])
 				rtmp_url.append("'%s'" % rtmp[1])
 			rtmpUrl = "'%s'" % urlList[0] + ' '.join(rtmp_url)
@@ -754,14 +758,16 @@ class Player():
 		self.rtmpgwProcess = None
 		
 	def _createServiceRef(self, streamURL):
-		if self.settings.servicemp4.getValue():
+		if streamURL.endswith('.ts') and videoPlayerInfo.type == 'gstreamer':
+			sref = eServiceReference(SERVICEDVB_ID, 0, streamURL)
+		elif self.settings.servicemp4.getValue():
 			sref = eServiceReference(SERVICEMP4_ID, 0, streamURL)
 		elif self.settings.servicemrua.getValue():
 			sref = eServiceReference(SERVICEMRUA_ID, 0, streamURL)
 		else:
-			sref = eServiceReference(4097, 0, streamURL)
+			sref = eServiceReference(SERVICEMP3_ID, 0, streamURL)
 		sref.setName(self.name.encode('utf-8', 'ignore'))
-		return sref	
+		return sref
 								
 			
 	def _playStream(self, streamURL, subtitlesURL, playAndDownload=False, playAndDownloadGst=False, verifyLink=False):
