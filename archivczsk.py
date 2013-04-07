@@ -21,7 +21,7 @@ from engine.addon import VideoAddon, XBMCAddon
 from engine.exceptions.updater import UpdateXMLVersionError
 from engine.tools.task import Task
 
-ta3 = 'plugin.video.ta3'
+ta3 = 'plugin.video.aczsk-online.ta3'
 nova = 'plugin.video.dmd-czech.voyo'
 btv = 'plugin.video.dmd-czech.btv'
 huste = 'plugin.video.dmd-czech.huste'
@@ -32,9 +32,9 @@ joj = 'plugin.video.dmd-czech.joj'
 prima = 'plugin.video.dmd-czech.prima'
 stream = 'plugin.video.dmd-czech.stream'
 stv = 'plugin.video.dmd-czech.stv'
-markiza = 'plugin.video.dmd-czech.markiza'
+voyosk = 'plugin.video.voyosk'
 
-tv_archives = [stv, joj, ct, prima, nova, huste, muvi, metropol, btv, markiza, stream,ta3]
+tv_archives = [stv, joj, ct, prima, nova, huste, muvi, metropol, btv, voyosk, stream]
 
 
 
