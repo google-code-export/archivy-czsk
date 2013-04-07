@@ -34,7 +34,7 @@ stream = 'plugin.video.dmd-czech.stream'
 stv = 'plugin.video.dmd-czech.stv'
 voyosk = 'plugin.video.voyosk'
 
-tv_archives = [stv, joj, ct, prima, nova, huste, muvi, metropol, btv, voyosk, stream]
+tv_archives = [stv, joj, ct, ta3, prima, nova, huste, muvi, metropol, btv, voyosk, stream]
 
 
 
