@@ -29,10 +29,12 @@ __addon__ = ArchivCZSK.get_xbmc_addon(__scriptid__)
 __language__ = __addon__.getLocalizedString
 __settings__ = __addon__.getSetting
 
+sys.path.append(os.path.join (os.path.dirname(__file__), 'resources', 'lib'))
+
 import util, search
 
 import xbmcutil
-import bezvadata, hellspy, ulozto
+import bezvadata, hellspy, ulozto, fastshare
 import xbmcprovider
 
 
@@ -125,6 +127,16 @@ if __settings__('hellspy_enabled'):
 	}
 	extra.update(settings)
 	providers[p.name] = XBMCHellspyContentProvider(p, extra, __addon__, session)
+	
+
+if __settings__('fastshare_enabled'):
+	p = fastshare.FastshareContentProvider(__settings__('fastshare_user'), __settings__('fastshare_pass'), tmp_dir=__addon__.getAddonInfo('profile'))
+	extra = {
+				'vip':'0',
+				'keep-searches':__settings__('fastshare_keep-searches')
+	}
+	extra.update(settings)
+	providers[p.name] = xbmcprovider.XBMCLoginOptionalContentProvider(p, extra, __addon__, session)
 
 def icon(provider):
 	icon_file = os.path.join(__addon__.get_info('path'), 'resources', 'icons', provider + '.png')

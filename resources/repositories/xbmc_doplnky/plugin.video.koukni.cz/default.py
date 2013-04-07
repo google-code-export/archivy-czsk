@@ -20,10 +20,12 @@
 # *
 # */
 
+sys.path.append( os.path.join ( os.path.dirname(__file__),'resources','lib') )
 import re,os,urllib,urllib2,shutil,traceback
 import xbmcutil,util
 import xbmcprovider,koukni
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
+
 __scriptid__   = 'plugin.video.koukni.cz'
 __scriptname__ = 'koukni.cz'
 __addon__ = ArchivCZSK.get_xbmc_addon(__scriptid__)
