@@ -3,7 +3,7 @@ Created on 25.10.2012
 
 @author: marko
 '''
-from Plugins.Extensions.archivCZSK.engine.client import add_dir, add_video, getSearch, showInfo,showWarning
+from Plugins.Extensions.archivCZSK.engine.client import add_dir, add_video, getSearch, showError,showInfo,showWarning
 
 def addDir(name, url, mode, image, page=None, kanal=None, infoLabels={}, menuItems={}):
     params = {'name':name, 'url':url, 'mode':mode, 'page':page, 'kanal':kanal}
