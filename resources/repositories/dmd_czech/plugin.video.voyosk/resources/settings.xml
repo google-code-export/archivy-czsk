@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings>
+	<setting label="Meno" id="username" type="text" default="" />
+	<setting label="Heslo" id="password" type="text" default="" option="true" />
+	<setting label="zariadenie" id="devhash" type="text" default="" />
+</settings>
