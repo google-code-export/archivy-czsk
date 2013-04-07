@@ -21,7 +21,7 @@ from engine.addon import VideoAddon, XBMCAddon
 from engine.exceptions.updater import UpdateXMLVersionError
 from engine.tools.task import Task
 
-ta3 = 'plugin.video.aczsk-online.ta3'
+ta3 = 'plugin.video.ta3'
 nova = 'plugin.video.dmd-czech.voyo'
 btv = 'plugin.video.dmd-czech.btv'
 huste = 'plugin.video.dmd-czech.huste'
