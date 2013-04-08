@@ -49,7 +49,7 @@ from Plugins.Extensions.archivCZSK.engine.exceptions.play import UrlNotExistErro
 from Plugins.Extensions.archivCZSK.gui.base import BaseArchivCZSKScreen
 
 SERVICEDVB_ID = 0x1
-SERVICEMP3_ID = 4197
+SERVICEMP3_ID = 4097
 SERVICEMP4_ID = 4113
 SERVICEMRUA_ID = 4370
 
