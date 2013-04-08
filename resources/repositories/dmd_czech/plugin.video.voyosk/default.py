@@ -34,7 +34,8 @@ import cookielib
 import decimal
 import random
 
-import aes, json
+import aes
+import simplejson as json
 from parseutils import *
 
 from util import addDir, addLink, showInfo, showError, showWarning
