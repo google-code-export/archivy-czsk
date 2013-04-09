@@ -280,7 +280,7 @@ def log_in(username, password):
     data = json.load(response)
     response.close()
     if not data[u'logged']:
-        raise showError(data[u'msg'])
+        showError(data[u'msg'])
     #elif not data[u'subscription']:
     #    print 'you dont have any subscription'
     #    raise showError(session,"Nemáte predplatné")
