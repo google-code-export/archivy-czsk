@@ -70,6 +70,7 @@ if username == "" or password == "":
 
 
 def OBSAH():
+    addDir('Filmy', __baseurl__ + '/filmy/', 1, icon)
     addDir('Seriály', __baseurl__ + '/zoznam/serialy/', 1, icon)
     addDir('Relácie', __baseurl__ + '/zoznam/relacie/', 1, icon)
     addDir('Šport', __baseurl__ + '/zoznam/sport/', 1, icon)

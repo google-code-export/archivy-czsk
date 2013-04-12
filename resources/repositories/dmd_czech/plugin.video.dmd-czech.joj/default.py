@@ -11,6 +11,16 @@ home = __settings__.get_info('path')
 icon = os.path.join(home, 'icon.png')
 nexticon = os.path.join(home, 'nextpage.png') 
 
+VYSIELANE_START = '<div class="archiveList preloader">'
+VYSIELANE_ITER_RE = '<ul class=\"clearfix\">.*?<div class=\"titleBg">.*?<a href=\"(?P<url>[^"]+).*?title=\"(?P<title>[^"]+).+?<p>(?P<desc>.*?)</p>.+?</ul>'
+NEVYSIELANE_START = '<div class="archiveNev">'
+NEVYSIELANE_END = '<div class="clearfix padSection">'
+NEVYSIELANE_ITER_RE = '<li.*?><a href=\"(?P<url>[^"]+).*?title=\"(?P<title>[^"]+).*?</li>'
+EPISODE_START = '<div class="episodeListing relative overflowed">'
+EPISODE_END = '<div class="centered pagerDots"></div>'
+EPISODE_ITER_RE = '<li.*?>\s+<a href=\"(?P<url>[^"]+).*?title=\"(?P<title>[^"]+)\">\s*?<span class=\"date\">(?P<date>[^<]+)</span>.+?<span class=\"episode\">(?P<episode>[0-9]+).+?</li>'
+
+
 
 JOJ_URL = 'http://www.joj.sk'
 JOJ_PLUS_URL = 'http://plus.joj.sk'
@@ -58,219 +68,140 @@ def OBSAH():
     addDir('Videoportal.sk', 'http://www.videoportal.sk/kategorie.html', 9, icon, 1)
     
 def OBSAH_JOJ():
-    addDir('Relácie', JOJ_URL + '/archiv.html', 33, icon, 1)
-    addDir('Seriály', JOJ_URL + '/archiv.html', 33, icon, 0)
+    addDir('Relácie', JOJ_URL + '/archiv.html?type=relacie', 33, icon, 1)
+    addDir('Seriály', JOJ_URL + '/archiv.html?type=serialy', 33, icon, 1)
     
 def OBSAH_JOJ_PLUS():
-    addDir('Relácie', JOJ_PLUS_URL + '/plus-archiv.html', 33, icon, 1)
-    addDir('Seriály', JOJ_PLUS_URL + '/plus-archiv.html', 33, icon, 0)
+    addDir('Relácie', JOJ_PLUS_URL + '/plus-archiv.html?type=relacie', 33, icon, 1)
+    addDir('Seriály', JOJ_PLUS_URL + '/plus-archiv.html?type=serialy', 33, icon, 1)
+    
+def OBSAH_RELASER(url):
+    addDir('Vysielané', url, 34, icon, 1)
+    addDir('Nevysielané', url, 35, icon, 0)
+    
 
-def OBSAH_RELASER(url, rel):
+def OBSAH_VYSIELANE(url):
     zoznam = []
     req = urllib2.Request(url)
     req.add_header('User-Agent', _UserAgent_)
     response = urllib2.urlopen(req)
     httpdata = response.read()
     response.close()
-    # velmi pomale cez Beautifulsoup
-    #doc = BeautifulSoup(httpdata, convertEntities=BeautifulSoup.HTML_ENTITIES)
-    # vysielane relacie a serialy
     
-    iter_re_vys='<div class=\"j-filter-item\">.+?<a.+?title=\"(.+?)\".+?</a>.+?<li class=\"trailer\".+?<a href=\"(.+?)\".+?>(.+?)</a>'
-    iter_re_nevys='<li class=\"i c j-filter-item\">.+?<span class=\"j-data\">(.+?)</span>.+?<a href=\"(.+?)\".+?title=\"(.+?)\"'
+    httpdata = httpdata[httpdata.find(VYSIELANE_START):httpdata.find(NEVYSIELANE_START)]
     
-    for item in re.compile(iter_re_vys,re.DOTALL).finditer(httpdata):
-        title = item.group(1).encode('utf-8')
-        link = item.group(2)
-        st = item.group(3).encode('utf-8')
-        if rel and st == 'Archív relácie':
-            if not zakazane(title):
-                mod = list_mod(link)
-                img = image(url)
-                zoznam.append((title,link,mod,img,1))
-                #print title, link
-        elif not rel and st == 'Archív seriálu':
-            if not zakazane(title):
-                mod = list_mod(link)
-                img = image(url)
-                zoznam.append((title,link,mod,img,1))
-                #print title, link
-        
-    for item in re.compile(iter_re_nevys,re.DOTALL).finditer(httpdata):
-        num = item.group(1)
-        title = item.group(3).encode('utf-8')
-        link = item.group(2)
-        #print title,link
-        if rel and num.startswith(('65','50')):
-            link = link[:link.rfind('-')]
-            if link.split('-')[-1] == 'o':
-                link = link[:link.rfind('-')]
-            link += '-archiv.html'
+    for item in re.compile(VYSIELANE_ITER_RE, re.DOTALL | re.IGNORECASE).finditer(httpdata):
+        title = item.group('title').encode('utf-8')
+        link = item.group('url')
+        desc = item.group('desc')
+        if not zakazane(title):
             mod = list_mod(link)
             img = image(url)
-            if not zakazane(title):
-                zoznam.append((title,link,mod,img,1))
-                #print title, link
-        elif not rel and num.startswith('497'):
-            link = link[:link.rfind('-')]
-            if link.split('-')[-1] == 'o':
-                link = link[:link.rfind('-')]
-            link += '-epizody.html'
-            mod = list_mod(link)
-            img = image(url)
-            if not zakazane(title):
-                zoznam.append((title,link,mod,img,1))
-                #print title, link
-    
-    
-    """
-    for item in doc.findAll('div', 'j-filter-item'):
-        description = item.find('div', 'description')
-        if description:
-            title = description.find('strong').a['title'].encode('utf-8')
-            archiv = description.find('li', 'trailer')
-            link = archiv.a['href']
-            if rel and archiv.a.getText(' ').encode('utf-8') == 'Archív relácie':
-                if not zakazane(title):
-                    mod = list_mod(link)
-                    img = image(url)
-                    zoznam.append((title,link,mod,img,1))
-                    #print title, link
-            elif not rel and archiv.a.getText(' ').encode('utf-8') == 'Archív seriálu':
-                if not zakazane(title):
-                    mod = list_mod(link)
-                    img = image(url)
-                    zoznam.append((title,link,mod,img,1))
-                    #print title, link
-    # nevysielane relacie a serialy
-    for item in doc.findAll('li', 'i c j-filter-item'):
-        num = item.find('span', 'j-data').getText(' ')
-        title = item.a['title'].encode('utf-8')
-        link = item.a['href']
-        #print title,link
-        if rel and num.startswith(('65', '50')):
-            link = link[:link.rfind('-')]
-            if link.split('-')[-1] == 'o':
-                link = link[:link.rfind('-')]
-            link += '-archiv.html'
-            link = fix_link(link)
-            mod = list_mod(link)
-            img = image(url)
-            if not zakazane(title):
-                zoznam.append((title,link,mod,img,1))
-                #print title, link
-        elif not rel and num.startswith('497'):
-            link = link[:link.rfind('-')]
-            if link.split('-')[-1] == 'o':
-                link = link[:link.rfind('-')]
-            link += '-epizody.html'
-            mod = list_mod(link)
-            img = image(url)
-            if not zakazane(title):
-                zoznam.append((title,link,mod,img,1))
-                #print title, link
-    """
+            infoLabels = {'title':title, 'plot':desc}
+            zoznam.append((title, link, mod, img, 1, infoLabels))
+
     zoznam.sort(key=lambda x:x[0])
-    for title,link,mod,img,page in zoznam:
-        addDir(title,link,mod,img,page)
-
-
-# zaloha ak sa nieco na stranke pokafre :)
-def OBSAH2():
-    addDir('Publicistika','http://www.joj.sk',1,icon,1)
-    addDir('Seriály','http://www.joj.sk',2,icon,1)
-    addDir('Zábava','http://www.joj.sk',3,icon,1)
-    addDir('Videoportal.sk','http://www.videoportal.sk/kategorie.html',9,icon,1)
-    addDir('Speciál Hotel Paradise','http://hotelparadise.joj.sk/hotelparadise-video/video-epizody.html',20,icon,1)        
-def OBSAH_PUB():
-    addDir('Črepiny *','http://crepiny.joj.sk/crepiny-s-hviezdickou-archiv.html',4,__dmdbase__+'crepiny-s-hviezdickou.jpg',1)
-    addDir('Exclusiv','http://www.joj.sk/exclusiv/exclusiv-archiv.html',4,__dmdbase__+'exclusiv.jpg',1)
-    addDir('Krimi noviny','http://krimi.joj.sk/krimi-noviny-archiv.html',4,__dmdbase__+'krimi-noviny.jpg',1)
-    addDir('Najlepšie počasie','http://www.joj.sk/najlepsie-pocasie/najlepsie-pocasie-archiv.html',4,__dmdbase__+'najlepsie-pocasie.jpg',1)
-    addDir('Noviny','http://www.joj.sk/relacia-noviny/noviny-archiv.html',4,__dmdbase__+'noviny_01.jpg.jpg',1)
-    addDir('Noviny o 12:00','http://www.joj.sk/noviny-o-12-00/noviny-o-12-00-archiv.html',4,__dmdbase__+'noviny-o-12-00.jpg.jpg',1)
-    addDir('Noviny o 17:00','http://www.joj.sk/noviny-o-17-00/noviny-o-17-00-archiv.html',4,'http://c.static.joj.sk/uploads/tx_media/thumbs/310x175/noviny-o-17-00_79970.jpg',1)
-    addDir('Top Star','http://www.joj.sk/top-star/top-star-archiv.html',4,'http://b.static.joj.sk/uploads/tx_media/thumbs/150x82/joj-2-122004-0401-h264-pal_142574.jpg',1)
-    addDir('Šport','http://www.joj.sk/relacia-sport/sport-archiv.html',4,__dmdbase__+'sport.jpg',1)
-def OBSAH_SER():
-    addDir('Aféry','http://afery.joj.sk/afery-epizody.html',4,__dmdbase__+'afery.jpg',1)
-    addDir('Ako som prežil','http://www.joj.sk/ako-som-prezil/ako-som-prezil-epizody.html',4,'http://media.televize.cz/film/n1p7zky90ogv.jpg',1)
-    addDir('Dr.Ludský','http://www.joj.sk/dr-ludsky/dr-ludsky-epizody.html',4,__dmdbase__+'dr-ludsky.jpg',1)
-    addDir('Hoď svišťom','http://hodsvistom.joj.sk/hod-svistom-epizody.html',4,'http://img.csfd.cz/posters/30/300577_1.jpg',1)
-    addDir('Keby bolo keby','http://www.joj.sk/keby-bolo-keby/keby-bolo-keby-epizody.html',4,__dmdbase__+'kbk.jpg',1)
-    addDir('Mafstory','http://mafstory.joj.sk/mafstory-epizody.html',4,__dmdbase__+'mafstory.jpg',1)
-    addDir('Nevinní','http://nevinni.joj.sk/nevinni-epizody.html',4,__dmdbase__+'nevinni.jpg',1)    
-    addDir('Panelák','http://panelak.joj.sk/panelak-epizody.html',4,__dmdbase__+'panelak.jpg',1)
-    addDir('Pod povrchom','http://www.joj.sk/pod-povrchom/pod-povrchom-epizody.html',4,__dmdbase__+'podpovrchom.jpg',1)
-    addDir('Profesionáli','http://profesionali.joj.sk/profesionali-epizody.html',4,__dmdbase__+'profesionali.jpg',1)
-    addDir('Prvé oddelenie','http://www.joj.sk/prve-oddelenie/prve-oddelenie-epizody.html',4,__dmdbase__+'prve-oddelenie.jpg',1)
-    addDir('Dr. Dokonaly','http://www.joj.sk/dr-dokonaly/dr-dokonaly-epizody.html',4,__dmdbase__+'dr-dokonaly.jpg',1)
-
-def OBSAH_ZAB():
-    addDir('Ano, šéfe!','http://anosefe.joj.sk/anosefe-epizody.html',4,__dmdbase__+'anosefe.jpg',1)
-    addDir('Bordelári','http://www.bordelari.sk/bordelari-archiv.html',4,'http://a.static.joj.sk/uploads/tx_media/thumbs/306x172/bordelari_79969.jpg',1)
-    addDir('ČS má Talent','http://www.csmatalent.cz/video-cz.html',6,__dmdbase__+'talent.jpg',1)
-    addDir('Hladá sa milionár','http://www.joj.sk/hlada-sa-milionar/hlada-sa-milionar-archiv.html',4,__dmdbase__+'hlada-sa-milionar.jpg',1)
-    addDir('Chutíš mi','http://www.chutismi.sk/chutis-mi-archiv.html',4,__dmdbase__+'chutismi.jpg',1)
-    addDir('Extrémne rodiny','http://extremnerodiny.joj.sk/extremne-rodiny-archiv.html',4,'http://c.static.joj.sk/uploads/tx_media/thumbs/306x172/extremne-rodiny_84528.jpg',1)
-    addDir('Farmár hľadá ženu 2','http://www.farmarhladazenu.sk/epizody.html',8,'http://t2.gstatic.com/images?q=tbn:ANd9GcRRJbqnrXcT-Ius3Qo29sc-KPVKuNkVjRq5zx51P3FSdpzLL0VD',1)
-    addDir('Kapor na torte','http://www.joj.sk/kapor-na-torte-den-prvy/kapor-na-torte-den-prvy-archiv.html',4,__dmdbase__+'kapor-na-torte.jpg',1)
-    addDir('Kutyil s.r.o','http://www.joj.sk/kutyil/kutyil-epizody.html',4,__dmdbase__+'kutyil-logo.jpg',1)
-    addDir('Mama ožeň ma','http://www.mamaozenma.sk/mama-ozen-ma-epizody.html',7,'http://reality-show.panacek.com/wp-content/2015-mama_ozen_ma2.jpg',1)
-    addDir('Nebožies','http://plus.joj.sk/neboziec/epizody.html',4,'http://a.static.joj.sk/uploads/tx_media/thumbs/310x175/logo_77360.jpg',1)
-    addDir('Nové bývanie','http://novebyvanie.joj.sk/nove-byvanie-archiv.html',4,__dmdbase__+'nove-byvanie.jpg',1)
-    addDir('Sedem','http://www.joj.sk/sedem/sedem-archiv.html',4,__dmdbase__+'sedem.jpg',1)
-    addDir('Odsůdené','http://www.joj.sk/odsudene/odsudene-epizody.html',4,__dmdbase__+'odsudene.jpg',1)
-    addDir('Sůdna sieň','http://www.joj.sk/sudna-sien/sudna-sien-archiv.html',4,__dmdbase__+'sudna-sien.jpg',1)
-    addDir('Šéfka','http://www.sefka.sk/epizody.html',5,__dmdbase__+'sefka-logo.jpg',1)
-    addDir('Tajný sen','http://www.joj.sk/tajny-sen/tajny-sen-archiv.html',4,__dmdbase__+'tajny-sen.jpg',1)
-    addDir('Riskni milión','http://risknimilion.joj.sk/archiv.html',4,__dmdbase__+'riskni.jpg',1)    
-    addDir('Supermama','http://supermama.joj.sk/supermama-archiv.html',4,__dmdbase__+'supermama.jpg',1)
-    addDir('Pali vam to?','http://www.joj.sk/pali-vam-to/pali-vam-to-tv-archiv.html',4,__dmdbase__+'pali.jpg',1)
-    addDir('Rodinne zalezitosti','http://www.joj.sk/rodinne-zalezitosti/rodinne-zalezitosti-archiv.html',4,__dmdbase__+'rz.jpg',1)
-    addDir('Buckovci','http://buckovci.joj.sk/buckovci-archiv.html',4,__dmdbase__+'buckovci.jpg',1)
-    addDir('Experti','http://experti.joj.sk/experti-archiv.html',4,__dmdbase__+'experti.jpg',1)
-    addDir('Extremne pripady','http://www.joj.sk/extremne-priprady/extremne-pripady-archiv.html',4,__dmdbase__+'extremne.jpg',1)    
-
-
-
-def LIST(url, strana):
+    for title, link, mod, img, page, infoLabels in zoznam:
+        addDir(title, link, mod, img, page, infoLabels=infoLabels)
+        
+        
+def OBSAH_NEVYSIELANE(url):
+    zoznam = []
     req = urllib2.Request(url)
     req.add_header('User-Agent', _UserAgent_)
     response = urllib2.urlopen(req)
     httpdata = response.read()
     response.close()
-    if strana != 1:
-        strankovani = re.compile('<form action="services(.+?)">').findall(httpdata)  
-        cast_url = urlparse(url)
-        paging = re.sub('&amp;', '&', strankovani[0])        
-        paging = 'http://' + cast_url[1] + '/services' + paging
-        data = "paging=1&pagingOffset=" + str(strana)       
-        request = urllib2.Request(paging)
-        request.add_data(data)
-        request.add_header("Referer", url)    
-        request.add_header("Origin", "http://" + cast_url[1])
-        request.add_header("X-Requested-With", "XMLHttpRequest")
-        request.add_header("User-Agent", _UserAgent_)
-        request.add_header("Content-Type", "application/x-www-form-urlencoded")
-        con = urllib2.urlopen(request)
-        data = con.read()
-        con.close()
-        httpdata = str(data)
-        match = re.compile('<td><strong><a title=".+?" href="(.+?)">(.+?)</a>').findall(httpdata)
-    else:        
-        match = re.compile('<td><strong><a title=".+?" href="(.+?)">(.+?)</a>').findall(httpdata)        
-    for link, name in match:
-        #print link,name
-        addDir(name, link, 10, icon, 1)
-    try:
-        strankovani = re.compile('title="Nasledujúce" href="#" data-name="pagingOffset" data-value="(.+?)"').findall(httpdata)
-        next_page = strankovani[0]
-        print next_page                
-        addDir('>> Další strana >>', url, 4, nexticon, str(next_page))
-    except:
-        print 'strankovani nenalezeno'
+    httpdata = httpdata[httpdata.find(NEVYSIELANE_START):httpdata.find(NEVYSIELANE_END)]
+        
+    for item in re.compile(NEVYSIELANE_ITER_RE, re.DOTALL | re.IGNORECASE).finditer(httpdata):
+        title = item.group('title').encode('utf-8')
+        link = item.group('url')
+        #print title,link
+        mod = list_mod(link)
+        img = image(url)
+        if not zakazane(title):
+            zoznam.append((title, link, mod, img, 1))
+            
+    zoznam.sort(key=lambda x:x[0])
+    for title, link, mod, img, page in zoznam:
+        addDir(title, link, mod, img, page)
 
+
+# zaloha ak sa nieco na stranke pokafre :)
+def OBSAH2():
+    addDir('Publicistika', 'http://www.joj.sk', 1, icon, 1)
+    addDir('Seriály', 'http://www.joj.sk', 2, icon, 1)
+    addDir('Zábava', 'http://www.joj.sk', 3, icon, 1)
+    addDir('Videoportal.sk', 'http://www.videoportal.sk/kategorie.html', 9, icon, 1)
+    addDir('Speciál Hotel Paradise', 'http://hotelparadise.joj.sk/hotelparadise-video/video-epizody.html', 20, icon, 1)        
+def OBSAH_PUB():
+    addDir('Črepiny *', 'http://crepiny.joj.sk/crepiny-s-hviezdickou-archiv.html', 4, __dmdbase__ + 'crepiny-s-hviezdickou.jpg', 1)
+    addDir('Exclusiv', 'http://www.joj.sk/exclusiv/exclusiv-archiv.html', 4, __dmdbase__ + 'exclusiv.jpg', 1)
+    addDir('Krimi noviny', 'http://krimi.joj.sk/krimi-noviny-archiv.html', 4, __dmdbase__ + 'krimi-noviny.jpg', 1)
+    addDir('Najlepšie počasie', 'http://www.joj.sk/najlepsie-pocasie/najlepsie-pocasie-archiv.html', 4, __dmdbase__ + 'najlepsie-pocasie.jpg', 1)
+    addDir('Noviny', 'http://www.joj.sk/relacia-noviny/noviny-archiv.html', 4, __dmdbase__ + 'noviny_01.jpg.jpg', 1)
+    addDir('Noviny o 12:00', 'http://www.joj.sk/noviny-o-12-00/noviny-o-12-00-archiv.html', 4, __dmdbase__ + 'noviny-o-12-00.jpg.jpg', 1)
+    addDir('Noviny o 17:00', 'http://www.joj.sk/noviny-o-17-00/noviny-o-17-00-archiv.html', 4, 'http://c.static.joj.sk/uploads/tx_media/thumbs/310x175/noviny-o-17-00_79970.jpg', 1)
+    addDir('Top Star', 'http://www.joj.sk/top-star/top-star-archiv.html', 4, 'http://b.static.joj.sk/uploads/tx_media/thumbs/150x82/joj-2-122004-0401-h264-pal_142574.jpg', 1)
+    addDir('Šport', 'http://www.joj.sk/relacia-sport/sport-archiv.html', 4, __dmdbase__ + 'sport.jpg', 1)
+def OBSAH_SER():
+    addDir('Aféry', 'http://afery.joj.sk/afery-epizody.html', 4, __dmdbase__ + 'afery.jpg', 1)
+    addDir('Ako som prežil', 'http://www.joj.sk/ako-som-prezil/ako-som-prezil-epizody.html', 4, 'http://media.televize.cz/film/n1p7zky90ogv.jpg', 1)
+    addDir('Dr.Ludský', 'http://www.joj.sk/dr-ludsky/dr-ludsky-epizody.html', 4, __dmdbase__ + 'dr-ludsky.jpg', 1)
+    addDir('Hoď svišťom', 'http://hodsvistom.joj.sk/hod-svistom-epizody.html', 4, 'http://img.csfd.cz/posters/30/300577_1.jpg', 1)
+    addDir('Keby bolo keby', 'http://www.joj.sk/keby-bolo-keby/keby-bolo-keby-epizody.html', 4, __dmdbase__ + 'kbk.jpg', 1)
+    addDir('Mafstory', 'http://mafstory.joj.sk/mafstory-epizody.html', 4, __dmdbase__ + 'mafstory.jpg', 1)
+    addDir('Nevinní', 'http://nevinni.joj.sk/nevinni-epizody.html', 4, __dmdbase__ + 'nevinni.jpg', 1)    
+    addDir('Panelák', 'http://panelak.joj.sk/panelak-epizody.html', 4, __dmdbase__ + 'panelak.jpg', 1)
+    addDir('Pod povrchom', 'http://www.joj.sk/pod-povrchom/pod-povrchom-epizody.html', 4, __dmdbase__ + 'podpovrchom.jpg', 1)
+    addDir('Profesionáli', 'http://profesionali.joj.sk/profesionali-epizody.html', 4, __dmdbase__ + 'profesionali.jpg', 1)
+    addDir('Prvé oddelenie', 'http://www.joj.sk/prve-oddelenie/prve-oddelenie-epizody.html', 4, __dmdbase__ + 'prve-oddelenie.jpg', 1)
+    addDir('Dr. Dokonaly', 'http://www.joj.sk/dr-dokonaly/dr-dokonaly-epizody.html', 4, __dmdbase__ + 'dr-dokonaly.jpg', 1)
+
+def OBSAH_ZAB():
+    addDir('Ano, šéfe!', 'http://anosefe.joj.sk/anosefe-epizody.html', 4, __dmdbase__ + 'anosefe.jpg', 1)
+    addDir('Bordelári', 'http://www.bordelari.sk/bordelari-archiv.html', 4, 'http://a.static.joj.sk/uploads/tx_media/thumbs/306x172/bordelari_79969.jpg', 1)
+    addDir('ČS má Talent', 'http://www.csmatalent.cz/video-cz.html', 6, __dmdbase__ + 'talent.jpg', 1)
+    addDir('Hladá sa milionár', 'http://www.joj.sk/hlada-sa-milionar/hlada-sa-milionar-archiv.html', 4, __dmdbase__ + 'hlada-sa-milionar.jpg', 1)
+    addDir('Chutíš mi', 'http://www.chutismi.sk/chutis-mi-archiv.html', 4, __dmdbase__ + 'chutismi.jpg', 1)
+    addDir('Extrémne rodiny', 'http://extremnerodiny.joj.sk/extremne-rodiny-archiv.html', 4, 'http://c.static.joj.sk/uploads/tx_media/thumbs/306x172/extremne-rodiny_84528.jpg', 1)
+    addDir('Farmár hľadá ženu 2', 'http://www.farmarhladazenu.sk/epizody.html', 8, 'http://t2.gstatic.com/images?q=tbn:ANd9GcRRJbqnrXcT-Ius3Qo29sc-KPVKuNkVjRq5zx51P3FSdpzLL0VD', 1)
+    addDir('Kapor na torte', 'http://www.joj.sk/kapor-na-torte-den-prvy/kapor-na-torte-den-prvy-archiv.html', 4, __dmdbase__ + 'kapor-na-torte.jpg', 1)
+    addDir('Kutyil s.r.o', 'http://www.joj.sk/kutyil/kutyil-epizody.html', 4, __dmdbase__ + 'kutyil-logo.jpg', 1)
+    addDir('Mama ožeň ma', 'http://www.mamaozenma.sk/mama-ozen-ma-epizody.html', 7, 'http://reality-show.panacek.com/wp-content/2015-mama_ozen_ma2.jpg', 1)
+    addDir('Nebožies', 'http://plus.joj.sk/neboziec/epizody.html', 4, 'http://a.static.joj.sk/uploads/tx_media/thumbs/310x175/logo_77360.jpg', 1)
+    addDir('Nové bývanie', 'http://novebyvanie.joj.sk/nove-byvanie-archiv.html', 4, __dmdbase__ + 'nove-byvanie.jpg', 1)
+    addDir('Sedem', 'http://www.joj.sk/sedem/sedem-archiv.html', 4, __dmdbase__ + 'sedem.jpg', 1)
+    addDir('Odsůdené', 'http://www.joj.sk/odsudene/odsudene-epizody.html', 4, __dmdbase__ + 'odsudene.jpg', 1)
+    addDir('Sůdna sieň', 'http://www.joj.sk/sudna-sien/sudna-sien-archiv.html', 4, __dmdbase__ + 'sudna-sien.jpg', 1)
+    addDir('Šéfka', 'http://www.sefka.sk/epizody.html', 5, __dmdbase__ + 'sefka-logo.jpg', 1)
+    addDir('Tajný sen', 'http://www.joj.sk/tajny-sen/tajny-sen-archiv.html', 4, __dmdbase__ + 'tajny-sen.jpg', 1)
+    addDir('Riskni milión', 'http://risknimilion.joj.sk/archiv.html', 4, __dmdbase__ + 'riskni.jpg', 1)    
+    addDir('Supermama', 'http://supermama.joj.sk/supermama-archiv.html', 4, __dmdbase__ + 'supermama.jpg', 1)
+    addDir('Pali vam to?', 'http://www.joj.sk/pali-vam-to/pali-vam-to-tv-archiv.html', 4, __dmdbase__ + 'pali.jpg', 1)
+    addDir('Rodinne zalezitosti', 'http://www.joj.sk/rodinne-zalezitosti/rodinne-zalezitosti-archiv.html', 4, __dmdbase__ + 'rz.jpg', 1)
+    addDir('Buckovci', 'http://buckovci.joj.sk/buckovci-archiv.html', 4, __dmdbase__ + 'buckovci.jpg', 1)
+    addDir('Experti', 'http://experti.joj.sk/experti-archiv.html', 4, __dmdbase__ + 'experti.jpg', 1)
+    addDir('Extremne pripady', 'http://www.joj.sk/extremne-priprady/extremne-pripady-archiv.html', 4, __dmdbase__ + 'extremne.jpg', 1)    
+
+def LIST(url):
+    req = urllib2.Request(url)
+    req.add_header('User-Agent', _UserAgent_)
+    response = urllib2.urlopen(req)
+    httpdata = response.read()
+    response.close()
+    
+    httpdata = httpdata[httpdata.find(EPISODE_START):httpdata.find(EPISODE_END)]
+        
+    for item in re.compile(EPISODE_ITER_RE, re.DOTALL | re.IGNORECASE).finditer(httpdata):
+        title = item.group('title')
+        datum = item.group('date')
+        episode = item.group('episode')
+        title = str(episode) + ' .' + title + ' (' + datum + ')'
+        link = item.group('url')
+        addDir(title, link, 10, icon, 1)
+    
 def LIST_2(url):
     #self.core.setSorting('NONE')
     doc = read_page(url)
@@ -401,9 +332,9 @@ def VIDEOLINK(url, name):
             if __settings__.get_setting('stream_server'):
                 server = 'n09.joj.sk'
             else:
-                if int(serverno)>20:
-                    serverno=str(int(serverno)/2)
-                if len(serverno)==2:
+                if int(serverno) > 20:
+                    serverno = str(int(serverno) / 2)
+                if len(serverno) == 2:
                     server = 'n' + serverno + '.joj.sk'
                 else:
                     server = 'n0' + serverno + '.joj.sk'
@@ -435,9 +366,9 @@ def VIDEOLINK(url, name):
             if __settings__.get_setting('stream_server'):
                 server = 'n09.joj.sk'
             else:
-                if int(serverno)>20:
-                    serverno=str(int(serverno)/2)
-                if len(serverno)==2:
+                if int(serverno) > 20:
+                    serverno = str(int(serverno) / 2)
+                if len(serverno) == 2:
                     server = 'n' + serverno + '.joj.sk'
                 else:
                     server = 'n0' + serverno + '.joj.sk'
@@ -566,18 +497,18 @@ if mode == None or url == None or len(url) < 1:
         print ""
         OBSAH()
         
-elif mode==30:
+elif mode == 30:
         OBSAH2()
         
-elif mode==1:
+elif mode == 1:
         print ""
         OBSAH_PUB()
 
-elif mode==2:
+elif mode == 2:
         print ""
         OBSAH_SER()
 
-elif mode==3:
+elif mode == 3:
         print ""
         OBSAH_ZAB()
        
@@ -591,12 +522,20 @@ elif mode == 32:
 
 elif mode == 33:
         print ""
-        OBSAH_RELASER(url, page)
+        OBSAH_RELASER(url)
 
+elif mode == 34:
+        print ""
+        OBSAH_VYSIELANE(url)
+        
+elif mode == 35:
+        print ""
+        OBSAH_NEVYSIELANE(url)
+        
 elif mode == 4:
         print "" + url
-        print "" + str(page)        
-        LIST(url, page)
+        #print "" + str(page)        
+        LIST(url)
 
 elif mode == 5:
         print "" + url

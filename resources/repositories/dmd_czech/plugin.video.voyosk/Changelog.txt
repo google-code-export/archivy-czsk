@@ -1,3 +1,6 @@
+2013-04-10
+* pridane filmy
+
 2013-04-03
 * init verzia voyosk, funkcna len pre tych co maju zaplatene predplatne
 
