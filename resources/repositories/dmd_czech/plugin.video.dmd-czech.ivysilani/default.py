@@ -418,11 +418,8 @@ def VIDEOLINK(url, name):
                 continue
             video = re.compile('<video src="(.+?)" system-bitrate=".+?" label="(.+?)" enabled=".+?"').findall(str(item))
             for cesta, kvalita in video:
-                #rtmp_url = base+' playpath='+cesta+' pageUrl='+url+' swfUrl='+swfurl+' swfVfy=true live=true'
-                rtmp_url = base + '/' + cesta
-                if __settings__.get_setting('fix-rtmp-url'):
-                    idx = rtmp_url.find('://') + 1
-                    rtmp_url = rtmp_url[:idx] + rtmp_url[idx:].replace(':', '/')
+                app = base[base.find('/', base.find('://') + 3) + 1:]
+                rtmp_url = base + ' app=' + app + 'playpath=' + cesta
                 addLink(kvalita + ' ' + name, rtmp_url, icon, info[0])
                 #print rtmp_url,kvalita+info[0] #vystupni parametry RTMP
 
