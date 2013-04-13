@@ -198,7 +198,7 @@ def LIST(url):
         title = item.group('title')
         datum = item.group('date')
         episode = item.group('episode')
-        title = str(episode) + ' .' + title + ' (' + datum + ')'
+        title = str(episode) + '. ' + title + ' (' + datum + ')'
         link = item.group('url')
         addDir(title, link, 10, icon, 1)
     
