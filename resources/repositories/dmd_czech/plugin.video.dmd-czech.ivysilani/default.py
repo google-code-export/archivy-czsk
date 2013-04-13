@@ -419,7 +419,7 @@ def VIDEOLINK(url, name):
             video = re.compile('<video src="(.+?)" system-bitrate=".+?" label="(.+?)" enabled=".+?"').findall(str(item))
             for cesta, kvalita in video:
                 app = base[base.find('/', base.find('://') + 3) + 1:]
-                rtmp_url = base + ' app=' + app + 'playpath=' + cesta
+                rtmp_url = base + ' app=' + app + ' playpath=' + cesta
                 addLink(kvalita + ' ' + name, rtmp_url, icon, info[0])
                 #print rtmp_url,kvalita+info[0] #vystupni parametry RTMP
 
