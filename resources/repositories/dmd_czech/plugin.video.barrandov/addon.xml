@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.video.barrandov"
+       name="Barrandov TV Archiv"
+       version="1.0"
+       provider-name="mx3L">
+  <requires>
+    <import addon="xbmc.python" version="1.0"/>
+    <import addon="script.module.dmd-czech.common" version="1.0"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource" library="default.py">
+    <provides>video</provides>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <platform>all</platform>
+    <summary>Barrandov video-archive plugin</summary>
+    <summary lang="cs">Barrandov - archiv</summary>
+    <summary lang="sk">Barrandov - archív</summary>
+    <description>
+        Plugin to play TV video archive from Voyo.sk  
+    </description>
+    <description lang="cs">
+        Plugin pro přehrávání videí z archivu Barrandov.cz 
+    </description>
+    <description lang="sk">
+        Plugin pre prehrávanie videí z archívu Barrandov.cz
+    </description>
+  </extension>
+</addon>
