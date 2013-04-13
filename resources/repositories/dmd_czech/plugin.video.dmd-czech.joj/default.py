@@ -91,7 +91,7 @@ def OBSAH_VYSIELANE(url):
     httpdata = httpdata[httpdata.find(VYSIELANE_START):httpdata.find(NEVYSIELANE_START)]
     
     for item in re.compile(VYSIELANE_ITER_RE, re.DOTALL | re.IGNORECASE).finditer(httpdata):
-        title = item.group('title').encode('utf-8')
+        title = item.group('title')
         link = item.group('url')
         desc = item.group('desc')
         if not zakazane(title):
@@ -115,7 +115,7 @@ def OBSAH_NEVYSIELANE(url):
     httpdata = httpdata[httpdata.find(NEVYSIELANE_START):httpdata.find(NEVYSIELANE_END)]
         
     for item in re.compile(NEVYSIELANE_ITER_RE, re.DOTALL | re.IGNORECASE).finditer(httpdata):
-        title = item.group('title').encode('utf-8')
+        title = item.group('title')
         link = item.group('url')
         #print title,link
         mod = list_mod(link)
