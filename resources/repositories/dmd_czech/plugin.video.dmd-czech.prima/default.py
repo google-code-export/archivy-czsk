@@ -157,7 +157,7 @@ def VIDEOLINK(url,name):
         print keydata
         if geo_zone[0] == "1":
             #hd_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token?auth=_any_'+keydata[1]+'/mp4:hq/'+hd_stream[0]
-            hd_url = 'rtmp://bcasts1w.livebox.cz:80/iprima_token_'+geo_zone[0]+'?auth=_any_'+keydata[1]+' playpath=mp4:hq/'+hd_stream+ ' live=true'
+            hd_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token_'+geo_zone[0]+'?auth=_any_'+keydata[1]+' playpath=mp4:hq/'+hd_stream+ ' live=true'
             hq_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token_'+geo_zone[0]+'?auth=_any_'+keydata[1]+'/mp4:'+hq_stream[0]
             lq_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token_'+geo_zone[0]+'?auth=_any_'+keydata[1]+'/mp4:'+lq_stream[0]
             
@@ -170,7 +170,7 @@ def VIDEOLINK(url,name):
         else:
             if re.match('Prima', hq_stream[0], re.U):
                 #hd_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token?auth=_any_'+keydata[1]+'/mp4:hq/'+hd_stream[0]
-                hd_url = 'rtmp://bcasts1w.livebox.cz:80/iprima_token?auth=_any_'+keydata[1]+' playpath=mp4:hq/'+hd_stream+ ' live=true'
+                hd_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token?auth=_any_'+keydata[1]+' playpath=mp4:hq/'+hd_stream+ ' live=true'
                 hq_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token?auth=_any_'+keydata[1]+'/mp4:'+hq_stream[0]
                 lq_url = 'rtmp://bcastgw.livebox.cz:80/iprima_token?auth=_any_'+keydata[1]+'/mp4:'+lq_stream[0]
             else:

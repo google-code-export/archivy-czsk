@@ -1,169 +1,20 @@
 # -*- coding: utf-8 -*-
-import urllib2, urllib, re, os, string, time, base64, datetime
+import  string, time, base64, datetime
 from urlparse import urlparse
 try:
     import hashlib
 except ImportError:
     import md5
 
-from util import addDir, addLink, showWarning
-from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
-
-from parseutils import *
-__baseurl__ = 'http://voyo.nova.cz'
 __dmdbase__ = 'http://iamm.uvadi.cz/xbmc/voyo/'
-_UserAgent_ = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'
-__settings__ = ArchivCZSK.get_addon('plugin.video.dmd-czech.voyo')
-home = __settings__.get_info('path')
-icon = os.path.join(home, 'icon.png')
-nexticon = os.path.join(home, 'nextpage.png')
 page_pole_url = []
 page_pole_no = []
-secret_token = __settings__.get_setting('secret_token')
 rtmp_token = 'h0M*t:pa$kA'
 nova_service_url = 'http://master-ng.nacevi.cz/cdn.server/PlayerLink.ashx'
 nova_app_id = 'nova-vod'
-if secret_token == '':
-    showWarning(u"Doplněk DMD VOYO Zadejte tajné heslo!")
-    #__settings__.open_settings(session) 
-def OBSAH():
-    addDir('Seriály', 'http://voyo.nova.cz/serialy/', 5, icon, 1)
-    addDir('Pořady', 'http://voyo.nova.cz/porady/', 5, icon, 1)
-    addDir('Zprávy', 'http://voyo.nova.cz/zpravy/', 5, icon, 1)
-    
-def CATEGORIES_OLD(url, page):
-    doc = read_page(url)
-    items = doc.find('div', 'productsList series')
-    print items
-    for item in items.findAll('div', 'section_item'):
-        if re.search('Přehrát', str(item), re.U):
-                continue
-        item2 = item.find('div', 'poster')    
-        url = item2.a['href'].encode('utf-8')
-        title = item2.a['title'].encode('utf-8')
-        thumb = item2.a.img['src'].encode('utf-8')
-        #print title,url,thumb
-        addDir(title, __baseurl__ + url, 4, thumb)
-    try:
-        items = doc.find('div', 'pagination')
-        dalsi = items.find('span', 'next next_page')
-        if len(dalsi) != 0:
-            next_url = str(dalsi.a['href']) 
-        addDir('>> Další strana >>', __baseurl__ + next_url, 1, nexticon, 1)
-    except:
-        print 'Stránkování nenalezeno'
 
-def CATEGORIES(url, page):
-    i = 0
-    req = urllib2.Request(url)
-    req.add_header('User-Agent', _UserAgent_)
-    response = urllib2.urlopen(req)
-    httpdata = response.read()
-    response.close()
-    section_id = re.compile('var ut_section_id = "(.+?)"').findall(httpdata)
-    urlPath = urlparse(url)[2]
-    try:
-        match = re.compile('<div id="[0-9A-Za-z]+_productsListFoot">(.+?)Všechny seriály</p>', re.S).findall(httpdata)
-        pageid = re.compile("'boxId': '(.+?)'", re.S).findall(str(match[0]))
-        
-    except:
-        print "id nenalezeno"
-    strquery = '?count=35&sectionId=' + section_id[0] + '&showAs=2013&urlPath=' + urlPath + '&boxId=' + pageid[0] + '&resultType=categories&disablePagination=n&page=' + str(page) + '&sortOrder=DESC&letterFilter=false'    
-    request = urllib2.Request(url, strquery)
-    request.add_header("Referer", url)
-    request.add_header("Host", "voyo.nova.cz")
-    request.add_header("Origin", "http://voyo.nova.cz")
-    request.add_header("X-Requested-With", "XMLHttpRequest")
-    request.add_header("User-Agent", _UserAgent_)
-    request.add_header("Content-Type", "application/x-www-form-urlencoded")
-    con = urllib2.urlopen(request)
-    data = con.read()
-    con.close()    
-    doc = BeautifulSoup(data, convertEntities=BeautifulSoup.HTML_ENTITIES)
-    items = doc.find('div', 'productsList series')
-    for item in items.findAll('li', 'item_ul'):
-        if re.search('Přehrát', str(item), re.U):
-                continue
-        item2 = item.find('div', 'poster')    
-        url2 = item2.a['href'].encode('utf-8')
-        title = item2.a['title'].encode('utf-8')
-        thumb = item2.a.img['src'].encode('utf-8')
-        #print title,url,thumb
-        i = i + 1
-        addDir(title, __baseurl__ + url2, 2, thumb, 1)
-    if i == 35:
-        page = page + 1
-        addDir('>> Další strana >>', url, 5, nexticon, page)
-        
-def INDEX_OLD(url, page):
-    doc = read_page(url)
-    items = doc.find('div', 'productsList')
-    for item in items.findAll('div', 'section_item'):
-            item = item.find('div', 'poster')
-            url = item.a['href'].encode('utf-8')
-            title = item.a['title'].encode('utf-8')
-            thumb = item.a.img['src'].encode('utf-8')
-            print title, url, thumb
-            addDir(title, __baseurl__ + url, 3, thumb, 1)
-    try:
-        items = doc.find('div', 'pagination')
-        for item in items.findAll('a'):
-            page = item.text.encode('utf-8') 
-            if re.match('další', page, re.U):
-                next_url = item['href']
-                #print next_url
-                addDir('>> Další strana >>', __baseurl__ + next_url, 4, nexticon, 1)                
-    except:
-        print 'strankovani nenalezeno'
 
-def INDEX(url, page):
-    vyjimka = ['/porady/30359-farma-epizody', '/porady/30359-farma-nejnovejsi-dily', '/porady/29930-farma-komentare-vypadnutych', '/porady/29745-farma-cele-dily', '/porady/29564-farma-necenzurovane-dily', '/porady/29563-farma-deniky-soutezicich']
-    i = 0
-    req = urllib2.Request(url)
-    req.add_header('User-Agent', _UserAgent_)
-    response = urllib2.urlopen(req)
-    httpdata = response.read()
-    response.close()
-    section_id = re.compile('var ut_section_id = "(.+?)"').findall(httpdata)
-    product_id = re.compile('<input type="hidden" name="productId" value="(.+?)"').findall(httpdata)
-    urlPath = urlparse(url)[2]
-    try:
-        match = re.compile('<div id="[0-9A-Za-z]+_productsListFoot">(.+?)Všechny seriály</p>', re.S).findall(httpdata)
-        pageid = re.compile("'boxId': '(.+?)'", re.S).findall(str(match[0]))        
-    except:
-        print "strankovani nenalezeno"       
-    strquery = '?count=35&sectionId=' + section_id[0] + '&productId=' + product_id[0] + '&showAs=2013&urlPath=' + urlPath + '&boxId=' + pageid[0] + '&disablePagination=n&page=' + str(page) + '&sortOrder=DESC&letterFilter=false'    
-    request = urllib2.Request(url, strquery)
-    request.add_header("Referer", url)
-    request.add_header("Host", "voyo.nova.cz")
-    request.add_header("Origin", "http://voyo.nova.cz")
-    request.add_header("X-Requested-With", "XMLHttpRequest")
-    request.add_header("User-Agent", _UserAgent_)
-    request.add_header("Content-Type", "application/x-www-form-urlencoded")
-    con = urllib2.urlopen(request)
-    data = con.read()
-    con.close()    
-    doc = BeautifulSoup(data, convertEntities=BeautifulSoup.HTML_ENTITIES)
-    items = doc.find('div', 'productsList series')
-    for item in items.findAll('li', 'item_ul'):
-            item = item.find('div', 'poster')
-            url2 = item.a['href'].encode('utf-8')
-            title = item.a['title'].encode('utf-8')
-            thumb = item.a.img['src'].encode('utf-8')
-            if url2 in vyjimka:
-                print title, url2, thumb
-                addDir(title, __baseurl__ + url2, 2, thumb, 1)
-                continue
-            print title, url, thumb
-            addDir(title, __baseurl__ + url2, 3, thumb, 1)
-            i = i + 1
-            print title
-            if i == 35:
-                page = page + 1
-                addDir('>> Další strana >>', url, 5, nexticon, page)
-
-        
-def VIDEOLINK(url, name):
+def VIDEOLINK_TEST(url, name):
     req = urllib2.Request(url)
     req.add_header('User-Agent', _UserAgent_)
     response = urllib2.urlopen(req)
@@ -235,18 +86,349 @@ def VIDEOLINK(url, name):
             except:
                 rtmp_url_hd = 0
         if __settings__.get_setting('kvalita_sel') == "HQ":
-            addLink("HQ "+name, rtmp_url_hq, icon, desc)
+            addLink("HQ " + name, rtmp_url_hq, icon, desc)
         elif __settings__.get_setting('kvalita_sel') == "LQ":
-            addLink("LQ "+name, rtmp_url_lq, icon, desc)
+            addLink("LQ " + name, rtmp_url_lq, icon, desc)
         elif __settings__.get_setting('kvalita_sel') == "HD":
             if rtmp_url_hd == 0:
-                addLink("HQ "+name, rtmp_url_hq, icon, desc)                
+                addLink("HQ " + name, rtmp_url_hq, icon, desc)                
             else:
-                addLink("HD "+name, rtmp_url_hd, icon, desc)
+                addLink("HD " + name, rtmp_url_hd, icon, desc)
         else:
-            addLink("HQ "+name, rtmp_url_hq, icon, desc)                
+            addLink("HQ " + name, rtmp_url_hq, icon, desc)
 
 
+#/*
+# *      Copyright (C) 2013 mx3L
+# *
+# *  This Program is free software; you can redistribute it and/or modify
+# *  it under the terms of the GNU General Public License as published by
+# *  the Free Software Foundation; either version 2, or (at your option)
+# *  any later version.
+# *
+# *  This Program is distributed in the hope that it will be useful,
+# *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+# *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# *  GNU General Public License for more details.
+# *
+# *  You should have received a copy of the GNU General Public License
+# *  along with this program; see the file COPYING.  If not, write to
+# *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+# *  http://www.gnu.org/copyleft/gpl.html
+# *
+# */
+
+#
+#  Credits to Jirka Vyhnalek - author of voyocz plugin from dmd-xbmc project
+#  Some sources in this plugin are used from this project
+#  
+#
+
+
+import urllib
+import urllib2
+import re
+import os
+import cookielib
+import decimal
+import random
+
+import aes
+import simplejson as json
+from parseutils import *
+
+from util import addDir, addLink, showInfo, showError, showWarning
+from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
+
+__baseurl__ = 'http://voyo.nova.cz'
+_UserAgent_ = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:18.0) Gecko/20100101 Firefox/18.0'
+__settings__ = ArchivCZSK.get_xbmc_addon('plugin.video.dmd-czech.voyo')
+home = __settings__.getAddonInfo('path')
+icon = os.path.join(home, 'icon.png')
+nexticon = os.path.join(home, 'nextpage.png') 
+
+username = __settings__.getSetting('username')
+password = __settings__.getSetting('password')
+dev_hash = __settings__.getSetting('devhash')
+secret_token = __settings__.getSetting('secret_token')
+
+user_php_url = __baseurl__ + '/bin/eshop/ws/user.php'
+wallet_php_url = __baseurl__ + '/bin/eshop/ws/ewallet.php'
+player_php_url = __baseurl__ + '/bin/eshop/ws/plusPlayer.php'
+livestream_php_url = __baseurl__ + 'http://voyo.nova.cz/lbin/player/LiveStream.php'
+
+MAX_PAGE_ENTRIES = 35
+PAGER_RE = "<span class=\'next next_set\'><a href=\'([^']+)"
+LISTING_START = 'productsList series'
+LISTING_END = 'productsList latestEpisodes'
+
+VIDEOLINK_LIVE_RE = "clip:.+?url:.*?\'(?P<playpath>[^']+).+?plugins:.+?netConnectionUrl:.*?\'(?P<url>[^']+)"
+CATEGORIES_ITER_RE = '<div class=\"item">.*?<div class=\"image\">.*?<img src=\"(?P<img>[^"]+).*?<div class=\"description\">.*?<a href=\"(?P<url>[^"]+).*?title=\"(?P<title>[^"]+).*?<\/div>.*?<\/div>.*?<\/div>'
+LISTING_ITER_RE = '<li class=\"item_ul\">.*?<a href=\"(?P<url>[^"]+)".*?title=\"(?P<title>[^"]+).*?<img src=\"(?P<img>[^"]+).+?<\/li>'
+LIVE_ITER_RE = '<a href=\"\?channel=(?P<channel>[^"]+).+?title=\"(?P<title>[^"]+)'
+
+
+if  (username == "" or password == "") and secret_token == "":
+    showInfo('VOYO CZ archív je prístupný po zadaní použivateľského mena a hesla')
+
+
+def OBSAH():
+    addDir('Filmy', __baseurl__ + '/filmy/', 1, icon)
+    addDir('Seriály', __baseurl__ + '/serialy/', 1, icon)
+    addDir('Pořady', __baseurl__ + '/porady/', 1, icon)
+    addDir('Zprávy', __baseurl__ + '/zpravy/', 1, icon)
+    addDir('Deti', __baseurl__ + '/deti/', 1, icon)
+    addDir('Sport', __baseurl__ + '/sport/', 1, icon)
+    #addDir('Živé vysielanie', __baseurl__ + '/tv-zive/', 2, icon)
+
+def VOYO_OBSAH(url, name='', page=None):
+    i = 0
+    iter1 = False
+    iter2 = False
+    data = voyo_read(url)
+    start = data.find(LISTING_START)
+    end = data.find(LISTING_END)
+    if start != -1 and end != -1:
+        data = data[start:end]
+    elif end != -1:
+        data = data[:end]
+    elif start != -1:
+        data = data[start:]
+
+    for item in re.finditer(CATEGORIES_ITER_RE, data, re.DOTALL):
+        iter1 = True
+        i += 1
+        addDir(item.group('title'), __baseurl__ + item.group('url'), 1, item.group('img'))
+    
+    if not iter1:
+        for item in re.finditer(LISTING_ITER_RE, data, re.DOTALL):
+            iter2 = True
+            i += 1
+            addDir(item.group('title'), __baseurl__ + item.group('url'), 1, item.group('img'))
+    
+    if i == MAX_PAGE_ENTRIES:
+        if page is None:
+            page = 1
+        page += 1
+        idx = url.find('?page=')
+        if idx != -1:
+            nexturl = url[:idx] + '?page=' + str(page)
+        else:
+            nexturl = url + '?page=' + str(page)
+        addDir('Daľšia strana >>', nexturl, 1, nexticon, page=page)
+        
+    if not iter1 and not iter2:
+        if username != "":
+            VIDEOLINK(url, name)
+        else:
+            VIDEOLINK_TEST(url, name)
+        
+
+def VOYO_OBSAH_LIVE():
+    data = voyo_read(livestream_php_url)
+    data = data[data.find('<div class="live_buttons_wrap">'):]
+    for live in re.finditer(LIVE_ITER_RE, data, re.DOTALL):
+        addDir(live.group('channel'), live.group('channel'), 3, None)
+    
+  
+def VIDEOLINK_LIVE(channel, name):
+    if not islogged_in():
+        log_in(username, password)
+        
+    r = gen_random_decimal(0, 99999999999999)
+    livestream_params = {'channel':channel, 'r':r}
+    livestream_url = livestream_php_url + '?' + urllib.urlencode(livestream_params)
+    request = urllib2.Request(livestream_url)
+    request.add_header("Referer", __baseurl__ + '/zive-vysielanie/')    
+    request.add_header("Accept", "application/json, text/javascript, */*")
+    request.add_header("X-Requested-With", "XMLHttpRequest")
+    request.add_header("User-Agent", _UserAgent_)
+    response = urllib2.urlopen(request)
+    data = response.read()
+    response.close()
+    
+    video = re.search(VIDEOLINK_LIVE_RE, data, re.DOTALL)
+    if video is not None:
+        link = video.group('url') + '/' + video.group('playpath') + " pageUrl=" + livestream_php_url + '?' + channel + " live=1"
+        addLink(name, link, None)
+    
+        
+def VIDEOLINK(url, name):
+    
+    def gen_dev_hash():
+        r = gen_random_decimal(0, 99999999999999)
+        device_params = {'x':'device', 'a':'generateNewHash', 'userId':urllib.quote(username), 'r':r}
+        devicehash_url = wallet_php_url + '?' + urllib.urlencode(device_params)
+    
+        print 'generating new devicehash'
+        request = create_req(devicehash_url)
+        response = urllib2.urlopen(request)
+        data = json.load(response)
+        response.close()
+        return data[u'hash']
+    
+    def add_dev(hash):
+        r = gen_random_decimal(0, 99999999999999)
+        client_details = '{"b":"FF","bv":"18.0","ua":"Mozilla/5.0 (Windows NT 6.1; WOW64; rv:18.0) Gecko/20100101 Firefox/18.0"}'
+        adddevice_params = {'x':'device', 'a':'add', 'deviceCode':'PC', 'deviceHash':hash, 'client':client_details, 'r':r}
+        adddevice_url = wallet_php_url + '?' + urllib.urlencode(adddevice_params)
+    
+        print 'trying to add new device'
+        request = create_req(adddevice_url)
+        response = urllib2.urlopen(request)
+        data = json.load(response)
+        response.close()
+        
+        succ = data[u'ok']
+        dev_hash = data[u'hash']
+        if not succ:
+            print 'device cannot be added, exception or "Maximum of free devices already reached"'
+            showError(data[u'msg'])
+        else:
+            print 'device was successfully added'
+        return dev_hash
+    
+    if not islogged_in():
+        log_in(username, password)
+
+    if dev_hash == "":
+        new_devhash = gen_dev_hash()
+        add_dev(new_devhash)
+        __settings__.setSetting('devhash', new_devhash)
+    
+    # to remove device
+    # http://voyo.markiza.sk/profil?sect=subscription
+    
+    request = urllib2.Request(url)
+    request.add_header('User-Agent', _UserAgent_)
+    request.add_header("Referer", url)
+    response = urllib2.urlopen(request)
+    httpdata = response.read()
+    response.close()
+
+    media_data = re.search('mainVideo = new mediaData\((.+?), (.+?), (.+?),', httpdata)
+    
+    prod = media_data.group(1)
+    unit = media_data.group(2)
+    media = media_data.group(3)
+    site = re.search('siteId: ([0-9]+)', httpdata).group(1)
+    section = re.search('sectionId: ([0-9]+)', httpdata).group(1)
+    subsite = re.search('subsite: \'(.+?)\',', httpdata).group(1)
+    width = re.search('width: ([0-9]+)', httpdata).group(1)
+    height = re.search('height: ([0-9]+)', httpdata).group(1)
+    r = gen_random_decimal(0, 99999999999999)
+    
+    player_params = {
+                   'x':'playerFlash',
+                   'prod':prod,
+                   'unit':unit,
+                   'media':media,
+                   'site':site,
+                   'section':section,
+                   'subsite':subsite,
+                   'embed':0,
+                   'realSite':site,
+                   'width':width,
+                   'height':height,
+                   'hdEnabled':1,
+                   'hash':'',
+                   'finish':'finishedPlayer',
+                   'dev':dev_hash,
+                   'sts':'undefined',
+                   'r': r,
+                   }
+    
+    player_url = player_php_url + '?' + urllib.urlencode(player_params)
+    request = create_req(player_url)
+    response = urllib2.urlopen(request)
+    data = json.load(response)
+    response.close()
+    
+    if data[u'error']:
+        showError(data[u'msg'])
+    else:
+        html = data[u'html']
+        match = re.search('var voyoPlusConfig.*[^"]+"(.+?)";', html, re.DOTALL).group(1)
+        aes_decrypt = aes.decrypt(match, 'EaDUutg4ppGYXwNMFdRJsadenFSnI6gJ', 128)
+        aes_decrypt = aes_decrypt.replace('\/', '/')
+        server = re.compile('"host":"(.+?)"').findall(aes_decrypt)
+        filename = re.compile('"filename":"(.+?)"').findall(aes_decrypt)
+        url_pattern = re.search('\"urlPattern\":\"(.+?)\/.+?\?([^"]+)', aes_decrypt, re.DOTALL)
+        key = url_pattern.group(2)
+        app = server[0].split('/')[-1]
+        tcUrl = server[0]
+        pageUrl = url
+        playpath = url_pattern.group(1) + '/' + filename[0] + '-1.mp4' + "?" + key
+        rtmp_url = tcUrl + ' tcUrl=' + tcUrl + ' ' + 'pageUrl=' + pageUrl + ' ' + 'app=' + app + ' ' + 'playpath=' + playpath
+        addLink(name, rtmp_url, icon, name) 
+        
+def gen_random_decimal(i, d):
+        return decimal.Decimal('%d.%d' % (random.randint(0, i), random.randint(0, d)))
+    
+def init_opener():
+    opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookielib.LWPCookieJar()))
+    urllib2.install_opener(opener) 
+
+
+def create_req(url, postdata=None):
+    request = urllib2.Request(url, postdata)
+    request.add_header('User-Agent', _UserAgent_)
+    request.add_header("Referer", __baseurl__)    
+    request.add_header("Accept", "application/json, text/javascript, */*")
+    request.add_header("X-Requested-With", "XMLHttpRequest")
+    return request 
+
+def islogged_in():
+    print 'checking if logged in'
+    r = gen_random_decimal(0, 99999999999999)
+    isloggedin_params = {'x':'isLoggedIn', 'r':r}
+    isloggedin_url = user_php_url + '?' + urllib.urlencode(isloggedin_params)
+    request = create_req(isloggedin_url)
+    response = urllib2.urlopen(request)
+    logged_in = response.read() == 'true'
+    response.close()
+    if logged_in:
+        print 'already logged in'
+    else:
+        print 'not logged in'
+    return logged_in
+
+def log_in(username, password):
+    print 'logging in...'
+    r = gen_random_decimal(0, 99999999999999)
+    login_params = {'x':'login', 'regMethod':'', 'regId':'', 'r':r}
+    login_url = user_php_url + '?' + urllib.urlencode(login_params)
+    postdata = urllib.urlencode({'u':username, 'p':password})
+    request = create_req(login_url, postdata)
+    response = urllib2.urlopen(request)
+    data = json.load(response)
+    response.close()
+    if not data[u'logged']:
+        showError(data[u'msg'])
+    #elif not data[u'subscription']:
+    #    print 'you dont have any subscription'
+    #    raise showError(session,"Nemáte predplatné")
+    else:
+        print 'succesfully logged in'   
+
+def voyo_read(url):
+    count = 0
+    response = None
+    while (count < 20):
+        count += 1
+        request = urllib2.Request(url)
+        request.add_header('User-Agent', _UserAgent_)
+        try:
+            response = urllib2.urlopen(request)
+        except urllib2.HTTPError as e:
+            if e.code == 404:
+                continue
+            raise
+        else:
+            data = response.read()
+            return data
+        finally:
+            response and response.close()   
 
 
 url = None
@@ -256,11 +438,11 @@ mode = None
 page = None
 
 try:
-        url = urllib.unquote_plus(params["url"])
+        url = params["url"]
 except:
         pass
 try:
-        name = urllib.unquote_plus(params["name"])
+        name = params["name"]
 except:
         pass
 try:
@@ -278,33 +460,14 @@ print "Name: " + str(name)
 print "Page: " + str(page)
 
 if mode == None or url == None or len(url) < 1:
-        print ""
-        OBSAH()
-
-elif mode == 1:
-        print "" + url
-        print "" + str(page)                
-        CATEGORIES_OLD(url, page)
-elif mode == 5:
-        print "" + url
-        print "" + str(page)        
-        CATEGORIES(url, page)
-     
+    init_opener()
+    OBSAH()
        
+elif mode == 1:
+    VOYO_OBSAH(url, name, page)
+        
 elif mode == 2:
-        print "" + url
-        print "" + str(page)     
-        INDEX(url, page)
-            
-elif mode == 4:
-        print "" + url
-        print "" + str(page)                
-        INDEX_OLD(url, page)        
-
+    VOYO_OBSAH_LIVE()
         
 elif mode == 3:
-        print "" + url
-        try:
-            VIDEOLINK(url, name)
-        except IndexError:
-            INDEX(url, name)
+    VIDEOLINK_LIVE(url, name)

@@ -20,6 +20,7 @@ icon = os.path.join(home, 'icon.png')
 nexticon = os.path.join(home, 'nextpage.png')
 page_pole_url = []
 page_pole_no = []
+bonus_video = __settings__.get_setting('bonus-video')
 
 DATE_FORMAT = '%d.%m.%Y'
 DAY_NAME = (u'Po', u'Út', u'St', u'Čt', u'Pá', u'So', u'Ne')
@@ -29,7 +30,7 @@ RE_DATE = re.compile('(\d{1,2}\.\s*\d{1,2}\.\s*\d{4})')
 
 
 def OBSAH():
-    addSearch('Vyhledat...(beta)','0',13,None)
+    addSearch('Vyhledat...(beta)', '0', 13, None)
     addDir('Nejnovější pořady', __baseurl__ + '/?nejnovejsi=vsechny-porady', 12, icon)
     addDir('Nejsledovanější videa týdne', __baseurl__ + '/?nejsledovanejsi=tyden', 11, icon)
     addDir('Podle data', __baseurl__ + '/podle-data-vysilani/', 5, icon)
@@ -104,21 +105,23 @@ def CAT_LIST(url):
     httpdata = response.read()
     response.close()
     
-    cat_iter_regex='<li>(.+?a class=\"toolTip\".+?)</li>'
-    cat_regex='.+?href=\"(.+?)\".*?title=\"(.*?)\".*?>(.+?)<'
-    httpdata= httpdata[httpdata.find('clearfix programmesList'):]
+    cat_iter_regex = '<li>(.+?a class=\"toolTip\".+?)</li>'
+    cat_regex = '.+?href=\"(.+?)\".*?title=\"(.*?)\".*?>(.+?)<'
+    httpdata = httpdata[httpdata.find('clearfix programmesList'):]
     for item in re.compile(cat_iter_regex, re.DOTALL).finditer(httpdata):
         #print item.group(1)
-        it = re.search(cat_regex,item.group(1),re.DOTALL)
+        it = re.search(cat_regex, item.group(1), re.DOTALL)
         #print item.group(1),item.group(2),item.group(3)
-        link =it.group(1)
+        link = it.group(1)
         desc = it.group(2).encode('utf-8')
         name = it.group(3).encode('utf-8')
-        if item.group(1).find('labelBonus')!=-1:
+        if item.group(1).find('labelBonus') != -1:
             name = name + ' (pouze bonusy)'
-        infoLabels={'title':name,'plot':desc}
+            if not bonus_video:
+                continue 
+        infoLabels = {'title':name, 'plot':desc}
         #print name,link
-        addDir(name, 'http://www.ceskatelevize.cz' + link, 6, icon,infoLabels=infoLabels)
+        addDir(name, 'http://www.ceskatelevize.cz' + link, 6, icon, infoLabels=infoLabels)
             
         
     """
@@ -223,62 +226,74 @@ def NEWEST(url):
 
 
 def VIDEO_LIST(url, video_listing= -1):
+    program_single_start = '<div id="programmeInfoDetlail">'
+    program_single_end = '<div id="programmePlayer">'
+    program_multi_start = '<div id="programmeMoreBox" class="clearfix">'
+    program_multi_end = '<div id="programmeRelated">'
+    single_regex = '<a href=\"(?P<url>[^"]+).*?<h2>(?P<title>[^<]+)<\/h2>.*?<p>(?P<desc>[^<]+)<\/p>'
+    iter_regex = '<li class=\"itemBlock (clearfix|clearfix active).*?<a class=\"itemImage\".*?src=\"(?P<img>[^"]+).*?<a class=\"itemSetPaging\".*?href=\"(?P<url>[^"]*).+?>(?P<title>[^<]+).*?<\/li>'
+    paging_regex = '<div class=\"pagingContent clearfix\">.*?<td class=\"center\">(?P<page>[^<]+)</td>.*<td class=\"right\".*?<a.*?href=\"(?P<nexturl>[^"]+).*?<\/a>'
+    
     link = url
     if not re.search('dalsi-casti', url):
         link = url + 'dalsi-casti/'
-    doc = read_page(link)
-    if re.search('Bonusy', str(doc), re.U) and video_listing == -1:
+        
+    req = urllib2.Request(link)
+    req.add_header('User-Agent', _UserAgent_)
+    response = urllib2.urlopen(req)
+    httpdata = response.read()
+    response.close()
+    #doc = read_page(link)
+    if re.search('Bonusy', str(httpdata), re.U) and video_listing == -1:
         bonuslink = url + 'bonusy/'
         if re.search('dalsi-casti', url):
             bonusurl = re.compile('(.+?)dalsi-casti/?').findall(url)
             bonuslink = bonusurl[0] + 'bonusy/'
         addDir('Bonusy', bonuslink, 7, nexticon)
         print 'Bonusy = True - ' + url + 'bonusy/'
-    items = doc.find('ul', 'clearfix content')
-    if re.search('Ouha', str(items), re.U):
+    #items = doc.find('ul', 'clearfix content')
+    if re.search('Ouha', httpdata, re.U):
         bonuslink = url + 'bonusy/'
         BONUSY(bonuslink)
-    if items is None:
-        item = doc.find("div", {"id": "programmeInfoDetail"})
-        name = item.find('h2').getText(" ").encode('utf-8')
-        popis = item.find('p',recursive=False).getText(" ").encode('utf-8')
-        url = str(item.find("div", {"id": "programmeInfo"}).a['href'])
-        url = 'http://www.ceskatelevize.cz' + url
+        
+        
+    item_single = True
+    
+    multidata = httpdata[httpdata.find(program_multi_start):httpdata.find(program_multi_end)]
+    items = re.compile(iter_regex, re.DOTALL).finditer(multidata)
+    
+    for item in items:
+        item_single = False
+        thumb = item.group('img')
+        name = item.group('title').strip()
+        url = 'http://www.ceskatelevize.cz' + item.group('url')
         url = re.sub('porady', 'ivysilani', url)
-        infoLabels={'title':name,'plot':popis}
-        addDir(name, url, 10, None,infoLabels=infoLabels)
-    else:
-        for item in items.findAll('li', 'itemBlock clearfix'):
-            try:
-                name_a = item.find('h3')
-                name_a = name_a.find('a')
-                name = name_a.getText(" ").encode('utf-8')
-                if len(name) < 2:
-                    name = 'Titul bez názvu'
-                popis_a = item.find('p') 
-                popis = popis_a.getText(" ").encode('utf-8')
-                popis = re.sub('mdash;', '-', popis)
-                if re.match('Reklama:', popis, re.U):
-                    popis = 'Titul bez názvu'
-                url = 'http://www.ceskatelevize.cz' + str(item.a['href'])
-                url = re.sub('porady', 'ivysilani', url)
-                thumb = str(item.img['src'])
-                #print name+' '+popis, thumb, url
-                addDir(name + ' ' + popis, url, 10, thumb)
-            except:
-                #print 'Licence pro internetové vysílání již skončila.', thumb, 'http://www.ceskatelevize.cz'
-                addDir('Licence pro internetové vysílání již skončila.', link, 60, thumb)
+        print item.group('url'), item.group('title').strip()
+        addDir(name, url, 10, thumb)
+    
+    if item_single:
+        program_single_start = '<div id="programmeInfoDetail">'
+        program_single_end = 'div id="programmePlayer">'
+        singledata = httpdata[httpdata.find(program_single_start):httpdata.find(program_single_end)]
+        #print singledata
+        item = re.search(single_regex, singledata, re.DOTALL)
+        print item.group('url'), item.group('title').strip(), item.group('desc')
+        
+        name = item.group('title').strip()
+        popis = item.group('desc')
+        url = 'http://www.ceskatelevize.cz' + item.group('url')
+        url = re.sub('porady', 'ivysilani', url)
+        infoLabels = {'title':name, 'plot':popis}
+        addDir(name, url, 10, None, infoLabels=infoLabels)
                
     try:
-        pager = doc.find('div', 'pagingContent')
-        act_page_a = pager.find('td', 'center')
-        act_page = act_page_a.getText(" ").encode('utf-8')
-        act_page = act_page.split()
-        next_page_i = pager.find('td', 'right')
+        pager = re.search(paging_regex, multidata, re.DOTALL)
+        act_page = pager.group('page').split()
         #print act_page,next_page_i
-        next_url = next_page_i.a['href']
+        next_url = pager.group('nexturl')
         next_label = 'Další strana (Zobrazena videa ' + act_page[0] + '-' + act_page[2] + ' ze ' + act_page[4] + ')'
         #print next_label,next_url
+        
         video_listing_setting = int(__settings__.get_setting('video-listing'))
         if video_listing_setting > 0:
                 next_label = 'Další strana (celkem ' + act_page[4] + ' videí)'
@@ -292,6 +307,7 @@ def VIDEO_LIST(url, video_listing= -1):
         if (video_listing_setting > 0 and video_listing > 0):
                 VIDEO_LIST('http://ceskatelevize.cz' + next_url, video_listing - 1)
         else:
+                print next_label, 'http://www.ceskatelevize.cz' + next_url
                 addDir(next_label, 'http://www.ceskatelevize.cz' + next_url, 6, nexticon)
     except:
         print 'STRANKOVANI NENALEZENO!'
@@ -334,8 +350,8 @@ def HLEDAT(url):
     if url == '0':
             what = getSearch(session)
             if not what == '':
-                what = re.sub(' ','+',what)
-                url2 = 'https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=filtered_cse&num=20&hl=cs&prettyPrint=false&source=gcsc&gss=.cz&sig=981037b0e11ff304c7b2bfd67d56a506&cx=000499866030418304096:fg4vt0wcjv0&q='+what+'&googlehost=www.google.com&callback=google.search.Search.apiary6680&nocache=1360011801862'
+                what = re.sub(' ', '+', what)
+                url2 = 'https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=filtered_cse&num=20&hl=cs&prettyPrint=false&source=gcsc&gss=.cz&sig=981037b0e11ff304c7b2bfd67d56a506&cx=000499866030418304096:fg4vt0wcjv0&q=' + what + '&googlehost=www.google.com&callback=google.search.Search.apiary6680&nocache=1360011801862'
     else:
         match_page = re.compile('start=([0-9]+)').findall(url)
         match2 = re.compile('q=(.+?)&googlehost').findall(url)
@@ -362,15 +378,15 @@ def HLEDAT(url):
             continue
         #if not re.search('([0-9]{15}-)', url, re.U):
         #continue
-        addDir(name,url2,10,image)
+        addDir(name, url2, 10, image)
     if url == '0':
-        next_url = 'https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=filtered_cse&num=20&start=20&hl=cs&prettyPrint=false&source=gcsc&gss=.cz&sig=981037b0e11ff304c7b2bfd67d56a506&cx=000499866030418304096:fg4vt0wcjv0&q='+what+'&googlehost=www.google.com&callback=google.search.Search.apiary6680&nocache=1360011801862'
+        next_url = 'https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=filtered_cse&num=20&start=20&hl=cs&prettyPrint=false&source=gcsc&gss=.cz&sig=981037b0e11ff304c7b2bfd67d56a506&cx=000499866030418304096:fg4vt0wcjv0&q=' + what + '&googlehost=www.google.com&callback=google.search.Search.apiary6680&nocache=1360011801862'
         next_title = '>> Další strana (výsledky 0 - 20)'
-        addDir(next_title,next_url,13,nexticon)
+        addDir(next_title, next_url, 13, nexticon)
     else:
-        next_url = 'https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=filtered_cse&num=20&start='+ str(next_page) + '&hl=cs&prettyPrint=false&source=gcsc&gss=.cz&sig=981037b0e11ff304c7b2bfd67d56a506&cx=000499866030418304096:fg4vt0wcjv0&q=' + match2[0] + '&googlehost=www.google.com&callback=google.search.Search.apiary6680&nocache=1360011801862'
-        next_title = '>> Další strana (výsledky '+ str(match_page[0]) + ' - ' + str(next_page) + ')'
-        addDir(next_title,next_url,13,nexticon)
+        next_url = 'https://www.googleapis.com/customsearch/v1element?key=AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY&rsz=filtered_cse&num=20&start=' + str(next_page) + '&hl=cs&prettyPrint=false&source=gcsc&gss=.cz&sig=981037b0e11ff304c7b2bfd67d56a506&cx=000499866030418304096:fg4vt0wcjv0&q=' + match2[0] + '&googlehost=www.google.com&callback=google.search.Search.apiary6680&nocache=1360011801862'
+        next_title = '>> Další strana (výsledky ' + str(match_page[0]) + ' - ' + str(next_page) + ')'
+        addDir(next_title, next_url, 13, nexticon)
 
 
 
