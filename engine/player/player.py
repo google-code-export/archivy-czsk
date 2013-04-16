@@ -35,7 +35,7 @@ from Components.Sources.StaticText import StaticText
 
 
 from subtitles.subtitles import SubsSupport
-from controller import VideoPlayerController, GStreamerDownloadController
+from controller import VideoPlayerController, GStreamerDownloadController, RTMPController
 from info import videoPlayerInfo
 from infobar import ArchivCZSKMoviePlayerInfobar
 import setting
@@ -58,13 +58,17 @@ NETSTAT_PATH = 'netstat'
 
 
 class Video(object):
-	def __init__(self, session, serviceTryLimit=20):
+	def __init__(self, session, serviceTryLimit=25):
 		self.session = session
 		self.service = None
 		self.__serviceTimer = eTimer()
 		self.__serviceTimerTryDelay = 500 #ms
 		self.__serviceTryTime = 0
 		self.__serviceTryLimit = serviceTryLimit * 1000
+		self.__deferred = None
+		
+	def restartService(self):
+		self.service = None
 		self.__deferred = defer.Deferred()
 		
 
@@ -73,7 +77,6 @@ class Video(object):
 		Get real start of service
 		@return: deferred, fires success when gets service or errback when dont get service in time limit
 		"""
-		
 		
 		def fireDeferred():
 			self.__deferred.callback(None)
@@ -91,18 +94,16 @@ class Video(object):
 				if self.__serviceTryTime < self.__serviceTryLimit:
 					self.__serviceTimer.start(self.__serviceTimerTryDelay, True)
 				else:
-					del self.__serviceTimer
 					fireDeferredErr()
 			else:
-				del self.__serviceTimer
 				fireDeferred()
-			return self.__deferred
 				
 		def setService():
 			self.__serviceTryTime += self.__serviceTimerTryDelay
 			self.service = self.session.nav.getCurrentService()
 			getService()
 		
+		self.__deferred = defer.Deferred()
 		self.__serviceTimer.callback.append(setService)
 		getService()
 		return self.__deferred	
@@ -280,6 +281,7 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePl
 		
 	def __serviceStarted(self):
 		# we wait for service reference, and then trigger serviceStartedNow/setvice
+		self.video.restartService()
 		d = self.video.startService()
 		d.addCallbacks(self._serviceStartedReal, self._serviceNotStarted)
 	
@@ -803,10 +805,16 @@ class Player():
 			self.rassFuncs = ServiceEventTracker.EventMap[14][:]
 			ServiceEventTracker.EventMap[14] = []
 		
+		
+		if streamURL.startswith('rtmp') and \
+		 	self.settings.seeking.getValue() and \
+		  	content_provider.addon.get_setting('rtmp_seek_fix'):
+				videoPlayerController = RTMPController()
 				
-		if useVideoController:
+		elif useVideoController:
 			videoPlayerController = VideoPlayerController(self.session, download=self.download, \
 													 seekable=self.seekable, pausable=self.pausable)
+		
 		
 		if videoPlayerSetting == 'standard':
 			self.session.openWithCallback(self.exit, StandardVideoPlayer, sref, videoPlayerController, subtitlesURL)

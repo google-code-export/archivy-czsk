@@ -1,10 +1,11 @@
 import os
 import shutil
 
-from enigma import  eTimer, iPlayableService
+from enigma import  eTimer, iPlayableService, eServiceReference
 from Screens.MessageBox import MessageBox
 from Components.config import config
 from Components.ServiceEventTracker import ServiceEventTracker
+from ServiceReference import ServiceReference
 from Plugins.Extensions.archivCZSK import _
 from Plugins.Extensions.archivCZSK import log
 from Plugins.Extensions.archivCZSK.gui.common import showInfoMessage, showErrorMessage, showYesNoDialog
@@ -670,3 +671,88 @@ class GStreamerDownloadController(BaseVideoPlayerController):
             self._ask_save_download()
             
         
+class RTMPController(BaseVideoPlayerController):
+    """ 
+        Ugly workaround for rtmp seek/pause 
+        Needs to be fixed in libgstrtmp or librtmp where the problem probably lies..
+        
+        Handles seeking in RTMP by restarting stream with added session parameter "start=timeInMS",
+        since some rtmp streams played by GStreamer looses sound after seeking """
+        
+    def __init__(self):
+        self.video = None
+        self.video_player = None
+        self.video_length_total = None
+        self._play_pts = 0
+        self._seek_pts = 0
+        self._base_pts = 0
+        self._offset_pts = 0
+        self._offset_mode = False
+
+        
+    def set_video_player(self, video_player):
+        self.video_player = video_player
+        self.video = video_player.video
+        self.session = video_player.session
+        sref = ServiceReference(video_player.sref)
+        self.sref_url = sref.getPath()
+        self.sref_id = sref.getType()
+        self.sref_name = sref.getServiceName()
+        
+    def _update_video_length(self):
+        if self.video_length_total is not None:
+            self.video_length_total = self.video.getCurrentLength()
+        if self.video_length_total is None:
+            self._offset_mode = True
+        
+    def do_seek_relative(self, relative_pts):
+        self._update_video_length()
+        play_pts = self.video.getCurrentPosition()
+
+        if play_pts is not None:
+            if self._offset_mode:
+                current_pts = self._base_pts + play_pts
+            else:
+                current_pts = play_pts
+            
+            self._seek_pts = current_pts + relative_pts
+            if self.video_length_total is not None:
+                if self._seek_pts >= self.video_length_total:
+                    return
+            if self._seek_pts < 0:
+                return
+            seek_time = self.pts_to_sec(self._seek_pts) * 1000
+            self.do_rtmp_seek(seek_time)
+            
+    def unpause_service(self):
+        if self._offset_mode:
+            current_pts = self._base_pts
+        else:
+            current_pts = play_pts
+        time = self.pts_to_sec(current_pts) * 1000
+        self.do_rtmp_seek(time)
+        
+    def pause_service(self):
+        self._update_video_length()
+        play_pts = self.video.getCurrentPosition()
+        if play_pts is not None:
+            if self._offset_mode:
+                self._base_pts = self._base_pts + play_pts
+            else:
+                self._play_pts = play_pts
+            self._pause_service()
+
+        
+    def do_rtmp_seek(self, seek_time):
+        self.session.nav.stopService()
+        log.info('RTMPSeek to %ss', seek_time)
+        seeking_ref = self.sref_url.find(' start=')
+        if seeking_ref != -1:
+            sref_url = self.sref_url[:seeking_ref] + ' start=%s' % str(seek_time)
+        else:
+            sref_url = self.sref_url + ' start=%s' % str(seek_time)
+        seek_sref = eServiceReference(self.sref_id, 0, sref_url)
+        seek_sref.setName(self.sref_name)
+        self.session.nav.playService(seek_sref)
+        if self._offset_mode:
+            self._base_pts = self._seek_pts
