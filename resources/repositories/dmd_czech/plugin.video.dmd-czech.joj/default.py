@@ -24,6 +24,7 @@ EPISODE_ITER_RE = '<li.*?>\s+<a href=\"(?P<url>[^"]+).*?title=\"(?P<title>[^"]+)
 
 JOJ_URL = 'http://www.joj.sk'
 JOJ_PLUS_URL = 'http://plus.joj.sk'
+WAU_URL = 'http://wau.joj.sk/'
 ZAKAZANE = []
 
 RELACIE_FIX = ['anosefe']
@@ -64,20 +65,25 @@ def image(url):
 def OBSAH():
     addDir('JOJ', JOJ_URL, 31, icon, 1)
     addDir('JOJ Plus', JOJ_PLUS_URL, 32, icon, 1)
-    addDir('JOJ Povodna', JOJ_PLUS_URL, 30, icon, 1)
+    addDir('WAU', WAU_URL, 33, icon, 1)
+    #addDir('JOJ Povodna', JOJ_PLUS_URL, 30, icon, 1)
     addDir('Videoportal.sk', 'http://www.videoportal.sk/kategorie.html', 9, icon, 1)
     
 def OBSAH_JOJ():
-    addDir('Relácie', JOJ_URL + '/archiv.html?type=relacie', 33, icon, 1)
-    addDir('Seriály', JOJ_URL + '/archiv.html?type=serialy', 33, icon, 1)
+    addDir('Relácie', JOJ_URL + '/archiv.html?type=relacie', 34, icon, 1)
+    addDir('Seriály', JOJ_URL + '/archiv.html?type=serialy', 34, icon, 1)
     
 def OBSAH_JOJ_PLUS():
-    addDir('Relácie', JOJ_PLUS_URL + '/plus-archiv.html?type=relacie', 33, icon, 1)
-    addDir('Seriály', JOJ_PLUS_URL + '/plus-archiv.html?type=serialy', 33, icon, 1)
+    addDir('Relácie', JOJ_PLUS_URL + '/plus-archiv.html?type=relacie', 34, icon, 1)
+    addDir('Seriály', JOJ_PLUS_URL + '/plus-archiv.html?type=serialy', 34, icon, 1)
+    
+def OBSAH_WAU():
+    addDir('Relácie', WAU_URL + '/wau-archiv.html?type=relacie', 34, icon, 1)
+    addDir('Seriály', WAU_URL + '/wau-archiv.html?type=serialy', 34, icon, 1)
     
 def OBSAH_RELASER(url):
-    addDir('Vysielané', url, 34, icon, 1)
-    addDir('Nevysielané', url, 35, icon, 0)
+    addDir('Vysielané', url, 35, icon, 1)
+    addDir('Nevysielané', url, 36, icon, 0)
     
 
 def OBSAH_VYSIELANE(url):
@@ -519,16 +525,20 @@ elif mode == 31:
 elif mode == 32:
         print ""
         OBSAH_JOJ_PLUS()
-
+        
 elif mode == 33:
         print ""
-        OBSAH_RELASER(url)
+        OBSAH_WAU()
 
 elif mode == 34:
         print ""
+        OBSAH_RELASER(url)
+
+elif mode == 35:
+        print ""
         OBSAH_VYSIELANE(url)
         
-elif mode == 35:
+elif mode == 36:
         print ""
         OBSAH_NEVYSIELANE(url)
         
