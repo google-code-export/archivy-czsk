@@ -3,4 +3,7 @@
    <setting id="proxy_use" type="bool" label="Použít SOCKS proxy" default="false" />
    <setting id="proxy_ip" type="ipaddress" label="IP adresa" default="127.0.0.1" />
    <setting id="proxy_port" type="number" label="Port" default="1080" />
+   
+   <!-- archivCZSK specificke nastavenie -->  
+   <setting id="rtmp_seek_fix" type="bool" label="Opraviť RTMP pretáčanie" default="true"/>
 </settings>

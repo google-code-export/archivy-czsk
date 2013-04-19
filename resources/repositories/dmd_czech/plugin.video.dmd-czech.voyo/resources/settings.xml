@@ -5,5 +5,6 @@
    <setting id="kvalita_sel" type="labelenum" label="Preferovaná kvalita" values="LQ|HQ|HD" default="HQ" />
    <setting id="secret_token" type="text" label="Zadejte tajné heslo" default="" />
    <setting id="test_nastaveni" type="bool" label="Použít testovací nastavení" default="false"/>
-   
+   	 <!-- archivCZSK specificke nastavenie -->  
+   <setting id="rtmp_seek_fix" type="bool" label="Opraviť RTMP pretáčanie" default="true"/>
 </settings>
