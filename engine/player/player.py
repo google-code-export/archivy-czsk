@@ -808,7 +808,7 @@ class Player():
 		
 		if streamURL.startswith('rtmp') and \
 		 	self.settings.seeking.getValue() and \
-		  	content_provider.addon.get_setting('rtmp_seek_fix'):
+		  	self.content_provider.video_addon.get_setting('rtmp_seek_fix'):
 				videoPlayerController = RTMPController()
 				
 		elif useVideoController:
