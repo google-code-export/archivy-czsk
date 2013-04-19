@@ -347,7 +347,7 @@ class AddonSettings(object):
     def get_setting(self, setting_id):
         try:
             setting = getattr(self.main, '%s' % setting_id)
-        except ValueError:
+        except (ValueError, KeyError):
             log.debug('%s cannot retrieve setting %s,  Invalid setting id', self, setting_id)
             return None
         else:
