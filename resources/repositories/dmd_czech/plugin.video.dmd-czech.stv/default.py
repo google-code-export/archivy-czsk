@@ -17,8 +17,7 @@ def OBSAH():
     doc = doc.find('select', id='sel3')
     match = re.compile('<option value="(.+?)">(.+?)</option>').findall(str(doc))
     for link, name in match:
-            print name, link
-            addDir(name, __baseurl__ + link, 2, icon)    
+        addDir(name, __baseurl__ + link, 2, icon)    
 
 
 def OBSAH_RELACE(url):
@@ -57,7 +56,7 @@ def VIDEOLINK(url, name):
     response.close()
     title = re.compile('<title>(.+?)</title>').findall(httpdata)
     title = title[0] + ' ' + name
-    video_id = re.search('.*?LiveboxPlayer.flash\(.+?stream_id:+.\"(.+?)\"', httpdata, re.IGNORECASE | re.DOTALL)
+    video_id = re.search('LiveboxPlayer.flash\(.+?stream_id:+.\"(.+?)\"', httpdata, re.IGNORECASE | re.DOTALL)
     video_id = video_id.group(1)
     
     req = urllib2.Request("http://embed.stv.livebox.sk/v1/tv-arch.js")
@@ -84,7 +83,8 @@ def VIDEOLINK(url, name):
     tcUrl = rtmp_url[:rtmp_url.find(stream_part)-1]+rtmp_url[rtmp_url.find(stream_part)+len(stream_part):]
     app = tcUrl[tcUrl.find('/',tcUrl.find('/')+2)+1:]
 
-    rtmp_url = rtmp_url+ ' playpath=' + playpath + ' tcUrl=' + tcUrl + ' app=' + app
+    #rtmp_url = rtmp_url+ ' playpath=' + playpath + ' tcUrl=' + tcUrl + ' app=' + app
+    rtmp_url = rtmp_url+ ' tcUrl=' + tcUrl + ' app=' + app
     
     addLink(name+' [rtmp]', rtmp_url, icon, name)
     addLink(name+' [hls]', m3u8_url, icon, name)
