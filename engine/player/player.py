@@ -79,11 +79,13 @@ class Video(object):
 		"""
 		
 		def fireDeferred():
+			self.__serviceTimer.callback.remove(setService)
 			self.__deferred.callback(None)
 			self.__deferred = None
 			
 		def fireDeferredErr():
-			self.__deferred.errback(None)
+			self.__serviceTimer.callback.remove(setService)
+			self.__deferred.errback(defer.failure.Failure(Exception("")))
 			self.__deferred = None
 			
 		def getService():

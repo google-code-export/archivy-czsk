@@ -714,7 +714,7 @@ class RTMPController(BaseVideoPlayerController):
                 current_pts = self._base_pts + play_pts
             else:
                 current_pts = play_pts
-            
+
             self._seek_pts = current_pts + relative_pts
             if self.video_length_total is not None:
                 if self._seek_pts >= self.video_length_total:
@@ -744,7 +744,6 @@ class RTMPController(BaseVideoPlayerController):
 
         
     def do_rtmp_seek(self, seek_time):
-        self.session.nav.stopService()
         log.info('RTMPSeek to %ss', seek_time)
         seeking_ref = self.sref_url.find(' start=')
         if seeking_ref != -1:
