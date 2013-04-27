@@ -18,7 +18,7 @@ from Plugins.Extensions.archivCZSK.engine.exceptions.addon import AddonInfoError
 from Plugins.Extensions.archivCZSK.engine.items import PFolder, PVideo, PNotSupportedVideo, PSearch, PSearchItem, PContextMenuItem, Stream
 
 
-GItem_lst = VideoAddonContentProvider.gui_item_list
+GItem_lst = VideoAddonContentProvider.get_shared_itemlist()
 
 def getVersion():
     return "1.0"

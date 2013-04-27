@@ -3,7 +3,7 @@ Created on 21.10.2012
 
 @author: marko
 '''
-import os, traceback, sys, imp
+import os, traceback, sys, imp, marshal
 from Tools.LoadPixmap import LoadPixmap
 from Components.config import config, ConfigSubsection, ConfigSelection, ConfigYesNo, ConfigText, ConfigNumber, ConfigIP, ConfigPassword, ConfigDirectory, configfile, getConfigListEntry
 
@@ -576,12 +576,18 @@ class AddonImporter:
                 self.__filehandle.close()
                 self.__filehandle = None
         log.debug("%s importing modul '%s'" , self, fullname)
+        bytecode = os.path.splitext(self.filename)[1] in ['.pyo', 'pyc']
         mod = self.__modules[fullname] = imp.new_module(fullname)
         mod.__file__ = self.filename
         mod.__loader__ = self
         del self.filename
         del self.description
         try:
+            if bytecode:
+                #magic = code[:4]
+                #assert magic == imp.get_magic()
+                code_bytes = code[8:]
+                code = marshal.loads(code_bytes)
             exec code in mod.__dict__
             log.debug("%s imported modul '%s'", self, fullname)
         except Exception:
