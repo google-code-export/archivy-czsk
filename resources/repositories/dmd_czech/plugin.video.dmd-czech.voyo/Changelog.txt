@@ -1,9 +1,14 @@
+2013-04-1:
+* pouzitie regexp namiesto beatifulsoup -> rychlejsie nacitavanie relacii
+* pridane kategorie
+* moznost pouzit prihlasovacie udaje na voyo.cz
+
 2013-03-26:
- * oprava zpráv a listingu nìkterých poøadù,zobrazení pøehrávané kvality
+ * oprava zprï¿½v a listingu nï¿½kterï¿½ch poï¿½adï¿½,zobrazenï¿½ pï¿½ehrï¿½vanï¿½ kvality
 2012-08-28:
  * opraveno strankovani poradu, opet lze prohlizet vice neuz poslednich 35 epizod
 2012-08-23:
- * opraven vypis poradu, nyni se jiz zobrazuji vsechny,opravena zmena podstranek poradu Farma,opraven vypis zpráv,zatim neni v provozu prochazeni stranek poradu
+ * opraven vypis poradu, nyni se jiz zobrazuji vsechny,opravena zmena podstranek poradu Farma,opraven vypis zprï¿½v,zatim neni v provozu prochazeni stranek poradu
 2012-08-07:
  * zatim pouze castecna oprava zmen na webu tv nova, doplnek zobrazuje zatim pouze 35 poradu v kategorii a poslednich 35 epizod, opravu strankovani predpokladam koncem mesice
 2012-07-03:
