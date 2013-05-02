@@ -31,18 +31,14 @@ def resolve(url):
         items = []
         headers = {
                    "Referer":"http://img.mail.ru/r/video2/uvpv3.swf?3",
+                   "Cookie":"VID=2SlVa309oFH4; mrcu=EE18510E964723319742F901060A; p=IxQAAMr+IQAA; video_key=203516; s="
                   }
+        # header "Cookie" with parameters need to be set for your download/playback
         quality = "???"
         vurl = m.group('url')
         vurl = re.sub('\&[^$]*', '', vurl)
-        req = util.urllib2.Request('http://api.video.mail.ru/videos/' + vurl + '.json', headers=headers)
-        response = util.urllib2.urlopen(req)
-        data = response.read()
-        cookie = response.info().get('Set-Cookie')
-        headers['Cookie'] = cookie.split(';')[0]
-        response.close()
+        data = util.request('http://api.video.mail.ru/videos/' + vurl + '.json', headers=headers)
         item = util.json.loads(data)
-
         for qual in item[u'videos']:
             if qual == 'sd':
                 quality = "480p"

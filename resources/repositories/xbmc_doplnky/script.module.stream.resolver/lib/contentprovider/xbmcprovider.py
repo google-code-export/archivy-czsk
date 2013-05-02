@@ -178,7 +178,10 @@ class XBMContentProvider(object):
 		if 'img' in item.keys():
 			img = item['img']
 		if title.find('$') == 0:
-			title = self.addon.getLocalizedString(int(title[1:]))
+			try:
+				title = self.addon.getLocalizedString(int(title[1:]))
+			except Exception:
+				pass
 		menuItems = {}
 		if 'menu' in item.keys():
 			menuItems.update(item['menu'])
@@ -186,8 +189,9 @@ class XBMContentProvider(object):
 
 	def _extract_infolabels(self, item):
 		infoLabels = {}
-		if 'plot' in item.keys():
-			infoLabels['plot'] = item['plot']
+		for label in ['plot', 'year', 'genre', 'rating', 'director', 'votes', 'cast', 'trailer']:
+			if label in item.keys():
+				infoLabels[label] = util.decode_html(item[label])
 		return infoLabels
 
 	def render_video(self, item):
@@ -207,7 +211,7 @@ class XBMContentProvider(object):
 		xbmcutil.add_video(title,
 			params,
 			item['img'],
-			infoLabels={'Title':item['title']},
+			infoLabels=self._extract_infolabels(item),
 			menuItems=menuItems
 		)	
 	
