@@ -260,6 +260,7 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePl
 		self.video = Video(session)
 		
 		self.sref = service	
+		self.isStream = service.getPath().find('://') != -1
 		self.returning = False
 		self.onClose.append(self._onClose)
 	
@@ -293,6 +294,9 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, SubsSupport, ArchivCZSKMoviePl
 		
 	def _serviceNotStarted(self, failure):
 		log.info('cannot get service reference')
+		
+	def isStream(self):
+		return sref.getPath().find('://') != -1
 		
 	def createSummary(self):
 		return ArchivCZSKMoviePlayerSummary
@@ -357,6 +361,7 @@ class CustomVideoPlayer(ArchivCZSKMoviePlayer):
 			self.videoPlayerController.start(self.playAndDownload)
 			
 ##################  default MP methods ################
+	
 	def _seekFwd(self):
 		super(CustomVideoPlayer, self).seekFwd()
 		
@@ -382,13 +387,19 @@ class CustomVideoPlayer(ArchivCZSKMoviePlayer):
 
 	def seekFwd(self):
 		if self.useVideoController:
-			self.videoPlayerController.seek_fwd()
+			if self.isStream:
+				self.seekFwdManual()
+			else:
+				self.videoPlayerController.seek_fwd()
 		else:
 			self._seekFwd()
 			
 	def seekBack(self):
 		if self.useVideoController:
-			self.videoPlayerController.seek_fwd()
+			if self.isStream:
+				self.seekBackManual()
+			else:
+				self.videoPlayerController.seek_fwd()
 		else:
 			self._seekBack()
 		
@@ -642,13 +653,14 @@ class Player():
 			
 			# rtmp stream
 			if self.playUrl.startswith('rtmp'):
+				rtmpTimeout = self.settings.rtmpTimeout.getValue()
 				
 				# internal player has rtmp support
 				if self.settings.seeking.getValue():
 					if self.stream is not None:
-						self._playStream(self.stream.getUrl(), self.subtitles, verifyLink=verifyLink)
+						self._playStream(self.stream.getUrl() + ' timeout=' + str(rtmpTimeout), self.subtitles, verifyLink=verifyLink)
 					else:
-						self._playStream(str(self.playUrl + ' buffer=' + str(self.rtmpBuffer)), self.subtitles, verifyLink=verifyLink)
+						self._playStream(self.playUrl + ' buffer=' + str(self.rtmpBuffer) + ' timeout=' + str(rtmpTimeout), self.subtitles, verifyLink=verifyLink)
 				# internal player doesnt have rtmp support so we use rtmpgw
 				else:
 					#to make sure that rtmpgw is not running
@@ -874,18 +886,25 @@ class Player():
 				DownloadManager.getInstance().removeDownload(self.download)
 			else:
 				self.download.wantSave = True
+				
+		downloadedSucc = self.download.downloaded
+		downloadedErr = not self.download.downloaded and not self.download.running
+		downloading = not self.download.downloaded and self.download.running
+		askedWantSave = self.download.wantSave
 
-		if self.download.downloaded and not self.download.wantSave:
+		if downloadedSucc and not askedWantSave:
 			self.session.openWithCallback(saveDownload, MessageBox, _("Do you want to save") + ' ' + self.download.name.encode('utf-8', 'ignore')\
 										 + ' ' + _("to disk?"), type=MessageBox.TYPE_YESNO)
-		elif self.download.downloaded and self.download.wantSave:
-			pass
 		
-		elif not self.download.downloaded and self.download.running:
+		elif downloadedErr and not askedWantSave:
+			self.session.openWithCallback(saveDownload, MessageBox, _("Do you want to save") + " " + _('not succesfully finished download') + " " + self.download.name.encode('utf-8', 'ignore')\
+										 + ' ' + _("to disk?"), type=MessageBox.TYPE_YESNO)
+
+		elif downloading and not askedWantSave:
 			self.session.openWithCallback(saveDownload, MessageBox, _("Do you want to continue downloading") + ' '\
 										 + self.download.name.encode('utf-8', 'ignore') + ' ' + _("to disk?"), type=MessageBox.TYPE_YESNO)
-		else:
-			saveDownload(False)
+		elif askedWantSave:
+			pass
 
 
 	def exit(self, callback=None):

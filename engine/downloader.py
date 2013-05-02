@@ -147,6 +147,8 @@ class DownloadManager(object):
                     rtmp_url.append(' --' + rtmp[0])
                     rtmp_url.append("'%s'" % rtmp[1])
                 url = "'%s'" % urlList[0] + ' '.join(rtmp_url)
+            if playDownload:
+                live = True
 
             d = RTMPDownloadE2(url=url, name=name, destDir=destination, live=live, quiet=quiet)
             d.onStartCB.append(startCB)

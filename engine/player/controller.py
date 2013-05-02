@@ -1,19 +1,26 @@
 import os
 import shutil
+from twisted.internet.task import deferLater
+from twisted.internet import reactor
+from twisted.internet.defer import inlineCallbacks
 
 from enigma import  eTimer, iPlayableService, eServiceReference
 from Screens.MessageBox import MessageBox
 from Components.config import config
 from Components.ServiceEventTracker import ServiceEventTracker
+from Components.Converter.ServicePositionAdj import ServicePositionAdj
 from ServiceReference import ServiceReference
 from Plugins.Extensions.archivCZSK import _
 from Plugins.Extensions.archivCZSK import log
 from Plugins.Extensions.archivCZSK.gui.common import showInfoMessage, showErrorMessage, showYesNoDialog
 
-
 show_info_message = showInfoMessage
 show_error_message = showErrorMessage
 show_yesno_dialog = showYesNoDialog
+
+def sleep(sec):
+    # Simple helper to delay asynchronously for some number of seconds.
+    return deferLater(reactor, sec, lambda: None)
 
     
 class BaseVideoPlayerController(object):
@@ -165,6 +172,8 @@ class VideoPlayerController(BaseVideoPlayerController):
                 
     def set_video_player(self, video_player):
         self.video_player = video_player
+        sref = ServiceReference(video_player.sref)
+        self.sref_url = sref.getPath()
         
     def start(self, play_and_download):
         self.video = self.video_player.video
@@ -186,7 +195,8 @@ class VideoPlayerController(BaseVideoPlayerController):
             self.check_timer.callback.append(self._update_info_bar)
             
             self.start_video_check()
-          
+
+        
     def set_video_check_interval(self, interval):
         self.check_video_interval = interval
     
@@ -218,7 +228,7 @@ class VideoPlayerController(BaseVideoPlayerController):
             self.buffering_timer_running = False
             
     def get_download_position(self):
-        if self.video_length_total is None:
+        if self.video_length_total is None or self.download.length == 0:
             return None
             
         download_pts = long(float(self.download.getCurrentLength()) / float(self.download.length) * self.video_length_total)
@@ -334,53 +344,47 @@ class VideoPlayerController(BaseVideoPlayerController):
     def do_seek_relative(self, relative_pts):
         if not self.seekable:
             show_info_message(self.session, _("Its not possible to seek in this video"), 3)
-        else:
-            player_position = self.get_player_position()
-                
-            if player_position is not None:
-                pts = player_position + relative_pts
-                
-                # whole video available
-                if self.download is None or self.download.downloaded:
-                    self._do_seek_relative(relative_pts)
+        # whole video available
+        elif self.download is None or self.download.downloaded:
+            self._do_seek_relative(relative_pts)
                     
-                    # not working in some situations, disabled for now
-                    """    
-                    #we want to seek to pts
-                    if self.is_pts_available(pts):
-                        self._do_seek_relative(relative_pts)
-                    else:
-                        #If we are seeking over the end of the video, we end
-                        if pts > self.video_length:
-                            self._exit_video_player()
-                        else:
-                            #seek to start
-                            self._do_seek_relative(-player_position)
-                    """
-                            
-                # downloading video
-                else:
-                    pts_reserve = pts + self.time_limit + self.seek_limit
-                    if self.is_pts_available(pts_reserve):
-                        log.debug("position available")
-                        self._do_seek_relative(relative_pts)
-                    else:
-                    #position is not yet available so seek where possible
-                        log.debug("position not available")
-                        if pts > self.video_length:
-                            log.debug("trying to seek where possible...")
-                            possible_seek = self.video_length - player_position - self.time_limit - self.seek_limit
-                            if possible_seek > 0:
-                                self._do_seek_relative(possible_seek)
-                            else:
-                                show_info_message(self.session, _("Cannot seek, not enough video is downloaded"), 2)
-                                log.debug("cannot seek, not enough video is downloaded")
-                        else:
-                            self._do_seek_relative(-player_position)
-            
-            else:
-                log.debug('seeking without control')
+            # not working in some situations, disabled for now
+            """    
+            #we want to seek to pts
+            if self.is_pts_available(pts):
                 self._do_seek_relative(relative_pts)
+            else:
+                #If we are seeking over the end of the video, we end
+                if pts > self.video_length:
+                    self._exit_video_player()
+                else:
+                    #seek to start
+                    self._do_seek_relative(-player_position)
+            """
+         # downloading video 
+        elif self.download and self.download.running:
+            player_position = self.get_player_position()
+            # disable seek if downloaded video_length or play position is not available 
+            if self.video_length is None or player_position is None:
+                return
+            pts = player_position + relative_pts
+            pts_reserve = pts + self.time_limit + self.seek_limit
+            if self.is_pts_available(pts_reserve):
+                log.debug("position available")
+                self._do_seek_relative(relative_pts)
+            else:
+            #position is not yet available so seek where possible
+                log.debug("position not available")
+                if pts > self.video_length:
+                    log.debug("trying to seek where possible...")
+                    possible_seek = self.video_length - player_position - self.time_limit - self.seek_limit
+                    if possible_seek > 0:
+                        self._do_seek_relative(possible_seek)
+                    else:
+                        show_info_message(self.session, _("Cannot seek, not enough video is downloaded"), 2)
+                        log.debug("cannot seek, not enough video is downloaded")
+                else:
+                    self._do_seek_relative(-player_position)
                 
     def pause_service(self):
         if not self.pausable:
@@ -688,6 +692,17 @@ class RTMPController(BaseVideoPlayerController):
         self._base_pts = 0
         self._offset_pts = 0
         self._offset_mode = False
+        
+        # eplayer gets correct video length of rtmp streams, but after this seeking workaround
+        # it cannot get correct video position and starts with 0 position every time after un-pause/seek
+        # so we adjust only play position since length is correct
+        self._eplayer_mode = False
+        
+        # With some rtmp streams we cannot get correct video length on gstreamer 0.10
+        # Video duration on these streams represents accumulated value of buffered seconds instead of actual video length
+        # so we will provide offset_mode_limit which will helps us to determine if we will use offset mode or not
+        # Value should be around maximum buffer seconds for rtmp stream(default for librtmp is 30 seconds)
+        self._offset_mode_limit = 60 * 1000 * 90
 
         
     def set_video_player(self, video_player):
@@ -698,18 +713,25 @@ class RTMPController(BaseVideoPlayerController):
         self.sref_url = sref.getPath()
         self.sref_id = sref.getType()
         self.sref_name = sref.getServiceName()
+        self._eplayer_mode = video_player.__class__.__name__ in ('EPlayer3VideoPlayer', 'EPlayer2VideoPlayer')
         
-    def _update_video_length(self):
-        if self.video_length_total is not None:
-            self.video_length_total = self.video.getCurrentLength()
+    def _update_video_state(self, play_pts):
         if self.video_length_total is None:
+            self.video_length_total = self.video.getCurrentLength()
+        if self.video_length_total is not None:
+            if self.video_length_total - play_pts <= self._offset_mode_limit:
+                self.video_length_total = None
+        if self.video_length_total is None or self._eplayer_mode:
             self._offset_mode = True
-        
+        else:
+            self._offset_mode = False
+            
+    #@inlineCallbacks   
     def do_seek_relative(self, relative_pts):
-        self._update_video_length()
         play_pts = self.video.getCurrentPosition()
-
+        #yield sleep(0.1)
         if play_pts is not None:
+            self._update_video_state(play_pts)
             if self._offset_mode:
                 current_pts = self._base_pts + play_pts
             else:
@@ -731,11 +753,13 @@ class RTMPController(BaseVideoPlayerController):
             current_pts = play_pts
         time = self.pts_to_sec(current_pts) * 1000
         self.do_rtmp_seek(time)
-        
+    
+    #@inlineCallbacks    
     def pause_service(self):
-        self._update_video_length()
         play_pts = self.video.getCurrentPosition()
+        #yield sleep(0.1)
         if play_pts is not None:
+            self._update_video_state(play_pts)
             if self._offset_mode:
                 self._base_pts = self._base_pts + play_pts
             else:
@@ -745,6 +769,7 @@ class RTMPController(BaseVideoPlayerController):
         
     def do_rtmp_seek(self, seek_time):
         log.info('RTMPSeek to %ss', seek_time)
+        self.session.nav.stopService()
         seeking_ref = self.sref_url.find(' start=')
         if seeking_ref != -1:
             sref_url = self.sref_url[:seeking_ref] + ' start=%s' % str(seek_time)
@@ -752,6 +777,9 @@ class RTMPController(BaseVideoPlayerController):
             sref_url = self.sref_url + ' start=%s' % str(seek_time)
         seek_sref = eServiceReference(self.sref_id, 0, sref_url)
         seek_sref.setName(self.sref_name)
-        self.session.nav.playService(seek_sref)
         if self._offset_mode:
             self._base_pts = self._seek_pts
+            ServicePositionAdj.setBasePts(self._base_pts)
+            if not self._eplayer_mode:
+                ServicePositionAdj.setBaseLength(self._base_pts)
+        self.session.nav.playService(seek_sref)

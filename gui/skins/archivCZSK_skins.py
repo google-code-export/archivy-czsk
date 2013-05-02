@@ -282,19 +282,19 @@ ArchivCZSKMoviePlayer_HD = """
       <ePixmap position="215,58" size="677,16" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/archivCZSK/gui/icon/mplayer/prog_bg.png" zPosition="1" alphatest="on" />
       <widget name="buffer_slider" position="216,58" size="675,16" zPosition="2" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/archivCZSK/gui/icon/mplayer/prog_buffer.png" transparent="1" />
       <widget source="session.CurrentService" render="Progress" position="216,58" size="675,16" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/archivCZSK/gui/icon/mplayer/prog.png" zPosition="3" transparent="1">
-        <convert type="ServicePosition">Position</convert>
+        <convert type="ServicePositionAdj">Position</convert>
       </widget>
       <widget source="session.CurrentService" render="PositionGauge" position="216,58" size="675,16" zPosition="4" transparent="1">
-        <convert type="ServicePosition">Gauge</convert>
+        <convert type="ServicePositionAdj">Gauge</convert>
       </widget>
       <widget source="session.CurrentService" render="Label" position="215,90" size="120,28" font="Regular;23" halign="left" backgroundColor="background" shadowColor="black" shadowOffset="-2,-2" transparent="1">
-        <convert type="ServicePosition">Position,ShowHours</convert>
+        <convert type="ServicePositionAdj">Position,ShowHours</convert>
       </widget>
       <widget source="session.CurrentService" render="Label" position="335,90" size="435,28" font="Regular;23" halign="center" backgroundColor="background" shadowColor="black" shadowOffset="-2,-2" transparent="1">
-        <convert type="ServicePosition">Length,ShowHours</convert>
+        <convert type="ServicePositionAdj">Length,ShowHours</convert>
       </widget>
       <widget source="session.CurrentService" render="Label" position="770,90" size="120,28" font="Regular;23" halign="right" backgroundColor="background" shadowColor="black" shadowOffset="-2,-2" transparent="1">
-        <convert type="ServicePosition">Remaining,Negate,ShowHours</convert>
+        <convert type="ServicePositionAdj">Remaining,Negate,ShowHours</convert>
       </widget>
       <eLabel position="930,10" size="2,110" backgroundColor="white" />
       <widget source="global.CurrentTime" render="Label" position=" 960,10" size="120,24" font="Regular;24" backgroundColor="#25080808" shadowColor="black" shadowOffset="-2,-2" transparent="1">

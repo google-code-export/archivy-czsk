@@ -26,6 +26,15 @@ LANGUAGE_SETTINGS_ID = language.getLanguage()[:2]
 (MANUFACTURER, MODEL, ARCH, VERSION) = stb.getBoxtype()
 AZBOX = (MODEL == 'Azbox')
 
+############# SUPPORTED MEDIA #################
+
+VIDEO_EXTENSIONS = ('.3gp', '3g2', '.asf', '.avi', '.flv', '.mp4', '.mkv', '.mpeg', '.mov' '.mpg', '.wmv', '.divx', '.vob', '.iso', '.ts', '.m3u8')
+AUDIO_EXTENSIONS = ('.mp2', '.mp3', '.wma', '.ogg', '.dts', '.flac', '.wav')
+PLAYLIST_EXTENSIONS = ('.m3u', 'pls')
+ARCHIVE_EXTENSIONS = ('.rar', '.zip', '.7zip')
+PLAYABLE_EXTENSIONS = VIDEO_EXTENSIONS + AUDIO_EXTENSIONS
+MEDIA_EXTENSIONS = VIDEO_EXTENSIONS + AUDIO_EXTENSIONS + ARCHIVE_EXTENSIONS + PLAYLIST_EXTENSIONS
+
 ######### Plugin Paths ##############
 
 PLUGIN_PATH = "/usr/lib/enigma2/python/Plugins/Extensions/archivCZSK/"
@@ -102,19 +111,24 @@ for i in range(1, 50, 1):
 config.plugins.archivCZSK.videoPlayer.bufferDuration = ConfigSelection(default="5", choices=choicelist)
 
 choicelist = []
-for i in range(5, 250, 1):
+for i in range(0, 250, 1):
     choicelist.append(("%d" % i, "%d s" % i))
 config.plugins.archivCZSK.videoPlayer.playDelay = ConfigSelection(default="20", choices=choicelist)
 
 choicelist = []
-for i in range(1000, 50000, 1000):
-    choicelist.append(("%d" % i, "%d ms" % i))
-config.plugins.archivCZSK.videoPlayer.archiveBuffer = ConfigSelection(default="6000", choices=choicelist)
+for i in range(10, 240, 5):
+    choicelist.append(("%d" % i, "%d s" % i))
+config.plugins.archivCZSK.videoPlayer.rtmpTimeout = ConfigSelection(default="60", choices=choicelist)
 
 choicelist = []
 for i in range(1000, 50000, 1000):
     choicelist.append(("%d" % i, "%d ms" % i))
-config.plugins.archivCZSK.videoPlayer.liveBuffer = ConfigSelection(default="6000", choices=choicelist)
+config.plugins.archivCZSK.videoPlayer.archiveBuffer = ConfigSelection(default="15000", choices=choicelist)
+
+choicelist = []
+for i in range(1000, 50000, 1000):
+    choicelist.append(("%d" % i, "%d ms" % i))
+config.plugins.archivCZSK.videoPlayer.liveBuffer = ConfigSelection(default="15000", choices=choicelist)
 
 
 ############ Main config #################
@@ -189,6 +203,7 @@ def get_player_settings():
             list.append(getConfigListEntry(_("Buffer duration"), config.plugins.archivCZSK.videoPlayer.bufferDuration))
             if buffer_mode == "2":
                 list.append(getConfigListEntry(_("Buffer size on HDD"), config.plugins.archivCZSK.videoPlayer.downloadBufferSize))
+    list.append(getConfigListEntry(_("RTMP Timeout"), config.plugins.archivCZSK.videoPlayer.rtmpTimeout))
     list.append(getConfigListEntry(_("Video player with RTMP support"), config.plugins.archivCZSK.videoPlayer.seeking))
     list.append(getConfigListEntry(_("TV archive rtmp buffer"), config.plugins.archivCZSK.videoPlayer.archiveBuffer))                                                 
     list.append(getConfigListEntry(_("Default live rtmp streams buffer"), config.plugins.archivCZSK.videoPlayer.liveBuffer))
