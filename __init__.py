@@ -36,7 +36,7 @@ class log(object):
     @staticmethod
     def debug(text, *args):
         if log.mode == log.DEBUG:
-            if len(args) == 1 and isinstance(args[0],tuple):
+            if len(args) == 1 and isinstance(args[0], tuple):
                 text = text % args[0]
             else:
                 text = text % (args)
@@ -44,8 +44,8 @@ class log(object):
     
     @staticmethod    
     def info(text, *args):
-        if log.mode > log.INFO:
-            if len(args) == 1 and isinstance(args[0],tuple):
+        if log.mode >= log.INFO:
+            if len(args) == 1 and isinstance(args[0], tuple):
                 text = text % args[0]
             else:
                 text = text % (args)
@@ -53,12 +53,12 @@ class log(object):
     
     @staticmethod  
     def error(text, *args):
-        if log.mode == log.ERROR:
-            if len(args) == 1 and isinstance(args[0],tuple):
+        if log.mode >= log.ERROR:
+            if len(args) == 1 and isinstance(args[0], tuple):
                 text = text % args[0]
             else:
                 text = text % (args)
-            print "[ArchivCZSK] ERROR:", text.encode('utf-8') 
+            print "[ArchivCZSK] ERROR:", text.encode('utf-8')
   
 
 # set logger
