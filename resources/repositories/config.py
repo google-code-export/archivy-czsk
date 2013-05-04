@@ -15,12 +15,7 @@ choicelist_timeout.append(("0", _("infinite")))
 
 
 #define settings which will apply for every addon
-global_addon_settings = [{'label':_('playing'),
-                             'subentries':[
-                                        {'label':_("seekable"), 'id':'seekable', 'entry':ConfigYesNo(default=True)},
-                                        {'label':_("pausable"), 'id':'pausable', 'entry':ConfigYesNo(default=True)}
-                                        ]
-                            },
+global_addon_settings = [
                            {'label':_('download'),
                              'subentries':[
                                         {'label':_("download path"), 'id':'download_path'},
@@ -54,11 +49,16 @@ def add_global_addon_settings(addon, addon_config):
                 setting['setting_id'] = getattr(addon_config, setting['id'])
 
 
-#get addon config entries with global addons settings          
+#get addon config entries with global addons settings
 def getArchiveConfigList(addon):
     categories = addon.settings.get_configlist_categories()[:]
     for category in global_addon_settings:
-        category_init = {'label':category['label'], 'subentries':[]}
+        category_init = None
+        for cat in categories:
+            if category['label'] == cat['label']:
+                category_init = cat
+        if category_init is None:
+            category_init = {'label':category['label'], 'subentries':[]}
         for setting in category['subentries']:
             if 'setting_id' not in setting:
                 category_init['subentries'].append(getConfigListEntry(setting['label'], getattr(addon.settings.main, setting['id'])))
