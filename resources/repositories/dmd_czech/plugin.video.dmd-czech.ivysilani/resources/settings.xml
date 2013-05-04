@@ -3,6 +3,8 @@
 	<setting label="30000" id="video-listing" type="enum" lvalues="30001|30002|30003|30004" default="0" />
 	<setting label="30006" id="bonus-video" type="bool" default="true" />
 	
-	 <!-- archivCZSK specificke nastavenie -->  
-   <setting id="rtmp_seek_fix" type="bool" label="Opraviť RTMP pretáčanie" default="true"/>
+	<!-- archivCZSK specificke nastavenie -->
+   <category label="Prehrávanie">
+   		<setting id="rtmp_seek_fix" type="bool" label="Opraviť RTMP pretáčanie" default="true"/>
+   </category>
 </settings>

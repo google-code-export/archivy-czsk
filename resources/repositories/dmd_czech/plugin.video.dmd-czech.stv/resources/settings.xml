@@ -1,4 +1,7 @@
 <settings>
-   <!-- archivCZSK specificke nastavenie -->  
+   <!-- archivCZSK specificke nastavenie -->
+   <category label="30052">
+		<setting label="30000" id="keep-searches" type="text" default="20" />
+	</category>
    <setting id="rtmp_seek_fix" type="bool" label="Opraviť RTMP pretáčanie" default="false"/>
 </settings>
