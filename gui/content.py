@@ -68,7 +68,7 @@ class ItemHandler():
 class VideoAddonItemHandler(ItemHandler):
     def __init__(self, session, content_screen):
         ItemHandler.__init__(self, session, content_screen)
-        
+       
     def open_item(self, item):
         self.item = item
         if isinstance(item, PVideoAddon):
@@ -78,17 +78,26 @@ class VideoAddonItemHandler(ItemHandler):
                 self.content_screen.resolveCommand(command, args)
                 self.content_screen.stopLoading()
                 self.open_video_addon(item.addon, list_items)
-                
-            @AddonExceptionHandler()
+            
+            @AddonExceptionHandler(self.session)  
             def open_item_error_cb(failure):
                 self.open_video_addon_cb(item.addon.provider)
                 self.content_screen.stopLoading()
                 self.content_screen.workingFinished()
                 failure.raiseException()
                 
+            @AddonExceptionHandler(self.session)
+            def get_content(addon):
+                try:
+                    addon.provider.get_content(self.session, {}, open_item_success_cb, open_item_error_cb)
+                except Exception:
+                    self.content_screen.stopLoading()
+                    self.content_screen.workingFinished()
+                    raise
+                
             self.content_screen.workingStarted()
             self.content_screen.startLoading()
-            item.addon.provider.get_content(self.session, {}, open_item_success_cb, open_item_error_cb)
+            get_content(item.addon)
         else:
             self.content_screen.stopLoading()
             self.content_screen.workingFinished()
@@ -200,7 +209,7 @@ class ContentItemHandler(ItemHandler):
                 self.content_screen.showList()
                 self.content_screen.workingFinished()
             
-        @AddonExceptionHandler()
+        @AddonExceptionHandler(self.session)
         def open_item_error_cb(failure):
             self.content_screen.stopLoading()
             self.content_screen.showList()
@@ -225,13 +234,10 @@ class ContentItemHandler(ItemHandler):
 
     def play_item(self, item, mode='play'):
         
-        @PlayExceptionHandler()
+        @PlayExceptionHandler(self.session)
         def play(mode):
             if mode == 'play_and_download':
-                if item.url.startswith('rtmp'):
-                    self.content_screen.showInfo(_('Not implemented yet'))
-                else:
-                    self.player.playAndDownload()
+                self.player.playAndDownload()
             elif mode == 'play_and_download_gst':
                 self.player.playAndDownload(True)
             else:
@@ -265,7 +271,7 @@ class ContentItemHandler(ItemHandler):
         if self.is_video(item):
             item.add_context_menu_item(_("Play"), action=self.play_item, params={'item':item})
             item.add_context_menu_item(_("Play and Download"), action=self.play_item, params={'item':item, 'mode':'play_and_download'})
-            if config.plugins.archivCZSK.videoPlayer.servicemp4.getValue():   
+            if config.plugins.archivCZSK.videoPlayer.servicemp4.getValue() and not item.url.startswith('rtmp'):   
                 item.add_context_menu_item(_("Play and Download (GStreamer)"), action=self.play_item, params={'item':item, 'mode':'play_and_download_gst'})
             if item.url.startswith('http'):
                 item.add_context_menu_item(_("Download (wget)"), action=self.download_item, params={'item':item, 'mode':'wget'})
@@ -285,7 +291,7 @@ class ContentItemHandler(ItemHandler):
             list_items, screen_command, args = result
             self.content_screen.resolveCommand(screen_command, args)
             
-        @AddonExceptionHandler()
+        @AddonExceptionHandler(self.session)
         def run_item_error_cb(failure):
             self.content_screen.stopLoading()
             self.content_screen.showList()
@@ -299,7 +305,7 @@ class ContentItemHandler(ItemHandler):
         
     
     def download_item(self, item, mode=""):
-        @DownloadExceptionHandler()
+        @DownloadExceptionHandler(self.session)
         def start_download():
             self.content_provider.download(item, startCB=startCB, finishCB=finishCB, mode=mode)
             
