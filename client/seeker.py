@@ -17,12 +17,12 @@ def getCapabilities():
     Vrati zoznam vsetkych moznosti vyhladavania: tuple(nazov_vyhladavania, id_doplnku, mod_vyhladavania)
     """
     list = []
-    list.append((_('Search in') + 'OnlineFiles', 'plugin.video.online-files', 'all'))
-    list.append((_('Search in') + 'Ulozto.cz', 'plugin.video.online-files', 'ulozto.cz'))
-    list.append((_('Search in') + 'Bezvadata.cz', 'plugin.video.online-files', 'bezvadata.cz'))
-    list.append((_('Search in') + 'Hellspy.cz', 'plugin.video.online-files', 'hellspy.cz'))
-    list.append((_('Search in') + 'Fastshare.cz', 'plugin.video.online-files', 'fastshare.cz'))
-    list.append((_('Search in') + 'Befun.cz', 'plugin.video.befun.cz', 'all'))
+    list.append((_('Search in') + ' ' + 'OnlineFiles', 'plugin.video.online-files', 'all'))
+    list.append((_('Search in') + ' ' + 'Ulozto.cz', 'plugin.video.online-files', 'ulozto.cz'))
+    list.append((_('Search in') + ' ' + 'Bezvadata.cz', 'plugin.video.online-files', 'bezvadata.cz'))
+    list.append((_('Search in') + ' ' + 'Hellspy.cz', 'plugin.video.online-files', 'hellspy.cz'))
+    list.append((_('Search in') + ' ' + 'Fastshare.cz', 'plugin.video.online-files', 'fastshare.cz'))
+    list.append((_('Search in') + ' ' + 'Befun.cz', 'plugin.video.befun.cz', 'all'))
     return list
 
 #    Napriklad:
