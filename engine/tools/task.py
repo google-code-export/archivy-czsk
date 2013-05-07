@@ -155,7 +155,7 @@ class Task():
             log.debug("checking function in thread callback")
             try:
                 return fnc_out_queue.get(block=False)()
-            except Exception:
+            except Queue.Empty:
                 log.debug("nothing in queue")
             else:
                 if self._finishing:
