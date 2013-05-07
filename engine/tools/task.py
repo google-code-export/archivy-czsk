@@ -94,7 +94,7 @@ class Task():
     """Class for running single python task at time in worker thread"""
     instance = None
     worker_thread = None
-    polling_interval = 1000#ms
+    polling_interval = 200#ms
     
     @staticmethod
     def getInstance():
@@ -121,7 +121,8 @@ class Task():
     def __init__(self, callback, fnc, *args, **kwargs):
         log.debug('initializing')
         Task.instance = self
-        self.running = False
+        self._running = False
+        self._finishing = False
         self._aborted = False
         self.callback = callback
         self.fnc = fnc
@@ -133,7 +134,8 @@ class Task():
           
     def run(self):
         log.debug('running')
-        self.running = True
+        self._running = True
+        self._finishing = False
         self._aborted = False
         
         ctx = context.theContextTracker.currentContext().contexts[-1]
@@ -149,14 +151,17 @@ class Task():
         didnt send function which wants to call in reactor thread. 
         If there is an function, than call it.
         """
-        if self.running:
+        if self._running:
             log.debug("checking function in thread callback")
             try:
                 return fnc_out_queue.get(block=False)()
             except Exception:
                 log.debug("nothing in queue")
+            else:
+                if self._finishing:
+                    self._running = False
         else:
-            self.timer.stop()    
+            self.timer.stop()
         
     def setResume(self):
         log.debug("resuming")
@@ -173,7 +178,6 @@ class Task():
         return self._aborted
 
     def onComplete(self, success, result):
-        self.running = False
         if success:
             log.debug('completed with success')
         else:
@@ -190,12 +194,20 @@ class Task():
         self.finish(True, result)
             
     def onCompleteFailure(self, failure):
-        self.finish(False, failure)
         log.debug('completed with failure')
+        self.finish(False, failure)
             
     def finish(self, success, result):
+        def wrapped_finish():
+            self.callback(success, result)
         Task.instance = None
-        self.callback(success, result)
+        
+        # set finishing flag to stop polling in reactor thread
+        self._finishing = True    
+        
+        # finish execution in reactor thread
+        fnc_out_queue.put(wrapped_finish)
+        
             
     
 
