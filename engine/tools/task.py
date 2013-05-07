@@ -102,13 +102,13 @@ class Task():
     
     @staticmethod
     def startWorkerThread():
-        log.debug("starting workerThread")
+        log.debug("[Task] starting workerThread")
         Task.worker_thread = WorkerThread(fnc_queue)
         Task.worker_thread.start()
         
     @staticmethod   
     def stopWorkerThread():
-        log.debug("stopping workerThread")
+        log.debug("[Task] stopping workerThread")
         Task.worker_thread.stop()
         Task.worker_thread.join()
         Task.worker_thread = None
@@ -119,7 +119,7 @@ class Task():
         
     
     def __init__(self, callback, fnc, *args, **kwargs):
-        log.debug('initializing')
+        log.debug('[Task] initializing')
         Task.instance = self
         self._running = False
         self._finishing = False
@@ -133,7 +133,7 @@ class Task():
         
           
     def run(self):
-        log.debug('running')
+        log.debug('[Task] running')
         self._running = True
         self._finishing = False
         self._aborted = False
@@ -152,11 +152,11 @@ class Task():
         If there is an function, than call it.
         """
         if self._running:
-            log.debug("checking function in thread callback")
+            log.debug("[Task] checking function in thread callback")
             try:
-                return fnc_out_queue.get(block=False)()
+                fnc_out_queue.get(block=False)()
             except Queue.Empty:
-                log.debug("nothing in queue")
+                log.debug("[Task] nothing in queue")
             else:
                 if self._finishing:
                     self._running = False
@@ -164,14 +164,14 @@ class Task():
             self.timer.stop()
         
     def setResume(self):
-        log.debug("resuming")
+        log.debug("[Task] resuming")
         self._aborted = False
     
     def setCancel(self):
         """
         setting flag to abort executing compatible task(ie. controlling this flag in task execution)
         """
-        log.debug('cancelling...')
+        log.debug('[Task] cancelling...')
         self._aborted = True
             
     def isCancelling(self):
@@ -179,23 +179,14 @@ class Task():
 
     def onComplete(self, success, result):
         if success:
-            log.debug('completed with success')
+            log.debug('[Task] completed with success')
         else:
-            log.debug('completed with failure')
+            log.debug('[Task] completed with failure')
         #To make sure that, when we abort processing of task, that its always the same type of failure
         if self._aborted:
             success = False
             result = failure.Failure(AddonThreadException())
         self.finish(success, result)
-    
-            
-    def onCompleteSuccess(self, result):
-        log.debug('completed with success')
-        self.finish(True, result)
-            
-    def onCompleteFailure(self, failure):
-        log.debug('completed with failure')
-        self.finish(False, failure)
             
     def finish(self, success, result):
         def wrapped_finish():

@@ -169,9 +169,6 @@ class VideoAddonContentProvider(ContentProvider):
         
     def resolve_dependecies(self, strict=False):
         from Plugins.Extensions.archivCZSK import archivczsk
-        if self.__resolved_dependencies:
-            return
-        
         self.video_addon.include()
         log.info("trying to resolve dependencies for %s" , self.video_addon)
         for dependency in self.video_addon.requires:
@@ -225,7 +222,9 @@ class VideoAddonContentProvider(ContentProvider):
       
     def get_content(self, session, params, successCB, errorCB):
         log.debug('get_content - params:%s' % str(params))
-        self.resolve_dependecies(strict=True)
+        
+        if not self.__resolved_dependencies:
+            self.resolve_dependecies(strict=True)
         self.include_dependencies()
         
         self.__clear_list()
