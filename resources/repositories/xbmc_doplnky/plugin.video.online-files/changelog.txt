@@ -1,3 +1,5 @@
+[B]1.1.1:[/B]
+- #155 přidána podpora oblíbených a uživatelských souborů (zatím pouze zobrazení)
 [B]1.1.0:[/B]
 - přidán fastshare.cz (zatím pouze FREE stahování)
 - přesunuty provider skripty
