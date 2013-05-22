@@ -19,7 +19,7 @@ from Tools.LoadPixmap import LoadPixmap
 from Plugins.Extensions.archivCZSK import _
 from Plugins.Extensions.archivCZSK import log
 from Plugins.Extensions.archivCZSK import settings
-from Plugins.Extensions.archivCZSK.engine.items import PItem, PFolder, PExit, PVideo, PContextMenuItem, PSearch, \
+from Plugins.Extensions.archivCZSK.engine.items import PItem, PFolder, PPlaylist, PExit, PVideo, PContextMenuItem, PSearch, \
                                                         PSearchItem, PDownload, PVideoAddon, Stream, RtmpStream
 from Plugins.Extensions.archivCZSK.engine.tools.task import Task
 from Plugins.Extensions.archivCZSK.engine.contentprovider import StreamContentProvider, VideoAddonContentProvider
@@ -75,6 +75,7 @@ class VideoAddonItemHandler(ItemHandler):
             
             def open_item_success_cb(result):
                 list_items, command, args = result
+                list_items.insert(0, PExit())
                 self.content_screen.resolveCommand(command, args)
                 self.content_screen.stopLoading()
                 self.open_video_addon(item.addon, list_items)
@@ -160,6 +161,9 @@ class ContentItemHandler(ItemHandler):
     def is_video(self, item):
         return isinstance(item, PVideo)
     
+    def is_playlist(self, item):
+        return isinstance(item, PPlaylist)
+    
     def is_context(self, item):
         return isinstance(item, PContextMenuItem)
     
@@ -173,7 +177,7 @@ class ContentItemHandler(ItemHandler):
         elif self.is_folder(item):
             self.folder_item(item)
             
-        elif self.is_video(item):
+        elif self.is_video(item) or self.is_playlist(item):
             self.play_item(item, mode)
             
         elif self.is_context(item):
@@ -189,6 +193,7 @@ class ContentItemHandler(ItemHandler):
     def folder_item(self, item):
         def open_item_success_cb(result):
             list_items, screen_command, args = result
+            list_items.insert(0, PExit())
                 
             if screen_command is not None:
                 self.content_screen.resolveCommand(screen_command, args)
@@ -246,11 +251,21 @@ class ContentItemHandler(ItemHandler):
         self.content_screen.workingStarted()
         seekable = self.content_provider.is_seekable()
         pausable = self.content_provider.is_pausable()
-        self.player.setVideoItem(item, seekable=seekable, pausable=pausable)
+        self.player.setMediaItem(item, seekable=seekable, pausable=pausable)
         self.player.setContentProvider(self.content_provider)
         play(mode)
         
-                        
+    def show_playlist(self, item):
+        self.content_screen.save()
+        list_items = [PExit()]
+        list_items.extend(item.playlist[:])
+        content = {'parent_it':item, 'lst_items':list_items, 'refresh':False}
+        self.content_screen.load(content)
+        #self.content_screen.stopLoading()
+        #self.content_screen.showList()
+        #self.content_screen.workingFinished()
+        
+   
     def info_item(self, item, mode="archive"):
         if mode == "archive":
             if not self.is_exit(item):
@@ -268,7 +283,11 @@ class ContentItemHandler(ItemHandler):
             item.add_context_menu_item(_("Open"), action=self.folder_item, params={'item':item})
             item.add_context_menu_item(_("Add Shortcut"), action=self.ask_add_shortcut, params={'item':item})
             
-        if self.is_video(item):
+        elif self.is_playlist(item):
+            item.add_context_menu_item(_("Play"), action=self.play_item, params={'item':item})
+            item.add_context_menu_item(_("Show playlist"), action=self.show_playlist, params={'item':item})
+            
+        elif self.is_video(item):
             item.add_context_menu_item(_("Play"), action=self.play_item, params={'item':item})
             item.add_context_menu_item(_("Play and Download"), action=self.play_item, params={'item':item, 'mode':'play_and_download'})
             if config.plugins.archivCZSK.videoPlayer.servicemp4.getValue() and not item.url.startswith('rtmp'):   
@@ -340,6 +359,8 @@ class StreamContentItemHandler(ContentItemHandler):
         self.content_screen.save()
         
         list_items = self.content_provider.get_content(item)
+        if not isinstance(list_items[0], PExit):
+            list_items.insert(0, PExit())
         
         content = {'parent_it':item, 'lst_items':list_items, 'refresh':False}
         self.content_screen.load(content)
@@ -361,7 +382,11 @@ class StreamContentItemHandler(ContentItemHandler):
         if self.is_folder(item):
             item.add_context_menu_item(_("Open"), action=self.folder_item, params={'item':item})
             
-        if self.is_video(item):
+        elif self.is_playlist(item):
+            item.add_context_menu_item(_("Play"), action=self.play_item, params={'item':item})
+            item.add_context_menu_item(_("Show playlist"), action=self.show_playlist, params={'item':item})
+            
+        elif self.is_video(item):
             item.add_context_menu_item(_("Play"), action=self.play_item, params={'item':item})
             item.add_context_menu_item(_("Play and Download"), action=self.play_item, params={'item':item, 'mode':'play_and_download'})
             if item.url.startswith('http'):
@@ -577,6 +602,8 @@ class VideoAddonsContentScreen(BaseContentScreen, DownloadList, TipBar):
             self.workingStarted()
             stream_content_provider = StreamContentProvider(config.plugins.archivCZSK.downloadsPath.getValue(), settings.STREAM_PATH)
             lst_items = stream_content_provider.get_content(None)
+            if not isinstance(lst_items[0], PExit):
+                lst_items.insert(0, PExit())
             self.session.openWithCallback(self.workingFinished, StreamContentScreen, stream_content_provider, lst_items)
     
     
@@ -727,7 +754,7 @@ class StreamContentScreen(BaseContentScreen, DownloadList, TipBar):
     LIVE_PIXMAP = None   
     
     def __init__(self, session, content_provider, lst_items):
-        player = StreamPlayer(session, self.workingFinished, config.plugins.archivCZSK.videoPlayer.useVideoController.getValue(), settings.STREAM_PATH)
+        player = StreamPlayer(session, self.workingFinished, config.plugins.archivCZSK.videoPlayer.useVideoController.getValue())
         item_handler = StreamContentItemHandler(session, self, content_provider, player)
         BaseContentScreen.__init__(self, session, item_handler, lst_items)
         self.content_provider = content_provider
@@ -805,7 +832,7 @@ class StreamContentScreen(BaseContentScreen, DownloadList, TipBar):
     
     def updateStreamInfo(self):
         it = self.getSelectedItem()
-        if isinstance(it, PFolder):
+        if isinstance(it, (PFolder, PPlaylist)):
             pass
         else:
             stream = it.stream
@@ -814,7 +841,7 @@ class StreamContentScreen(BaseContentScreen, DownloadList, TipBar):
                 self['playdelay'].setText(str(stream.playDelay))
                 self['livestream_pixmap'].instance.setPixmap(self.LIVE_PIXMAP)
             if self.isRtmpStream():
-                self['rtmpbuffer'].setText(str(stream.rtmpBuffer))
+                self['rtmpbuffer'].setText(str(stream.buffer))
             if self.isGstreamerPlayerSelected():
                 self['playerbuffer'].setText(str(stream.playerBuffer))
                

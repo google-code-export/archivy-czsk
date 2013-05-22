@@ -93,6 +93,18 @@ class PNotSupportedVideo(PVideo):
         PVideo.__init__(self)
         self.thumb = PNG_PATH + '/movie_warning.png'
         
+class PPlaylist(PItem):
+    def __init__(self):
+        PItem.__init__(self)
+        self.playlist = []
+        self.thumb = PNG_PATH + '/playlist.png'
+        
+    def clear(self):
+        del self.playlist[:]
+    
+    def add(self, media):
+        self.playlist.append(media)
+        
 class PDownload(PVideo):
     def __init__(self, path):
         PVideo.__init__(self)
@@ -138,8 +150,9 @@ class RtmpStream(Stream):
         self.playpath = playpath
         self.pageUrl = pageUrl
         self.swfUrl = swfUrl
-        self.rtmpBuffer = 20000
+        self.buffer = 20000
         self.advanced = advanced
+        self.timeout = 60
         
     def getUrl(self):
         """ 
@@ -178,7 +191,8 @@ class RtmpStream(Stream):
         if self.swfUrl != "":url.append("swfUrl=%s" % self.swfUrl)
         if self.pageUrl != "":url.append("pageUrl=%s" % self.pageUrl)
         if self.playpath != "":url.append("playpath=%s" % self.playpath)
-        url.append("buffer=%d" % self.rtmpBuffer)
+        url.append("buffer=%d" % self.buffer)
+        url.append("timeout=%d" % self.timeout)
         url.append(self.advanced)
         return ' '.join(url)
     
@@ -194,6 +208,7 @@ class RtmpStream(Stream):
         if self.swfUrl != "":url.append("--swfUrl '%s'" % self.swfUrl)
         if self.pageUrl != "":url.append("--pageUrl '%s'" % self.pageUrl)
         if self.playpath != "":url.append("--playpath '%s'" % self.playpath)
-        url.append("--buffer %d" % self.rtmpBuffer)
+        url.append("--buffer %d" % self.buffer)
+        url.append("--timeout %d" % self.timeout)
         url.append(self.advanced)
         return ' '.join(url)

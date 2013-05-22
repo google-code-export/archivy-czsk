@@ -55,7 +55,6 @@ class VideoPlaySettingsProvider(object):
             self.__config.download.setValue("False")
 
 
-
 class VideoPlaySetting(object):
     def __init__(self):
         self.vpsp = VideoPlaySettingsProvider()
@@ -66,7 +65,8 @@ class CustomVideoPlaySetting(VideoPlaySetting):
         super(CustomVideoPlaySetting, self).__init__()
         self.vpsp.setUserAgent(userAgent)
         self.vpsp.setExtraHeaders(extraHeaders)
-        self.vpsp.setDownloadMode(downloadMode)
+        if downloadMode:
+            self.vpsp.setDownloadMode(downloadMode)
         
 class DefaultVideoPlaySetting(VideoPlaySetting):
     def __init__(self):
@@ -74,12 +74,3 @@ class DefaultVideoPlaySetting(VideoPlaySetting):
         self.vpsp.setUserAgent(USER_AGENT)
         self.vpsp.setExtraHeaders({})
         self.vpsp.setDownloadMode(False)
-        
-        
-
-    
-    
-        
-        
-        
-

@@ -154,7 +154,6 @@ class DownloadManager(object):
             d.onStartCB.append(startCB)
             d.onFinishCB.append(finishCB)
             d.status = DownloadStatus(d)
-            return d
 
         elif url[0:4] == 'http':
             try:
@@ -188,12 +187,14 @@ class DownloadManager(object):
             d.onFinishCB.append(finishCB)
             d.length = long(length)
             d.status = DownloadStatus(d)
-            return d
             
         else:
             print '[Downloader] cannot create download %s - not supported protocol' % toUTF8(filename)
             protocol = filename.split('://')[0].upper()
             raise NotSupportedProtocolError(protocol)
+        
+        d.playMode = playDownload
+        return d
         
 class DownloadStatus():
     def __init__(self, download):
@@ -252,7 +253,7 @@ class Download(object):
         self.local = os.path.join(destDir, filename).encode('ascii', 'ignore')
         self.length = 0
         self.quiet = quiet
-        self.wantSave = False
+        self.playMode = False
         self.running = False
         self.killed = False
         self.paused = False

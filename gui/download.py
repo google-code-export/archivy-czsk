@@ -427,6 +427,6 @@ class DownloadsScreen(BaseArchivCZSKMenuListScreen, DownloadList):
             if download is not None and download.running:
                 self.player.playDownload(download)
             else:
-                self.player.setVideoItem(it)
+                self.player.setMediaItem(it)
                 self.player.play()
             

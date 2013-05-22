@@ -13,7 +13,7 @@ from ServiceReference import ServiceReference
 from Plugins.Extensions.archivCZSK import _
 from Plugins.Extensions.archivCZSK import log
 from Plugins.Extensions.archivCZSK.gui.common import showInfoMessage, showErrorMessage, showYesNoDialog
-import buff 
+from util import getBufferInfo
 
 show_info_message = showInfoMessage
 show_error_message = showErrorMessage
@@ -536,7 +536,7 @@ class GStreamerDownloadController(BaseVideoPlayerController):
         
     def __ev_updated_buffer_info(self):
         self.istreamed = self.get_istreamed()
-        info = buff.getBufferInfo(self.istreamed)
+        info = getBufferInfo(self.istreamed)
         self.buffered_percent = info['percentage']
         self._update_info_bar()
     
@@ -544,7 +544,7 @@ class GStreamerDownloadController(BaseVideoPlayerController):
     def __ev_updated_download_status(self):
         if self.istreamed is None:
             return
-        info = buff.getBufferInfo(self.istreamed)
+        info = getBufferInfo(self.istreamed)
         self.download_speed = info['avg_in_rate']
         self.download_percent = info['download_percent']
         self.buffered_percent = info['percentage']

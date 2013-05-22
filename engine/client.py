@@ -15,10 +15,19 @@ from Plugins.Extensions.archivCZSK.engine.contentprovider import VideoAddonConte
 from Plugins.Extensions.archivCZSK.engine.tools import util
 from Plugins.Extensions.archivCZSK.engine.tools.task import callFromThread, Task
 from Plugins.Extensions.archivCZSK.engine.exceptions.addon import AddonInfoError, AddonWarningError, AddonError, AddonThreadException
-from Plugins.Extensions.archivCZSK.engine.items import PFolder, PVideo, PNotSupportedVideo, PSearch, PSearchItem, PContextMenuItem, Stream
+from Plugins.Extensions.archivCZSK.engine.items import PFolder, PVideo, PPlaylist, PNotSupportedVideo, PSearch, PSearchItem, PContextMenuItem, Stream
 
 
 GItem_lst = VideoAddonContentProvider.get_shared_itemlist()
+
+def abortTask(func):
+    def wrapped_func(*args, **kwargs):
+        task = Task.getInstance()
+        if task and task._aborted:
+            raise AddonThreadException()
+        func(*args, **kwargs)
+    return wrapped_func
+        
 
 def getVersion():
     return "1.0"
@@ -65,13 +74,13 @@ def openSettings(session, addon):
     addon.open_settings(session, addon, getSettingsCB)
     return d
 
-def showInfo(info,timeout=5):
+def showInfo(info, timeout=5):
     raise AddonInfoError(info)
 
-def showError(error,timeout=5):
+def showError(error, timeout=5):
     raise AddonError(error)
 
-def showWarning(warning,timeout=5):
+def showWarning(warning, timeout=5):
     raise AddonWarningError(warning)
     
     
@@ -101,22 +110,9 @@ def set_command(name, **kwargs):
         
 def refresh_screen():
     set_command('refreshnow')
-
-def add_dir(name, params={}, image=None, infoLabels={}, menuItems={}, search_folder=False, search_item=False):
-    """adds directory item to content screen
     
-        @param name : name of the directory
-        @param params: dictationary of parameters for next resolving
-        @param image: image to show in directories info
-        @param infoLabels: dictationary of informations{'title':title,'plot':plot,'rating':rating,''}"
-        @param menuItems: dictationary with menu items
     
-    """
-    #controlling if task shouldnt be _aborted(ie. we pushed exit button when loading)
-    task = Task.getInstance()
-    if task and task._aborted:
-        raise AddonThreadException
-    
+def create_directory_it(name, params={}, image=None, infoLabels={}, menuItems={}, search_folder=False, search_item=False):
     if search_item: it = PSearchItem()
     elif search_folder: it = PSearch()
     else: it = PFolder()
@@ -147,30 +143,11 @@ def add_dir(name, params={}, image=None, infoLabels={}, menuItems={}, search_fol
             params = value[1]
         it.add_context_menu_item(item_name, thumb=thumb, params=params)
                 
-    it.info = infolabel_uni         
-    GItem_lst[0].append(it)
+    it.info = infolabel_uni 
+    return it
+    
 
-
-def add_video(name, url, subs=None, image=None, infoLabels={}, menuItems={}, filename=None, live=False, stream=None, settings=None):
-    
-    """
-    adds video item to content screen
-        @param url: play url 
-        @param subs: subtitles url
-        @param image: image of video item
-        @param infoLabels: dictationary of informations{'title':title,'plot':plot,'rating':rating,''}"
-        @param filename: set this filename when downloading
-        @param live: is video live stream
-        @param settings: dictationary of player/download settings{"user-agent",:"","extra-headers":{}}
-    """
-    
-    #controling if task shouldnt be _aborted(ie. we pushed exit button when loading)
-    task = Task.getInstance()
-    if task and task._aborted:
-        raise AddonThreadException
-    
-    #if util.isSupportedVideo(url): it = PVideo()
-    #else: it = PNotSupportedVideo()
+def create_video_it(name, url, subs=None, image=None, infoLabels={}, menuItems={}, filename=None, live=False, stream=None, settings=None):
     it = PVideo()
     
     if isinstance(name, str): it.name = unicode(name, 'utf-8', 'ignore')
@@ -227,7 +204,67 @@ def add_video(name, url, subs=None, image=None, infoLabels={}, menuItems={}, fil
                 settings['extra-headers'] = {}
             log.debug("Settings: %s", settings)
             it.settings = settings
-        
+            
+    return it
+
+@abortTask
+def add_dir(name, params={}, image=None, infoLabels={}, menuItems={}, search_folder=False, search_item=False):
+    """adds directory item to content screen
+    
+        @param name : name of the directory
+        @param params: dictationary of parameters for next resolving
+        @param image: image to show in directories info
+        @param infoLabels: dictationary of informations{'title':title,'plot':plot,'rating':rating,''}"
+        @param menuItems: dictationary with menu items
+    
+    """
+    it = create_directory_it(name=name,
+                             params=params,
+                             image=image,
+                             infoLabels=infoLabels,
+                             menuItems=menuItems,
+                             search_folder=search_folder,
+                             search_item=search_item)
     GItem_lst[0].append(it)
+
+@abortTask
+def add_video(name, url, subs=None, image=None, infoLabels={}, menuItems={}, filename=None, live=False, stream=None, settings=None):
+    
+    """
+    adds video item to content screen
+        @param url: play url 
+        @param subs: subtitles url
+        @param image: image of video item
+        @param infoLabels: dictationary of informations{'title':title,'plot':plot,'rating':rating,''}"
+        @param filename: set this filename when downloading
+        @param live: is video live stream
+        @param settings: dictationary of player/download settings{"user-agent",:"","extra-headers":{}}
+    """
+    
+    video_it = create_video_it(name=name,
+                               url=url,
+                               subs=subs,
+                               image=image,
+                               infoLabels=infoLabels,
+                               menuItems=menuItems,
+                               filename=filename,
+                               live=live,
+                               stream=stream,
+                               settings=settings)
+    
+    GItem_lst[0].append(video_it)
+
+@abortTask    
+def add_playlist(name, media_list=[]):
+    playlist = PPlaylist()
+    playlist.name = name
+    for media in media_list:
+        playlist.add(media)
+    GItem_lst[0].append(playlist)
+    
+    
+    
+    
+        
 
 

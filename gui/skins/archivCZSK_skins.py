@@ -128,7 +128,7 @@ ItemInfoScreen_SD = """
             <widget name="img" position="10,0" zPosition="2" size="300,300"  alphatest="on"/>
         </screen>"""
         
-VideoPlayerInfoScreen_HD= """
+VideoPlayerInfoScreen_HD = """
         <screen position="center,center" size="900,575" title="ContentScreen">
             <widget backgroundColor="#9f1313" font="Regular;20" halign="center" name="key_red" position="8,5" shadowColor="black" shadowOffset="-2,-2" size="215,45" valign="center" zPosition="1" />
             <widget backgroundColor="#1f771f" font="Regular;20" halign="center" name="key_green" position="231,5" shadowColor="black" shadowOffset="-2,-2" size="215,45" valign="center" zPosition="1" />
@@ -270,6 +270,13 @@ CaptchaDialog = """
             <widget name="captcha" position="450,65" zPosition="-1" size="175,70"  alphatest="on"/>
             <eLabel position="20,555" size="1060,1" backgroundColor="white" />
         </screen>"""
+        
+Playlist = """
+            <screen name="Playlist" position="center,center" size="600,400" flags="wfNoBorder" backgroundColor="#68080808">
+                <widget name="menu" position="0,43" scrollbarMode="showOnDemand" size="600,357" backgroundColor="#68080808" />
+                <widget name="title" position="3,1" size="594,37" backgroundColor="#48080808" font="Regular; 24" foregroundColor="#e5b243" halign="center" noWrap="1" />
+            </screen>
+           """
         
 ArchivCZSKMoviePlayer_HD = """
     <screen position="50,550" size="1180,130" title="InfoBar" backgroundColor="transparent" flags="wfNoBorder">

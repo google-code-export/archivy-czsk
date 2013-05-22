@@ -18,7 +18,7 @@ from Plugins.Extensions.archivCZSK.engine.exceptions.addon import AddonError
 import xmlshortcuts
 from tools import task, util
 from downloader import DownloadManager
-from items import PVideo, PFolder, PDownload, Stream, RtmpStream, PExit
+from items import PVideo, PFolder, PPlaylist, PDownload, Stream, RtmpStream
 
 VIDEO_EXTENSIONS = ['.avi', '.mkv', '.mp4', '.flv', '.mpg', '.mpeg', '.wmv']
 SUBTITLES_EXTENSIONS = ['.srt']
@@ -264,7 +264,6 @@ class VideoAddonContentProvider(ContentProvider):
             log.debug("successfully loaded %d items" % len(self.__gui_item_list[0]))
             lst_itemscp = [[], None, {}]
             lst_itemscp[0] = self.__gui_item_list[0][:]
-            lst_itemscp[0].insert(0, PExit())
             lst_itemscp[1] = self.__gui_item_list[1]
             lst_itemscp[2] = self.__gui_item_list[2].copy()
             self.content_deferred.callback(lst_itemscp)
@@ -293,7 +292,7 @@ class VideoAddonContentProvider(ContentProvider):
     
     def save_shortcuts(self):
         self.shortcuts.writeFile()
-        
+
     def close(self):
         self.video_addon = None
     
@@ -328,17 +327,18 @@ class StreamContentProvider(ContentProvider):
         
             for channel in group.findall('channel'):    
                 name = channel.findtext('name')
-                stream_url = channel.findtext('stream_url')
+                stream_url = channel.findtext('stream_url') or channel.findtext('streamUrl')
                 picon = channel.findtext('picon')
                 app = channel.findtext('app')
                 swf_url = channel.findtext('swfUrl')
                 page_url = channel.findtext('pageUrl')
                 playpath = channel.findtext('playpath')
                 advanced = channel.findtext('advanced')
-                live_stream = channel.findtext('liveStream')
-                player_buffer = channel.findtext('playerBuffer')
-                rtmp_buffer = channel.findtext('rtmpBuffer')
-                play_delay = channel.findtext('playDelay')
+                live_stream = channel.findtext('liveStream') or channel.findtext('live_stream')
+                player_buffer = channel.findtext('playerBuffer') or channel.findtext('player_buffer')
+                rtmp_buffer = channel.findtext('rtmpBuffer') or channel.findtext('rtmp_buffer')
+                play_delay = channel.findtext('playDelay') or channel.findtext('play_delay')
+                rtmp_timeout = channel.findtext('timeout')
             
                 if name is None or stream_url is None:
                     log.info('skipping stream, cannot find name or url')
@@ -352,12 +352,15 @@ class StreamContentProvider(ContentProvider):
                 if live_stream is None: live_stream = True
                 else: live_stream = not live_stream == 'False'
                 if rtmp_buffer is None: rtmp_buffer = int(config.plugins.archivCZSK.videoPlayer.liveBuffer.getValue())
+                if rtmp_timeout is None: rtmp_timeout = int(config.plugins.archivCZSK.videoPlayer.rtmpTimeout.getValue())
                 if player_buffer is None: player_buffer = int(config.plugins.archivCZSK.videoPlayer.bufferSize.getValue())
                 if play_delay is None: play_delay = int(config.plugins.archivCZSK.videoPlayer.playDelay.getValue())
-            
+                
+                
                 if stream_url.startswith('rtmp'):
                     stream = RtmpStream(stream_url, app, playpath, page_url, swf_url, advanced)
-                    stream.rtmpBuffer = int(rtmp_buffer)
+                    stream.buffer = int(rtmp_buffer)
+                    stream.timeout = int(rtmp_timeout)
                 else:
                     stream = Stream(stream_url)
                 
@@ -375,14 +378,16 @@ class StreamContentProvider(ContentProvider):
                 it.root_xml = group
                 cat_channels.append(it)
             
-            cat_channels.insert(0, PExit())
+            playlist = PPlaylist()
+            playlist.name = group_name
+            playlist.playlist = cat_channels[:]
+            #cat_channels.insert(0, playlist)
             it = PFolder()
             it.name = group_name
             it.xml = group
             it.channels = cat_channels
-            groups.append(it)
+            groups.append(playlist)
             
-        groups.insert(0, PExit())
         self.groups = groups
         
     def is_seekable(self):
@@ -404,6 +409,3 @@ class StreamContentProvider(ContentProvider):
     def remove_folder(self, folder):
         log.debug('removing folder %s' , folder.name)
         self.stream_root.remove(folder.xml)
-        
-        
-        
