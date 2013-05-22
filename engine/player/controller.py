@@ -13,6 +13,7 @@ from ServiceReference import ServiceReference
 from Plugins.Extensions.archivCZSK import _
 from Plugins.Extensions.archivCZSK import log
 from Plugins.Extensions.archivCZSK.gui.common import showInfoMessage, showErrorMessage, showYesNoDialog
+import buff 
 
 show_info_message = showInfoMessage
 show_error_message = showErrorMessage
@@ -107,6 +108,12 @@ class BaseVideoPlayerController(object):
 class VideoPlayerController(BaseVideoPlayerController):
     """
     External Video Player Controller for video playback
+    Handles play and download mode - restricts user to play only already downloaded content
+                                   - automatically stops/resumes playing video according to download state
+                                   - handles seeking in downloading video
+                                   - updates information about download state
+    Handles play mode - respects video settings and boundaries when seeking
+    
     @param session: reference to active session for info messages
     @param download: reference for active download to control "download and play"
     @param video_check_interval: set video check interval in seconds
@@ -195,6 +202,8 @@ class VideoPlayerController(BaseVideoPlayerController):
             self.check_timer.callback.append(self._update_info_bar)
             
             self.start_video_check()
+        else:
+            log.debug("play_and_download=%s video_length_total=%s", play_and_download, self.video_length_total)
 
         
     def set_video_check_interval(self, interval):
@@ -468,6 +477,10 @@ class VideoPlayerController(BaseVideoPlayerController):
                 
 
 class GStreamerDownloadController(BaseVideoPlayerController):
+    """
+    Handles gstreamer download mode
+    """
+    
     def __init__(self, download_path, prebuffer_seconds=0, prebuffer_percent=0):
         
         self.video_player = None
@@ -523,19 +536,19 @@ class GStreamerDownloadController(BaseVideoPlayerController):
         
     def __ev_updated_buffer_info(self):
         self.istreamed = self.get_istreamed()
-        info = self.istreamed.getBufferCharge()
-        self.buffered_percent = info[0]
+        info = buff.getBufferInfo(self.istreamed)
+        self.buffered_percent = info['percentage']
         self._update_info_bar()
     
     # called every 1 seconds
     def __ev_updated_download_status(self):
         if self.istreamed is None:
             return
-        info = self.istreamed.getBufferCharge()
-        self.download_speed = info[1]
-        self.download_percent = info[7]
-        self.buffered_percent = info[0]
-        self.buffer_size = info[4]
+        info = buff.getBufferInfo(self.istreamed)
+        self.download_speed = info['avg_in_rate']
+        self.download_percent = info['download_percent']
+        self.buffered_percent = info['percentage']
+        self.buffer_size = info['size']
         log.debug('download_percent: %d, buffer_size %lu', self.download_percent, self.buffer_size)
         self._update()
     
