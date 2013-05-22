@@ -211,6 +211,16 @@ def add_play(title, provider_name, quality, url, subs=None, filename=None, image
 	else:
 		client.add_video(name, url, subs=subs, filename=filename, image=image, infoLabels=infoLabels, menuItems=menuItems)
 
+def create_play_it(title, provider_name, quality, url, subs=None, filename=None, image=None, infoLabels={}, menuItems={},headers={}):
+	name = '%s - %s[%s]' % (decode_html(title), decode_html(provider_name), decode_html(quality))
+	if not 'title' in infoLabels:
+		infoLabels['title'] = name
+	settings = {"extra-headers":headers}
+	return client.create_video_it(name, url, subs=subs, filename=filename, image=image, infoLabels=infoLabels, menuItems=menuItems, settings=settings)
+
+def add_playlist(name,playlist):
+	client.add_playlist(name,playlist)
+
 _diacritic_replace = {u'\u00f3':'o',
 u'\u0213':'-',
 u'\u00e1':'a',
