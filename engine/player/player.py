@@ -7,7 +7,6 @@ Created on 20.3.2012
 import os
 
 from subprocess import Popen, PIPE, STDOUT
-from twisted.internet import defer
 
 from enigma import  eServiceCenter, iServiceInformation, eServiceReference, iSeekableService, iPlayableService, iPlayableServicePtr, eTimer, eConsoleAppContainer, getDesktop
 from Screens.Screen import Screen
@@ -38,7 +37,7 @@ from subtitles.subtitles import SubsSupport
 from controller import VideoPlayerController, GStreamerDownloadController, RTMPController
 from info import videoPlayerInfo
 from infobar import ArchivCZSKMoviePlayerInfobar, ArchivCZSKMoviePlayerSummary, InfoBarAspectChange, InfoBarPlaylist
-from util import Video, getBufferInfo, setBufferInfo
+from util import Video, getBufferInfo, setBufferSize
 import setting
 
 
@@ -81,8 +80,9 @@ class StandardStreamVideoPlayer(MoviePlayer, InfoBarPlaylist):
 		self.onPlayService = []
 		self.sref = sref
 		MoviePlayer.__init__(self, session, sref)
+		startShow = endShow = repeat = len(playlist) > 1
 		InfoBarPlaylist.__init__(self, playlist, playlistCB, playlistName,
-								startShow=True, endShow=True, nextShow=True, repeat=True, showProtocol=True)
+								startShow=startShow, endShow=endShow, nextShow=True, repeat=repeat, showProtocol=True)
 		#SubsSupport.__init__(self, subPath=subtitles, alreadyPlaying=True)
 		self.skinName = "MoviePlayer" 
 		
@@ -410,8 +410,9 @@ class EPlayer2VideoPlayer(CustomVideoPlayer):
 
 class GSTStreamVideoPlayer(GStreamerVideoPlayer):
 	def __init__(self, session, sref, videoPlayerController, playlist, playlistName, playlistCB, playAndDownload=False, subtitles=None):
+		startShow = endShow = repeat = len(playlist) > 1
 		CustomVideoPlayer.__init__(self, session, sref, videoPlayerController, playlist, playlistName, playlistCB, playAndDownload, subtitles,
-								   startShow=True, endShow=True, nextShow=True, showProtocol=True, repeat=False)
+								   startShow=startShow, endShow=endShow, nextShow=True, showProtocol=True, repeat=repeat)
 		self.gstreamerSetting = self.settings
 		self.useBufferControl = False
 		self.setBufferMode(int(self.gstreamerSetting.bufferMode.getValue()))
@@ -424,14 +425,16 @@ class GSTStreamVideoPlayer(GStreamerVideoPlayer):
 		
 class EP3StreamVideoPlayer(CustomVideoPlayer):
 	def __init__(self, session, sref, videoPlayerController, playlist, playlistName, playlistCB, playAndDownload=False, subtitles=None):
+		startShow = endShow = repeat = len(playlist) > 1
 		CustomVideoPlayer.__init__(self, session, sref, videoPlayerController, playlist, playlistName, playlistCB, playAndDownload, subtitles,
-								   startShow=True, endShow=True, nextShow=True, showProtocol=True, repeat=False) 
+								   startShow=startShow, endShow=endShow, nextShow=True, showProtocol=True, repeat=repeat)
 		self.playService()
 		
 class EP2StreamVideoPlayer(CustomVideoPlayer):
 	def __init__(self, session, sref, videoPlayerController, playlist, playlistName, playlistCB, playAndDownload=False, subtitles=None):
+		startShow = endShow = repeat = len(playlist) > 1
 		CustomVideoPlayer.__init__(self, session, sref, videoPlayerController, playlist, playlistName, playlistCB, playAndDownload, subtitles,
-								   startShow=True, endShow=True, nextShow=True, showProtocol=True, repeat=False) 
+								   startShow=startShow, endShow=endShow, nextShow=True, showProtocol=True, repeat=repeat) 
 		self.playService()
 		
 class DownloadSupport(object):

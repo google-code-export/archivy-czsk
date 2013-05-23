@@ -65,6 +65,8 @@ class AddonExceptionHandler(GUIExceptionHandler):
             except urllib2.URLError, e:
                 message = "%s %s:%s" % (_("Error in loading"), _("URL Error"), str(e.reason))
                 self.errorMessage(message)
+            except addon.AddonThreadException:
+                pass
             # we handle all possible exceptions since we dont want plugin to crash because of addon error..       
             except Exception, e:
                 self.errorMessage(_("Author of this addon needs to update it"))

@@ -4,6 +4,8 @@ Created on 16.5.2013
 @author: marko
 
 '''
+from twisted.internet import defer
+from enigma import eTimer
 
 def setBufferSize(iStreamed, size):
     """

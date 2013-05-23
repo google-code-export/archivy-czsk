@@ -28,7 +28,7 @@ PNG_PATH = settings.IMAGE_PATH + '/'
 SPINNER_PATH = PNG_PATH + 'spinner/'
 
 class PanelList(MenuList):
-    def __init__(self, list, itemHeight=28):
+    def __init__(self, list, itemHeight=29):
         MenuList.__init__(self, list, False, eListboxPythonMultiContent)
         self.l.setItemHeight(itemHeight)
         self.l.setFont(0, gFont("Regular", 21))
@@ -250,6 +250,21 @@ class LoadingScreen(Screen):
             spin = SPINNER_PATH + str(self.curr) + ".png"
         self["spinner"].instance.setPixmapFromFile(spin)
         self.timer.start(130, True)
+        
+class CutLabel(Label):
+    def __init__(self, text, subsNum=3, subsText='.'):
+        Label.__init__(self, text)
+        position = widget1.position
+        self.test = Label("")
+        
+    def setText(self, text):
+        self.test.setText(text)
+        size = self.test.getSize()
+        if size.width() > self.getWidth():
+            size = self.getSize()
+        
+        
+        widget2.instance.move(ePoint(position[0] + size1.width() + 10, position[1]))
               
         
 class MultiLabelWidget():

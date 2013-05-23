@@ -179,7 +179,7 @@ class PlayListPanelList(PanelList):
 def PlaylistEntry(name, png):
     res = [(name)]
     res.append(MultiContentEntryPixmapAlphaTest(pos=(5, 5), size=(32, 32), png=loadPNG(png)))
-    res.append(MultiContentEntryText(pos=(60, 5), size=(600, 30), font=0, flags=RT_VALIGN_TOP, text=toUTF8(name)))
+    res.append(MultiContentEntryText(pos=(55, 5), size=(580, 30), font=0, flags=RT_VALIGN_CENTER|RT_HALIGN_LEFT, text=toUTF8(name)))
     return res         
             
 class Playlist(BaseArchivCZSKMenuListScreen):

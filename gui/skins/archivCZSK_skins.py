@@ -272,9 +272,9 @@ CaptchaDialog = """
         </screen>"""
         
 Playlist = """
-            <screen name="Playlist" position="center,center" size="600,400" flags="wfNoBorder" backgroundColor="#68080808">
-                <widget name="menu" position="0,43" scrollbarMode="showOnDemand" size="600,357" backgroundColor="#68080808" />
-                <widget name="title" position="3,1" size="594,37" backgroundColor="#48080808" font="Regular; 24" foregroundColor="#e5b243" halign="center" noWrap="1" />
+            <screen name="Playlist" position="center,center" size="650,450" flags="wfNoBorder" backgroundColor="#48080808">
+                <widget name="menu" position="0,60" scrollbarMode="showOnDemand" size="650,390" backgroundColor="#48080808"/>
+                <widget name="title" position="0,0" size="650,55" valign="center" halign="center" backgroundColor="#28080808" font="Regular; 24" foregroundColor="#e9b253" />
             </screen>
            """
         
