@@ -319,7 +319,7 @@ class SelectPath(Screen):
             
         }, -1)
         self["key_red"] = StaticText(_("Cancel"))
-        self["key_green"] = StaticText(_("OK"))
+        self["key_green"] = StaticText(_("Save"))
         self.onShown.append(self.setWindowTitle)
         
     def setWindowTitle(self):
