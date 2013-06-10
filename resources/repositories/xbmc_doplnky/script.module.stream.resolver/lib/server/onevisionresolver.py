@@ -32,10 +32,11 @@ def gen_random_decimal(i, d):
 def resolve(url):
     m = _regex(url)
     if m:
-        data = util.request(url)
-        video = re.search('<iframe.+?src=\".+\?id=(?P<id>[\d]+).+?</iframe>', data, re.IGNORECASE | re.DOTALL)
+        data = util.request(m.group('url'))
+        video = re.search('<iframe.+?src=".+\?id=(?P<id>[\d]+).+?</iframe>', data, re.IGNORECASE | re.DOTALL)
         if video:
             id = int(video.group('id'))
+            print id
             headers = {
                    "Referer":"http://st.kset.kz/pl/pl.swf"
                     }
@@ -52,6 +53,6 @@ def resolve(url):
     
     
 def _regex(url):
-    m = re.search('http://onevision\.ucoz\.ua/(.+?)', url, re.IGNORECASE | re.DOTALL)
+    m = re.search('(?P<url>http://onevision\.ucoz\.ua/[^<]+)', url, re.IGNORECASE | re.DOTALL)
     return m
     
