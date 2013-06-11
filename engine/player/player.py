@@ -80,9 +80,10 @@ class StandardStreamVideoPlayer(MoviePlayer, InfoBarPlaylist):
 		self.onPlayService = []
 		self.sref = sref
 		MoviePlayer.__init__(self, session, sref)
-		startShow = endShow = repeat = len(playlist) > 1
+		onStartShow = repeat = len(playlist) > 1
+		autoPlay = False
 		InfoBarPlaylist.__init__(self, playlist, playlistCB, playlistName,
-								startShow=startShow, endShow=endShow, nextShow=True, repeat=repeat, showProtocol=True)
+								autoPlay=autoPlay, repeat=repeat, onStartShow=onStartShow, showProtocol=True)
 		#SubsSupport.__init__(self, subPath=subtitles, alreadyPlaying=True)
 		self.skinName = "MoviePlayer" 
 		
@@ -102,7 +103,7 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, InfoBarPlaylist, SubsSupport, 
 	ALLOW_SUSPEND = True
 	
 	def __init__(self, session, sref, playlist, playlistName, playlistCB, subtitles=None,
-				startShow=False, endShow=False, nextShow=False, showProtocol=False, repeat=False):
+				autoPlay=True, showProtocol=False, onStartShow=False, repeat=False):
 		BaseArchivCZSKScreen.__init__(self, session)
 		self.onPlayService = []
 		self.settings = config.plugins.archivCZSK.videoPlayer
@@ -131,15 +132,6 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, InfoBarPlaylist, SubsSupport, 
          	"audioSelection":(self.audioSelection, _("show audio selection menu")),
           	}, -3) 
 			
-		## bindend some video events to functions
-		self.__event_tracker = ServiceEventTracker(screen=self, eventmap=
-		{
-			iPlayableService.evStart: self.__serviceStarted,
-			iPlayableService.evUpdatedEventInfo: self.__evUpdatedEventInfo,
-			iPlayableService.evUser + 10: self.__evAudioDecodeError,
-			iPlayableService.evUser + 11: self.__evVideoDecodeError,
-			iPlayableService.evUser + 12: self.__evPluginError,
-		})
 		InfoBarBase.__init__(self, steal_current_service=True)
 		# init of all inherited screens
 		for x in HelpableScreen, InfoBarShowHide, \
@@ -152,7 +144,18 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, InfoBarPlaylist, SubsSupport, 
 		SubsSupport.__init__(self, subPath=subtitles, defaultPath=config.plugins.archivCZSK.subtitlesPath.getValue(), forceDefaultPath=True)
 		
 		# playlist support
-		InfoBarPlaylist.__init__(self, playlist, playlistCB, playlistName, startShow, nextShow, endShow, repeat, showProtocol)
+		InfoBarPlaylist.__init__(self, playlist, playlistCB, playlistName,
+								 autoPlay=autoPlay, onStartShow=onStartShow, repeat=repeat, showProtocol=showProtocol)
+		
+		## bindend some video events to functions
+		self.__event_tracker = ServiceEventTracker(screen=self, eventmap=
+		{
+			iPlayableService.evStart: self.__serviceStarted,
+			iPlayableService.evUpdatedEventInfo: self.__evUpdatedEventInfo,
+			iPlayableService.evUser + 10: self.__evAudioDecodeError,
+			iPlayableService.evUser + 11: self.__evVideoDecodeError,
+			iPlayableService.evUser + 12: self.__evPluginError,
+		})
 		
 		# to get real start of service, and for queries for video length/position
 		self.video = Video(session)
@@ -229,11 +232,9 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, InfoBarPlaylist, SubsSupport, 
 # adds support for videoplayer controller
 class CustomVideoPlayer(ArchivCZSKMoviePlayer):
 	def __init__(self, session, sref, videoPlayerController, playlist, playlistName, playlistCB,
-				 playAndDownload=False, subtitles=None, startShow=False, endShow=False,
-				 nextShow=False, showProtocol=False, repeat=False):
+				 playAndDownload=False, subtitles=None, autoPlay=True, showProtocol=False, onStartShow=False, repeat=False):
 		ArchivCZSKMoviePlayer.__init__(self, session, sref, playlist, playlistName, playlistCB, subtitles,
-									   startShow=startShow, endShow=endShow, nextShow=nextShow,
-									   showProtocol=showProtocol, repeat=repeat)
+									   autoPlay=autoPlay, showProtocol=showProtocol, onStartShow=onStartShow, repeat=repeat)
 		self.videoPlayerController = videoPlayerController
 		self.useVideoController = self.videoPlayerController is not None
 		self.playAndDownload = playAndDownload
@@ -410,9 +411,9 @@ class EPlayer2VideoPlayer(CustomVideoPlayer):
 
 class GSTStreamVideoPlayer(GStreamerVideoPlayer):
 	def __init__(self, session, sref, videoPlayerController, playlist, playlistName, playlistCB, playAndDownload=False, subtitles=None):
-		startShow = endShow = repeat = len(playlist) > 1
+		onStartShow = repeat = len(playlist) > 1
 		CustomVideoPlayer.__init__(self, session, sref, videoPlayerController, playlist, playlistName, playlistCB, playAndDownload, subtitles,
-								   startShow=startShow, endShow=endShow, nextShow=True, showProtocol=True, repeat=repeat)
+								   autoPlay=False, onStartShow=onStartShow, showProtocol=True, repeat=repeat)
 		self.gstreamerSetting = self.settings
 		self.useBufferControl = False
 		self.setBufferMode(int(self.gstreamerSetting.bufferMode.getValue()))
@@ -425,16 +426,16 @@ class GSTStreamVideoPlayer(GStreamerVideoPlayer):
 		
 class EP3StreamVideoPlayer(CustomVideoPlayer):
 	def __init__(self, session, sref, videoPlayerController, playlist, playlistName, playlistCB, playAndDownload=False, subtitles=None):
-		startShow = endShow = repeat = len(playlist) > 1
+		onStartShow = repeat = len(playlist) > 1
 		CustomVideoPlayer.__init__(self, session, sref, videoPlayerController, playlist, playlistName, playlistCB, playAndDownload, subtitles,
-								   startShow=startShow, endShow=endShow, nextShow=True, showProtocol=True, repeat=repeat)
+								   autoPlay=False, showProtocol=True, onStartShow=onStartShow, repeat=repeat)
 		self.playService()
 		
 class EP2StreamVideoPlayer(CustomVideoPlayer):
 	def __init__(self, session, sref, videoPlayerController, playlist, playlistName, playlistCB, playAndDownload=False, subtitles=None):
-		startShow = endShow = repeat = len(playlist) > 1
+		onStartShow = repeat = len(playlist) > 1
 		CustomVideoPlayer.__init__(self, session, sref, videoPlayerController, playlist, playlistName, playlistCB, playAndDownload, subtitles,
-								   startShow=startShow, endShow=endShow, nextShow=True, showProtocol=True, repeat=repeat) 
+								   autoPlay=False, showProtocol=True, onStartShow=onStartShow, repeat=repeat) 
 		self.playService()
 		
 class DownloadSupport(object):
@@ -454,6 +455,8 @@ class DownloadSupport(object):
 		def playNDownload(callback=None):
 			if callback:
 				self.content_provider.download(self.play_it, self._showPlayDownloadDelay, DownloadManagerMessages.finishDownloadCB, playDownload=True)
+			else:
+				self.callback and self.callback()
 		
 		from Plugins.Extensions.archivCZSK.gui.download import DownloadManagerMessages
 		from Plugins.Extensions.archivCZSK.engine.downloader import getFileInfo, GStreamerDownload
@@ -593,9 +596,9 @@ class RTMPGWSupport(object):
 		stream = media_it.stream
 		url = media_it.url
 		live = media_it.live
-		if isinstance(stream, RtmpStream):
+		try:
 			cmd = "%s %s --sport %d" % (RTMPGW_PATH, stream.getRtmpgwUrl(), self.__port)	
-		else:
+		except Exception:
 			urlList = url.split()
 			rtmpTimeout = self.settings.rtmpTimeout.getValue()
 			rtmpBuffer = (live and self.liveRTMPBuffer) or (not live and self.archiveRTMPBuffer)
@@ -605,13 +608,12 @@ class RTMPGWSupport(object):
 				rtmp_url.append(' --' + rtmp[0])
 				rtmp_url.append("'%s'" % rtmp[1])
 			rtmpUrl = "'%s'" % urlList[0] + ' '.join(rtmp_url)
+			if not '--buffer' in rtmpUrl:
+				rtmpUrl = '%s --buffer %d' % (rtmpUrl, int(rtmpBuffer))
+			if not '--timeout' in rtmpUrl:
+				rtmpUrl = '%s --timeout %d' % (rtmpUrl, int(rtmpTimeout))
 			cmd = '%s --quiet --rtmp %s --sport %d' % (RTMPGW_PATH, rtmpUrl, self.__port)
-			if not '--buffer ' in cmd:
-				rtmpUrl = '%s --buffer %d' % (cmd, int(rtmpBuffer))
-			if not '--timeout ' in cmd:
-				rtmpUrl = '%s --timeout %d' % (cmd, int(rtmpTimeout))
 		log.debug('rtmpgw server streaming: %s' , cmd)
-		
 		self.__rtmpgwProcess = eConsoleAppContainer()
 		self.__rtmpgwProcess.appClosed.append(self.__endRTMPGWProcess)
 		self.__rtmpgwProcess.execute(cmd)
@@ -716,6 +718,8 @@ class Player(DownloadSupport, RTMPGWSupport):
 			if playUrl.startswith('rtmp') and self.useRtmpgw:
 				self.startRTMPGWProcess(self.play_it)
 				playUrl = self._getRTMPGWPlayUrl()
+				self.seekable = False
+				self.pausable = False
 			subtitlesUrl = self.play_it.subs
 			verifyLink = self.verifyLink
 			self._playStream(srefName, playUrl, subtitlesUrl, verifyLink=verifyLink)
