@@ -7,6 +7,8 @@ Created on 16.5.2013
 from twisted.internet import defer
 from enigma import eTimer
 
+bufferServicemp4 = True
+
 def setBufferSize(iStreamed, size):
     """
     set buffer size in (B)
@@ -47,14 +49,15 @@ def getBufferInfo(iStreamed):
         bufferDict['avg_out_rate'] = bufferInfo[2]
         bufferDict['space'] = bufferInfo[3]
         bufferDict['size'] = bufferInfo[4]
-        
-        try:
-            # servicemp4 download
-            bufferDict['downloading'] = bufferInfo[5]
-            bufferDict['download_path'] = bufferInfo[6]
-            bufferDict['download_percent'] = bufferInfo[7]
-        except IndexError:
-            pass
+        if bufferServicemp4:
+            try:
+                # servicemp4 download
+                bufferDict['downloading'] = bufferInfo[5]
+                bufferDict['download_path'] = bufferInfo[6]
+                bufferDict['download_percent'] = bufferInfo[7]
+            except IndexError:
+                global bufferServicemp4
+                bufferServicemp4 = False
     return bufferDict
 
 
