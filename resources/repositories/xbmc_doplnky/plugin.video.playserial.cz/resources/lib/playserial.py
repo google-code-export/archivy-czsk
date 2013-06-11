@@ -103,7 +103,7 @@ class PlayserialContentProvider(ContentProvider):
         url = self._url(item['url'])
         data = util.request(url)
         data = util.substr(data,'<div class=\'obsah\'','</div>')
-        resolved = resolver.findstreams(data,['[\"|\']+(?P<url>http://[^\"|\'|\\\]+)','flashvars=\"file=(?P<url>[^\"|\\\]+)','file=(?P<url>[^\&]+)'])
+        resolved = resolver.findstreams(data,['[\"|\']+(?P<url>http://[^\"|\'|\\\]+)','flashvars=\"file=(?P<url>[^\"|\\\]+)','file=(?P<url>[^\&]+)','<object.*?data=(?P<url>.+?)</object>'])
         result = []
         for i in resolved:
 		item = self.video_item()
