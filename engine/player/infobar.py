@@ -11,7 +11,9 @@ from Components.config import config
 from Components.ActionMap import HelpableActionMap, ActionMap, NumberActionMap
 from Components.Sources.StaticText import StaticText
 from Components.MultiContent import MultiContentEntryText, MultiContentEntryPixmapAlphaTest
+from Components.ServiceEventTracker import ServiceEventTracker
 from enigma import loadPNG, RT_HALIGN_RIGHT, RT_VALIGN_TOP, RT_HALIGN_LEFT, RT_HALIGN_RIGHT, RT_HALIGN_CENTER, RT_VALIGN_CENTER, eListboxPythonMultiContent, gFont
+from enigma import iPlayableService
 
 from Plugins.Extensions.archivCZSK import _, settings, log
 from Plugins.Extensions.archivCZSK.gui.base import BaseArchivCZSKMenuListScreen
@@ -45,8 +47,23 @@ class ArchivCZSKMoviePlayerInfobar(object):
         self["bitrate"] = Label("")
         self.onFirstExecBegin.append(self.__resetBufferSlider) 
         
+        self.__event_tracker = ServiceEventTracker(screen=self, eventmap=
+        {
+            iPlayableService.evStart: self.__serviceStarted,
+        })
+        
+    def __serviceStarted(self):
+        self.__resetBufferSlider()
+        self.__resetBufferState()
+        
+    def __resetBufferState(self):
+        self["buffer_size"].setText("0")
+        self["buffer_state"].setText(_("N/A"))
+        self["download_speed"].setText(_("N/A"))
+        
     def __resetBufferSlider(self):
-        self["buffer_slider"].setValue(0)    
+        self["buffer_slider"].setValue(0) 
+           
         
     def setBufferSliderRange(self, video_length):
         #doesnt work
@@ -171,7 +188,7 @@ class PlayerSettingsSupport(object):
         sref.setName(name)
         return sref
     
-class PlayListPanelList(PanelList):
+class PlaylistPanelList(PanelList):
     def __init__(self, list):
         PanelList.__init__(self, list, 35)       
 
@@ -179,17 +196,18 @@ class PlayListPanelList(PanelList):
 def PlaylistEntry(name, png):
     res = [(name)]
     res.append(MultiContentEntryPixmapAlphaTest(pos=(5, 5), size=(32, 32), png=loadPNG(png)))
-    res.append(MultiContentEntryText(pos=(55, 5), size=(580, 30), font=0, flags=RT_VALIGN_CENTER|RT_HALIGN_LEFT, text=toUTF8(name)))
+    res.append(MultiContentEntryText(pos=(55, 5), size=(580, 30), font=0, flags=RT_VALIGN_CENTER | RT_HALIGN_LEFT, text=toUTF8(name)))
     return res         
             
 class Playlist(BaseArchivCZSKMenuListScreen):
     instance = None
-    def __init__(self, session, title, playlist, current=0):
+    def __init__(self, session, title, playlist, selected, selection):
         Playlist.instance = self
-        BaseArchivCZSKMenuListScreen.__init__(self, session, PlayListPanelList)
+        BaseArchivCZSKMenuListScreen.__init__(self, session, PlaylistPanelList)
         self.lst_items = playlist
-        self.current = current
-        self["title"] = Label(title.encode('utf-8', 'ignore'))
+        self.selected = selected
+        self.selection = selection
+        self["title"] = Label(toUTF8(title))
         self["actions"] = NumberActionMap(["archivCZSKActions"],
                 {
                 "ok": self.ok,
@@ -204,63 +222,77 @@ class Playlist(BaseArchivCZSKMenuListScreen):
     def updateMenuList(self):
         menu_list = []
         for idx, name in enumerate(self.lst_items):
-            if idx != self.current:
+            if idx != self.selected:
                 menu_list.append(PlaylistEntry(name, VIDEO_PNG))
             else:
                 menu_list.append(PlaylistEntry(name, PLAY_PNG))
         self["menu"].setList(menu_list)
             
     def setSelection(self):
-        self["menu"].moveToIndex(self.current)
+        selection = self.selected or self.selection or 0
+        self["menu"].moveToIndex(selection)
             
     def ok(self):
         if len(self.lst_items) > 0:
-            self.current = self["menu"].getSelectionIndex()
+            self.selected = self["menu"].getSelectionIndex()
         self.cancel()
         
     def _onClose(self):
         Playlist.instance = None
             
     def cancel(self):
-        self.close(self.current)  
+        self.close(self.selected)
     
     
 class InfoBarPlaylist(object):
-    """
+    """ Adds playlist capability to player
+    
     @param name: name of playlist
-    @param playlist: list of service references
-    @param nextShow: show playlist before next show should be played
-    @param endShow: show playlist after end of last entry in playlist
+    @param playlist: list of PVideo items
+    @param playlistCB: callback function of player frontend 
+    @param autoPlay: start auto play next entry
     @param repeat: start play from beggining of playlist after end of 
                    last entry in playlist
+    @param showProtocol: shows protocol in the name of the entry ie. [protocol] name of entry
+    @param onFirstStartShow: shows playlist on start media player
+    @param reconnect: reconnects if live stream suddenly stops to play
+    
     """
-    def __init__(self, playlist, playlistCB, name=None, startShow=False, nextShow=False, endShow=False, repeat=False, showProtocol=False):
+    def __init__(self, playlist, playlistCB, name=None, autoPlay=True,
+                  repeat=False, showProtocol=False, onStartShow=False):
         self.__playlist = playlist
         if name is None:
-            self.__name = self.__playlist[0]
+            self.__name = self.__playlist[0].name
         else:
             self.__name = name
         self.__repeat = repeat
-        self.__endShowPlaylist = endShow
-        self.__nextShowPlaylist = nextShow
+        self.__reconnect = False
+        self.__autoPlay = autoPlay
         self.__showProtocol = showProtocol
         self.__callback = playlistCB
-        self.__current = 0
+        # currently selected index in playlist
+        self.__selection = 0
+        # currently selected and played index of entry in playlist
+        self.__selected = 0
+        
         self.__last = len(playlist) - 1
-        self["playlistShowActions"] = NumberActionMap(["DirectionActions"],
+        
+        self["playlistShowActions"] = ActionMap(["DirectionActions"],
             {
              "up":self.showPlaylist,
              "down":self.showPlaylist,
               }, -2)
         
         self.__callback and self.__callback({"init":""})
-        if startShow:
+        if onStartShow:
             self.onFirstExecBegin.append(self.showPlaylist)
         
         
     def setPlaylist(self, playlist, choice=None):
         self.__playlist = playlist
-        self.__current = choice or self.__current
+        self.__selected = choice or self.__selected
+        self.__selection = self.__selected
+        self.__last = len(playlist) - 1
          
     def showPlaylist(self):
         if Playlist.instance:return
@@ -268,36 +300,62 @@ class InfoBarPlaylist(object):
             list = ["[%s] %s" % (video.get_protocol(), video.name) for video in self.__playlist]
         else:
             list = ["%s" % (video.name) for video in self.__playlist]
-        self.session.openWithCallback(self.__showPlaylistCb, Playlist, self.__name, list, self.__current)
+        self.session.openWithCallback(self.__showPlaylistCb, Playlist, self.__name, list,
+                                      self.__selected, self.__selection)
         
-    def __showPlaylistCb(self, current=None):
-        log.info('[InfoBarPlaylist] %s %s', str(current), str(self.__current))
-        if current is not None and self.__current != current:
-            self.__current = current
-            log.debug('[InfoBarPlaylist] __showPlaylistCb - [%s/%s] %s', self.__current, self.__last, self.__playlist[self.__current])
-            self.__callback({'play_idx':self.__current})
+    def __showPlaylistCb(self, selection=None):
+        log.info('[InfoBarPlaylist] %s %s', str(selection), str(self.__selected))
+        if selection is not None and self.__selected != selection:
+            self.__selected = selection
+            self.__selection = self.__selected
+            log.debug('[InfoBarPlaylist] __showPlaylistCb - [%s/%s] %s',
+                       self.__selected,
+                       self.__last,
+                       self.__playlist[self.__selected])
+            self.__play()
         else:
             log.debug('[InfoBarPlaylist] __showPlaylistCb - same service')
-            if self.session.nav.getCurrentlyPlayingServiceReference() is None:
-                self.leavePlayerConfirmed((True, 'quit'))
+            #if self.session.nav.getselectedlyPlayingServiceReference() is None:
+            #    self.leavePlayerConfirmed((True, 'quit'))
+            
+    def lockEntry(self):
+        """
+        locks selected video in playlist - auto reconnect when connection breaks
+        """     
+        self.__reconnect = True
             
     def playNext(self):
-        if self.__current != self.__last:
-            self.__current += 1
-            log.debug('[InfoBarPlaylist] playNext - [%s/%s] %s', self.__current, self.__last, self.__playlist[self.__current])
-            self.__callback({'play_idx':self.__current})
+        if self.__selected != self.__last:
+            self.__selected += 1
+            self.__selection = self.__selected
+            log.debug('[InfoBarPlaylist] playNext - [%s/%s] %s',
+                       self.__selected, self.__last,
+                       self.__playlist[self.__selected])
+            self.__play()
         else:
-            self.__current = 0
-            log.debug('[InfoBarPlaylist] playNext - [%s/%s] %s', self.__current, self.__last, self.__playlist[self.__current])
-            self.__callback({'play_idx':self.__current})
+            self.__selected = 0
+            self.__selection = self.__selected 
+            log.debug('[InfoBarPlaylist] playNext - [%s/%s] %s',
+                      self.__selected, self.__last,
+                      self.__playlist[self.__selected])
+            self.__play()
+            
+    def playAgain(self):
+        self.__play()
+        
+    def __play(self):
+        self.__callback({'play_idx': self.__selected})
             
     def doEofInternal(self, playing):
-        if self.__current != self.__last or self.__repeat:
-            if self.__nextShowPlaylist:
-                self.showPlaylist()
-            else:
+        if self.__reconnect:
+            log.debug('[InfoBarPlaylist] doEofInternal - reconnecting stream: %s',
+                      str(self.__playlist[self.__selected]))
+            self.playAgain()
+        elif self.__selected != self.__last or self.__repeat:
+            if self.__autoPlay:
                 self.playNext()
-        elif self.__endShowPlaylist:
-            self.showPlaylist()
+            else:
+                self.__selected = None
+                self.showPlaylist()
         else:
             self.leavePlayerConfirmed((True, 'quit'))
