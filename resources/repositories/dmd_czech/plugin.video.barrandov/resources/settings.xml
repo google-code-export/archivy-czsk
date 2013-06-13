@@ -1,6 +1,2 @@
 <settings>
-   <!-- archivCZSK specificke nastavenie -->
-   <category label="Prehrávanie">
-   		<setting id="rtmp_seek_fix" type="bool" label="Opraviť RTMP pretáčanie" default="false"/>
-   </category>
 </settings>

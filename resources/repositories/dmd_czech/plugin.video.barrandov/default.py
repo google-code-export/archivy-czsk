@@ -35,18 +35,18 @@ home = __settings__.getAddonInfo('path')
 icon = os.path.join(home, 'icon.png')
 nexticon = os.path.join(home, 'nextpage.png') 
 
-CATEGORIES_START = '<div id="videoContent">'
-CATEGORIES_END = '<div class="cols footerMenu">'
-CATEGORIES_ITER = '<div class=\"videosGenre.*?\">.*?<h3>(?P<title>.*?)</h3>.*?<a href=\"(?P<url>[^"]+)\">Všechna videa</a>.*?</div>'
-LISTING_START = '<ul class="videoHpList">'
-LISTING_END = '<div class="cols footerMenu">'
-LISTING_ITER = '<li.*?><h5><a href=\"(?P<url>[^"]+).*?<img src=\"(?P<img>[^"]+)\" alt=\"(?P<title>[^"]+).*?</li>'
-PAGER_RE = '<div class="largePager">.*?strana:\s*?(?P<actpage>[0-9]+)[^/]+\/.*?(?P<totalpage>[0-9]+).*?<a class=\"right\" href=\"(?P<nexturl>[^"]+)'
-VIDEOLINK_RE = '<mediainfo.*?name=\"(?P<title>[^"]+).*?hd="(?P<hd>[^"]+).*?<file>(?P<file>[^<]+).*?<host>(?P<host>[^<]+)'
+CATEGORIES_START = '<div id="right-menu">'
+CATEGORIES_END = '<div class="block tip">'
+CATEGORIES_ITER = '<li.*?<a href=\"(?P<url>[^"]+)">(?P<title>.+?)</a><\/li>'
 
+LISTING_START = '<div class="block video show-archive">'
+LISTING_END = '<div id="right-menu">'
+LISTING_ITER = '<div class=\"item.*?\">.+?<a href=\"(?P<url>[^"]+)\">(?P<title>.+?)<.+?<p class=\"desc\">(?P<desc>.+?)</p>.+?<img src=\"(?P<img>[^"]+)".+?</div>'
+PAGER_RE = '<span class=\"pages">(?P<actpage>[0-9]+)/(?P<totalpage>[0-9]+)</span>.*?<a href=\"(?P<nexturl>[^"]+)'
+VIDEOLINK_ITER = 'file:.*?\"(?P<url>[^"]+)".+?label:.*?\"(?P<quality>[^"]+)\"'
 
 def CATEGORIES():
-    req = urllib2.Request(__baseurl__+'/video')
+    req = urllib2.Request(__baseurl__ + '/video')
     req.add_header('User-Agent', _UserAgent_)
     response = urllib2.urlopen(req)
     httpdata = response.read()
@@ -65,11 +65,12 @@ def LISTING(url):
     httpdata = response.read()
     response.close()
     httpdata = httpdata[httpdata.find(LISTING_START):httpdata.find(LISTING_END)]
-    
     for item in re.compile(LISTING_ITER, re.DOTALL | re.IGNORECASE).finditer(httpdata):
-        title = item.group('title').encode('utf-8')
+        desc = item.group('desc')
+        title = item.group('title')
+        title = title + ' ' + desc
         img = __baseurl__ + item.group('img')
-        link = item.group('url')
+        link = __baseurl__ + item.group('url')
         addDir(title, link, 2, img)
         
     pager = re.search(PAGER_RE, httpdata, re.DOTALL)
@@ -84,28 +85,18 @@ def LISTING(url):
             nexturl = url + nexturl
         addDir('Daľšia strana >> (%s / %s)' % (actpage, totalpage), nexturl, 1, nexticon)
         
-def VIDEOLINK(url):
-    videoid = re.search('\/([0-9]+)', url).group(1)
-    url = 'http://www.barrandov.tv/special/voddata/' + videoid + '?r=' + str(random.randint(1000, 9999))
+def VIDEOLINK(url, name):
     req = urllib2.Request(url)
     req.add_header('User-Agent', _UserAgent_)
     response = urllib2.urlopen(req)
     httpdata = response.read()
     response.close()
     
-    video = re.search(VIDEOLINK_RE, httpdata, re.DOTALL)
-    title = video.group('title')
-    hd = video.group('hd')
-    if hd: 
-        title = 'HD ' + title
-    else: 
-        title = 'SD ' + title
-    playpath = video.group('file')
-    app = video.group('host').split('/')[-1]
-    tcurl = 'rtmpe://' + video.group('host')
-    swfurl = 'http://www.barrandov.tv/flash/tvbPlayer22.swf?itemid=' + videoid
-    rtmp_url = tcurl + ' playpath=' + playpath + ' swfUrl=' + swfurl + ' app=' + app + ' token=#ed%h0#w@1'
-    addLink(title, rtmp_url, None, title)
+    for video in re.compile(VIDEOLINK_ITER, re.DOTALL | re.IGNORECASE).finditer(httpdata):
+        url = __baseurl__ + video.group('url')
+        quality = video.group('quality')
+        title = name + ' - ' + quality
+        addLink(title, url, None, title)
 
             
 url = None
@@ -133,4 +124,4 @@ elif mode == 1:
         LISTING(url)
         
 elif mode == 2:
-        VIDEOLINK(url)
+        VIDEOLINK(url, name)
