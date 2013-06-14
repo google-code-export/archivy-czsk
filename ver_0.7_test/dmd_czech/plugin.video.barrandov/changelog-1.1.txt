@@ -1,0 +1,7 @@
+2013-06-13
+* oprava archivu
+
+2013-04-12
+* init verzia
+
+
