@@ -54,7 +54,7 @@ def CATEGORIES():
     httpdata = httpdata[httpdata.find(CATEGORIES_START):httpdata.find(CATEGORIES_END)]
     
     for item in re.compile(CATEGORIES_ITER, re.DOTALL | re.IGNORECASE).finditer(httpdata):
-        title = item.group('title').encode('utf-8')
+        title = item.group('title')
         link = __baseurl__ + item.group('url')
         addDir(title, link, 1, icon)
         
@@ -109,7 +109,7 @@ try:
 except:
         pass
 try:
-        name = urllib.unquote_plus(params["name"])
+        name = params["name"]
 except:
         pass
 try:
