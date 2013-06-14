@@ -580,7 +580,7 @@ class AddonImporter:
                 self.__filehandle.close()
                 self.__filehandle = None
         log.debug("%s importing modul '%s'" , self, fullname)
-        bytecode = os.path.splitext(self.filename)[1] in ['.pyo', 'pyc']
+        bytecode = os.path.splitext(self.filename)[1] in ['.pyo', '.pyc']
         mod = self.__modules[fullname] = imp.new_module(fullname)
         mod.__file__ = self.filename
         mod.__loader__ = self
