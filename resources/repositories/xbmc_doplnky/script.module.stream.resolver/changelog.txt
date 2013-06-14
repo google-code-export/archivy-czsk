@@ -1,3 +1,5 @@
+[B]1.6.0:[/B]
+- added kset resolver (mx3L)
 [B]1.5.6:[/B]
 - fixed koukni - works back with mp4
 [B]1.5.5:[/B]

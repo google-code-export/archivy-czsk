@@ -21,7 +21,7 @@
 # */
 import re, util, decimal, random, base64, urllib
 
-__name__ = 'onevision'
+__name__ = 'kset'
 def supports(url):
     return not _regex(url) == None
 
@@ -32,27 +32,23 @@ def gen_random_decimal(i, d):
 def resolve(url):
     m = _regex(url)
     if m:
-        data = util.request(m.group('url'))
-        video = re.search('<iframe.+?src=".+\?id=(?P<id>[\d]+).+?</iframe>', data, re.IGNORECASE | re.DOTALL)
-        if video:
-            id = int(video.group('id'))
-            print id
-            headers = {
+        id = int(m.group('id'))
+        headers = {
                    "Referer":"http://st.kset.kz/pl/pl.swf"
-                    }
+                   }
         
-            params = {
-                      'id':id,
-                      'ref':'http://kset.kz/video_frame.php?id=%d' % id,
-                      'r':gen_random_decimal(0, 99999999999999)
-                     }
-            quality = "???"
-            data = util.request("http://kset.kz/v.php?" + urllib.urlencode(params), headers=headers)
-            item = util.json.loads(base64.decodestring(data))
-            return [{'quality':quality, 'url':item[u'file']}]
+        params = {
+                  'id':id,
+                  'ref':'http://kset.kz/video_frame.php?id=%d' % id,
+                  'r':gen_random_decimal(0, 99999999999999)
+                  }
+        quality = "???"
+        data = util.request("http://kset.kz/v.php?" + urllib.urlencode(params), headers=headers)
+        item = util.json.loads(base64.decodestring(data))
+        return [{'quality':quality, 'url':item[u'file']}]
     
     
 def _regex(url):
-    m = re.search('(?P<url>http://onevision\.ucoz\.ua/[^<]+)', url, re.IGNORECASE | re.DOTALL)
+    m = re.search('http://kset\.kz/video_frame\.php\?id=(?P<id>[0-9]+)', url, re.IGNORECASE | re.DOTALL)
     return m
     

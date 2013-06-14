@@ -117,7 +117,21 @@ class SerialyczContentProvider(ContentProvider):
         item = item.copy()
         url = self._url(item['url']).replace('×', '%c3%97')
         data = util.substr(util.request(url), '<div id=\"content\"', '#content')
-        resolved = resolver.findstreams(data, ['<embed( )src=\"(?P<url>[^\"]+)', '<object(.+?)data=\"(?P<url>[^\"]+)', '<iframe(.+?)src=[\"\'](?P<url>.+?)[\'\"]', '<object.*?data=(?P<url>.+?)</object>','<p><code><strong>(?P<url>.+?)</strong></code></p>'])
+        resolved = []
+        onevision = re.search('(?P<url>http://onevision\.ucoz\.ua/[^<]+)', data, re.IGNORECASE)
+        if onevision:
+            onevision_data = util.substr(util.request(onevision.group('url')),'<td class=\"eText\"','<td class=\"rightColumn\"')
+            resolved += resolver.findstreams(onevision_data, ['<embed( )src=\"(?P<url>[^\"]+)',
+                                                  '<object(.+?)data=\"(?P<url>[^\"]+)',
+                                                  '<iframe(.+?)src=[\"\'](?P<url>.+?)[\'\"]',
+                                                  '<object.*?data=(?P<url>.+?)</object>',
+                                                  '<p><code><strong>(?P<url>.+?)</strong></code></p>'])
+        
+        resolved += resolver.findstreams(data, ['<embed( )src=\"(?P<url>[^\"]+)',
+                                               '<object(.+?)data=\"(?P<url>[^\"]+)',
+                                               '<iframe(.+?)src=[\"\'](?P<url>.+?)[\'\"]',
+                                               '<object.*?data=(?P<url>.+?)</object>',
+                                               '<p><code><strong>(?P<url>.+?)</strong></code></p>'])
         result = []
         for i in resolved:
             item = self.video_item()
