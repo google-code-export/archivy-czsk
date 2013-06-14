@@ -178,7 +178,7 @@
 
 <addon id="plugin.video.playserial.cz"
        name="PlaySerialCZ"
-       version="1.0.6"
+       version="1.0.7"
        provider-name="Ivo Brhel">
   <requires>
     <import addon="xbmc.python" version="1.0"/>
@@ -266,7 +266,7 @@
 
 <addon id="plugin.video.serialycz.cz"
        name="serialycz.cz"
-       version="1.1.11"
+       version="1.1.12"
        provider-name="Libor Zoubek">
   <requires>
     <import addon="xbmc.python" version="1.0"/>
@@ -333,7 +333,7 @@
 
 <addon id="script.module.stream.resolver"
        name="stream resolver"
-       version="1.5.7"
+       version="1.6.0"
        provider-name="Libor Zoubek">
   <requires>
     <import addon="xbmc.python" version="2.0" />
