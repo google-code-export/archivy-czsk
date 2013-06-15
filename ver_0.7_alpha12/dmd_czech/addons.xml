@@ -2,7 +2,7 @@
 <addons>
 <addon id="plugin.video.barrandov"
        name="Barrandov TV Archiv"
-       version="1.0"
+       version="1.1"
        provider-name="mx3L">
   <requires>
     <import addon="xbmc.python" version="1.0"/>
