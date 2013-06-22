@@ -471,9 +471,9 @@ class DownloadSupport(object):
 			filename = self.play_it.filename
 			name = self.play_it.name
 			downloadsPath = self.content_provider.downloads_path
-			url = self._getUrl(self.play_it)
+			url = self._getPlayUrl(self.play_it)
 			subs = self.play_it.subs
-			if self.playUrl.startswith('http'):
+			if url.startswith('http'):
 				info = getFileInfo(url, filename, self.playSettings['extra-headers'])
 				path = os.path.join(downloadsPath, info[0])
 			path = path.encode('ascii', 'ignore')
