@@ -177,17 +177,23 @@ class VideoAddon(Addon):
         log.info('%s successfully loaded', self)
     
   
-    def refresh_provider_paths(self):
+    def refresh_provider_paths(self, *args, **kwargs):
         self.downloads_path = self.get_setting('download_path')
         self.shortcuts_path = os.path.join(config.plugins.archivCZSK.dataPath.getValue(), self.id)
         self.provider.downloads_path = self.downloads_path
         self.provider.shortcuts_path = self.shortcuts_path
     
     def open_shortcuts(self, session, cb):
-        shortcuts.openShortcuts(session, self, cb)
+        def callback(*args, **kwargs):
+            self.refresh_provider_paths()
+            cb and cb(*args, **kwargs)
+        shortcuts.openShortcuts(session, self, callback)
         
     def open_downloads(self, session, cb):
-        download.openAddonDownloads(session, self, cb)
+        def callback(*args, **kwargs):
+            self.refresh_provider_paths()
+            cb and cb(*args, **kwargs)
+        download.openAddonDownloads(session, self, callback)
         
     def close(self):
         Addon.close(self)

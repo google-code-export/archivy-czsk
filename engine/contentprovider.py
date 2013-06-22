@@ -13,20 +13,54 @@ from Components.config import config
 from Plugins.Extensions.archivCZSK import _
 from Plugins.Extensions.archivCZSK import version as aczsk
 from Plugins.Extensions.archivCZSK import log
-from Plugins.Extensions.archivCZSK import settings
+from Plugins.Extensions.archivCZSK.settings import VIDEO_EXTENSIONS, SUBTITLES_EXTENSIONS
 from Plugins.Extensions.archivCZSK.engine.exceptions.addon import AddonError
 import xmlshortcuts
 from tools import task, util
 from downloader import DownloadManager
 from items import PVideo, PFolder, PPlaylist, PDownload, Stream, RtmpStream
 
-VIDEO_EXTENSIONS = ['.avi', '.mkv', '.mp4', '.flv', '.mpg', '.mpeg', '.wmv']
-SUBTITLES_EXTENSIONS = ['.srt']
+
+class SysPath(list):
+    """to append sys path only to addon which belongs to""" 
+    def __init__(self, addons):
+        self.addons = addons
+    def append(self, val):
+        for addon in self.addons:
+            if val.find(addon.id) != -1:
+                addon.loader.add_path(val)
+    
+class AddonSys():
+    "sys for addons"
+    def __init__(self):
+        self.addons = []
+        self.path = SysPath(self.addons)
+    
+    def __setitem__(self, key, val):
+        if key == 'path':
+            print 'you cannot replace AddonSysPath'
+        else:
+            dict.__setitem__(self, key, val)
+        
+    def add_addon(self, addon):
+        self.addons.append(addon)
+        
+    def remove_addon(self, addon):
+        self.addons.remove(addon)
+        
+    def clear_addons(self):
+        del self.addons[:]
+
         
 class ContentProvider(object):
+    """ Provides item content which can be shown in GUI
+       All item content which can be created is in items module
+    """
     
-    def __init__(self, downloads_path):
-        self.downloads_path = downloads_path
+    def __init__(self):
+        self._capabilities = []
+        self.on_start = []
+        self.on_stop = []
         
     def is_seekable(self):
         return True
@@ -34,9 +68,43 @@ class ContentProvider(object):
     def is_pausable(self):
         return True
     
+    def get_capabilities(self):
+        return self._capabilities
+    
     def get_content(self, params={}):
-        """get content from params"""
+        """get content with help of params
+          @return: should return list of items created in items module"""
         pass
+    
+    def start(self):
+        for f in self.on_start:
+            f()
+        
+    def stop(self):
+        for f in self.on_stop:
+            f()
+          
+        
+class Favorites(object):
+    def __init__(self, shortcuts_path):
+        self.shortcuts = xmlshortcuts.ShortcutXML(shortcuts_path)
+        
+    def create_shortcut(self, item):
+        return self.shortcuts.createShortcut(item)
+
+    def remove_shortcut(self, id_shortcut):
+        return self.shortcuts.removeShortcut(id_shortcut)
+    
+    def get_shortcuts(self):
+        return self.shortcuts.getShortcuts()
+    
+    def save_shortcuts(self):
+        self.shortcuts.writeFile()
+        
+        
+class Downloads(object):
+    def __init__(self, downloads_path):
+        self.downloads_path = downloads_path
         
     def get_downloads(self):
         video_lst = []
@@ -74,17 +142,11 @@ class ContentProvider(object):
                 
         return video_lst
     
-    def remove_download(self, item):
-        if item is not None and isinstance(item, PDownload):
-            log.debug('removing item %s from disk' % item.name)
-            os.remove(item.path.encode('utf-8'))
-        else:
-            log.info('cannot remove item %s from disk, not PDownload instance', str(item))
-            
-        
+    
     def download(self, item, startCB, finishCB, playDownload=False, mode=""):
-        """Downloads item PVideo itemem calls startCB when download starts and finishCB when download finishes"""
-        
+        """Downloads item PVideo itemem calls startCB when download starts
+           and finishCB when download finishes
+        """
         quiet = False
         headers = item.settings['extra-headers']
         log.debug("Download headers %s", headers)
@@ -98,81 +160,65 @@ class ContentProvider(object):
             subs_file_path = os.path.splitext(d.local)[0] + '.srt'
             util.download_to_file(item.subs, subs_file_path)
         downloadManager.addDownload(d) 
-        
-class SysPath(list):
-    """to append sys path only to addon which belongs to""" 
-    def __init__(self, addons):
-        self.addons = addons
-    def append(self, val):
-        for addon in self.addons:
-            if val.find(addon.id) != -1:
-                addon.loader.add_path(val)
     
-class AddonSys():
-    "sys for addons"
-    def __init__(self):
-        self.addons = []
-        self.path = SysPath(self.addons)
-    
-    def __setitem__(self, key, val):
-        if key == 'path':
-            print 'you cannot replace AddonSysPath'
+    def remove_download(self, item):
+        if item is not None and isinstance(item, PDownload):
+            log.debug('removing item %s from disk' % item.name)
+            os.remove(item.path.encode('utf-8'))
         else:
-            dict.__setitem__(self, key, val)
-        
-    def add_addon(self, addon):
-        self.addons.append(addon)
-        
-    def remove_addon(self, addon):
-        self.addons.remove(addon)
-        
-    def clear_addons(self):
-        self.addons = []
-
+            log.info('cannot remove item %s from disk, not PDownload instance', str(item))
             
 
-class VideoAddonContentProvider(ContentProvider):
+class VideoAddonContentProvider(ContentProvider, Downloads, Favorites):
 
     __resolving_provider = None    
     __gui_item_list = [[], None, {}] #[0] for items, [1] for command to GUI [2] arguments for command
     __addon_sys = AddonSys()
     
-    @staticmethod
-    def get_shared_itemlist():
-        return VideoAddonContentProvider.__gui_item_list
+    @classmethod
+    def get_shared_itemlist(cls):
+        return cls.__gui_item_list
     
-    @staticmethod
-    def get_resolving_provider():
-        return VideoAddonContentProvider.__resolving_provider
-
+    @classmethod
+    def get_resolving_provider(cls):
+        return cls.__resolving_provider
+    
+    @classmethod
+    def get_resolving_addon(cls):
+        return cls.__resolving_provider.addon
 
     def __init__(self, video_addon, downloads_path, shortcuts_path):
-        ContentProvider.__init__(self, downloads_path)
+        ContentProvider.__init__(self)
+        Downloads.__init__(self,downloads_path)
+        Favorites.__init__(self,shortcuts_path)
         self.video_addon = video_addon
-        self.shortcuts = xmlshortcuts.ShortcutXML(shortcuts_path)
+        self._dependencies = []
+        self.on_start.append(self.__set_resolving_provider)
+        self.on_stop.append(self.__unset_resolving_provider)
         
-        self.dependencies = [video_addon]
-        self.__resolved_dependencies = False
-        self.__addon_sys.add_addon(video_addon)
+    def __set_resolving_provider(self):
+        VideoAddonContentProvider.__resolving_provider = self
+        VideoAddonContentProvider.__addon_sys.add_addon(self.video_addon)
+        self.video_addon.include()
+        self.resolve_dependencies()
+        self.include_dependencies()
         
-        
-    def refresh_paths(self):
-        self.video_addon.refresh_provider_paths()
-        
-    def __set_resolving_provider(self, provider):
-        VideoAddonContentProvider.__resolving_provider = provider
+    def __unset_resolving_provider(self):
+        VideoAddonContentProvider.__resolving_provider = None
+        VideoAddonContentProvider.__addon_sys.clear_addons()
+        self.video_addon.deinclude()
+        self.release_dependencies()
         
     def __clear_list(self):
         del VideoAddonContentProvider.__gui_item_list[0][:]
         VideoAddonContentProvider.__gui_item_list[1] = None
         VideoAddonContentProvider.__gui_item_list[2].clear()
         
-    def resolve_dependecies(self, strict=False):
-        from Plugins.Extensions.archivCZSK import archivczsk
-        self.video_addon.include()
+    def resolve_dependencies(self):
+        from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
         log.info("trying to resolve dependencies for %s" , self.video_addon)
         for dependency in self.video_addon.requires:
-            addon_id, version = dependency['addon'], dependency['version']
+            addon_id, version, optional = dependency['addon'], dependency['version'], dependency['optional']
             
             # checking if archivCZSK version is compatible with this plugin
             if addon_id == 'enigma2.archivczsk':
@@ -183,15 +229,15 @@ class VideoAddonContentProvider(ContentProvider):
                     raise AddonError(_("You need to update archivCZSK at least to") + " " + version + " " + _("version"))
                 
             log.info("%s requires %s addon, version %s" , self.video_addon, addon_id, version)
-            if archivczsk.ArchivCZSK.has_addon(addon_id):
-                tools_addon = archivczsk.ArchivCZSK.get_addon(addon_id)
+            if ArchivCZSK.has_addon(addon_id):
+                tools_addon = ArchivCZSK.get_addon(addon_id)
                 log.info("required %s founded" , tools_addon)
                 if  not util.check_version(tools_addon.version, version):
                     log.debug("version %s>=%s" , tools_addon.version, version)
-                    self.dependencies.append(tools_addon)
+                    self._dependencies.append(tools_addon)
                 else:
                     log.debug("version %s<=%s" , tools_addon.version, version)
-                    if strict:
+                    if not optional:
                         log.error("cannot execute %s " , self.video_addon)
                         raise AddonError("Cannot execute addon %s, dependency %s version %s needs to be at least version %s" 
                                         % (self.video_addon, tools_addon.id, tools_addon.version, version))
@@ -200,41 +246,28 @@ class VideoAddonContentProvider(ContentProvider):
                         continue
             else:
                 log.info("required %s addon not founded" , addon_id)
-                if strict:
+                if not optional:
                     log.info("cannot execute %s addon" , self.video_addon)
                     raise Exception("Cannot execute %s, missing dependency %s" % (self.video_addon, addon_id))
                 else:
                     log.debug("skipping")
-        self.__resolved_dependencies = True
         
     def include_dependencies(self):
-        for addon in self.dependencies:
+        for addon in self._dependencies:
             addon.include()
             self.__addon_sys.add_addon(addon)
                  
     def release_dependencies(self):
         log.debug("trying to release dependencies for %s" , self.video_addon)
-        for addon in self.dependencies:
+        for addon in self._dependencies:
             addon.deinclude()
-        self.__addon_sys.clear_addons()
-        self.__resolved_dependencies = False
-        self.dependencies = []
+        del self._dependencies[:]
       
     def get_content(self, session, params, successCB, errorCB):
         log.debug('get_content - params:%s' % str(params))
-        
-        if not self.__resolved_dependencies:
-            self.resolve_dependecies(strict=True)
-        self.include_dependencies()
-        
         self.__clear_list()
-        
         self.content_deferred = defer.Deferred()
         self.content_deferred.addCallbacks(successCB, errorCB)
-        
-        # setting current provider
-        self.__set_resolving_provider(self)
-        
         # setting timeout for resolving content
         loading_timeout = int(self.video_addon.get_setting('loading_timeout'))
         if loading_timeout > 0:
@@ -257,9 +290,6 @@ class VideoAddonContentProvider(ContentProvider):
         # resetting timeout for resolving content
         socket.setdefaulttimeout(None)
         
-        # resetting resolving provider
-        self.__set_resolving_provider(None)
-        
         if success:
             log.debug("successfully loaded %d items" % len(self.__gui_item_list[0]))
             lst_itemscp = [[], None, {}]
@@ -275,33 +305,17 @@ class VideoAddonContentProvider(ContentProvider):
     
     def is_pausable(self):
         return self.video_addon.get_setting('pausable')
-    
-    def get_downloads(self):
-        self.refresh_paths()
-        return super(VideoAddonContentProvider, self).get_downloads()
-    
-    def create_shortcut(self, item):
-        return self.shortcuts.createShortcut(item)
-
-    def remove_shortcut(self, id_shortcut):
-        return self.shortcuts.removeShortcut(id_shortcut)
-    
-    def get_shortcuts(self):
-        self.refresh_paths()
-        return self.shortcuts.getShortcuts()
-    
-    def save_shortcuts(self):
-        self.shortcuts.writeFile()
 
     def close(self):
         self.video_addon = None
     
     
     
-class StreamContentProvider(ContentProvider):
+class StreamContentProvider(ContentProvider, Downloads):
     
     def __init__(self, downloads_path, streams_path):
-        ContentProvider.__init__(self, downloads_path)
+        ContentProvider.__init__(self)
+        Downloads.__init__(self, downloads_path)
         self.streams_path = streams_path
         self.stream_root = None
         self.groups = []

@@ -27,7 +27,7 @@ class XBMCSettingsXMLParser(XMLParser):
         for category in settings.findall('category'):
             category_entry = self.get_category_entry(category)
             categories.append(category_entry)
-        
+
         return categories
             
             
@@ -88,8 +88,7 @@ class XBMCAddonXMLParser(XMLParser):
         
         type = 'unknown'
         description = {}
-        broken = False
-        broken_reason = u''
+        broken = None
         repo_datadir_url = u''
         repo_addons_url = u''
         requires = []
@@ -98,7 +97,9 @@ class XBMCAddonXMLParser(XMLParser):
         
         req = addon.find('requires')
         for imp in req.findall('import'):
-            requires.append({'addon':imp.attrib.get('addon'), 'version':imp.attrib.get('version')})
+            requires.append({'addon':imp.attrib.get('addon'),
+                             'version':imp.attrib.get('version'),
+                             'optional':imp.attrib.get('optional')})
             
             
         for info in addon.findall('extension'):
@@ -120,13 +121,11 @@ class XBMCAddonXMLParser(XMLParser):
                     if provides is not None and provides == 'video':
                         type = 'video'
                         script = info.attrib.get('library')
-                    pass
                     
  
             if info.attrib.get('point') == 'xbmc.addon.metadata':
                 if info.attrib.get('broken') is not None:
-                    broken = True
-                    broken_reason = info.attrib.get('broken')
+                    broken = info.attrib.get('broken')
 
                 for desc in info.findall('description'):
                     if desc.attrib.get('lang') is None:
@@ -141,7 +140,6 @@ class XBMCAddonXMLParser(XMLParser):
                 "version":version,
                 "description":description,
                 "broken":broken,
-                "broken_reason":broken_reason,
                 "repo_addons_url":repo_addons_url,
                 "repo_datadir_url":repo_datadir_url,
                 "requires":requires,
