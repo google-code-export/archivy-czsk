@@ -7,6 +7,7 @@ import os
 
 from Components.config import config, ConfigSubsection, ConfigSelection, ConfigDirectory, ConfigInteger, ConfigYesNo, ConfigText, ConfigNothing, configfile, getConfigListEntry, NoSave
 from Components.Language import language
+from Tools.Directories import SCOPE_PLUGINS, resolveFilename
 from Plugins.Extensions.archivCZSK import log, _
 from engine.player.info import videoPlayerInfo
 from engine.tools import stb
@@ -26,18 +27,9 @@ LANGUAGE_SETTINGS_ID = language.getLanguage()[:2]
 (MANUFACTURER, MODEL, ARCH, VERSION) = stb.getBoxtype()
 AZBOX = (MODEL == 'Azbox')
 
-############# SUPPORTED MEDIA #################
-
-VIDEO_EXTENSIONS = ('.3gp', '3g2', '.asf', '.avi', '.flv', '.mp4', '.mkv', '.mpeg', '.mov' '.mpg', '.wmv', '.divx', '.vob', '.iso', '.ts', '.m3u8')
-AUDIO_EXTENSIONS = ('.mp2', '.mp3', '.wma', '.ogg', '.dts', '.flac', '.wav')
-PLAYLIST_EXTENSIONS = ('.m3u', 'pls')
-ARCHIVE_EXTENSIONS = ('.rar', '.zip', '.7zip')
-PLAYABLE_EXTENSIONS = VIDEO_EXTENSIONS + AUDIO_EXTENSIONS
-MEDIA_EXTENSIONS = VIDEO_EXTENSIONS + AUDIO_EXTENSIONS + ARCHIVE_EXTENSIONS + PLAYLIST_EXTENSIONS
-
 ######### Plugin Paths ##############
 
-PLUGIN_PATH = "/usr/lib/enigma2/python/Plugins/Extensions/archivCZSK/"
+PLUGIN_PATH = os.path.join(resolveFilename(SCOPE_PLUGINS),'Extensions','archivCZSK')
 IMAGE_PATH = os.path.join(PLUGIN_PATH, 'gui/icon')
 SKIN_PATH = os.path.join(PLUGIN_PATH, 'gui/skin')
 REPOSITORY_PATH = os.path.join(PLUGIN_PATH, 'resources/repositories')
@@ -50,6 +42,16 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:18.0) Gecko/20100101 Firefo
 
 config.plugins.archivCZSK = ConfigSubsection()
 config.plugins.archivCZSK.archives = ConfigSubsection()
+
+############# SUPPORTED MEDIA #################
+
+VIDEO_EXTENSIONS = ('.3gp', '3g2', '.asf', '.avi', '.flv', '.mp4', '.mkv', '.mpeg', '.mov' '.mpg', '.wmv', '.divx', '.vob', '.iso', '.ts', '.m3u8')
+AUDIO_EXTENSIONS = ('.mp2', '.mp3', '.wma', '.ogg', '.dts', '.flac', '.wav')
+SUBTITLES_EXTENSIONS = ('.srt',)
+PLAYLIST_EXTENSIONS = ('.m3u', 'pls')
+ARCHIVE_EXTENSIONS = ('.rar', '.zip', '.7zip')
+PLAYABLE_EXTENSIONS = VIDEO_EXTENSIONS + AUDIO_EXTENSIONS
+MEDIA_EXTENSIONS = VIDEO_EXTENSIONS + AUDIO_EXTENSIONS + ARCHIVE_EXTENSIONS + PLAYLIST_EXTENSIONS + SUBTITLES_EXTENSIONS
 
 ################## Player config #####################################
 
@@ -157,7 +159,11 @@ config.plugins.archivCZSK.subtitlesPath = ConfigDirectory(default="/tmp")
 
 config.plugins.archivCZSK.convertPNG = ConfigYesNo(default=True)
 config.plugins.archivCZSK.clearMemory = ConfigYesNo(default=False)
-config.plugins.archivCZSK.hdmuFix = ConfigYesNo(default=False)
+if ARCH == 'sh4' and SERVICEMP4:
+    config.plugins.archivCZSK.hdmuFix = ConfigYesNo(default=True)
+else:
+    config.plugins.archivCZSK.hdmuFix = ConfigYesNo(default=False)
+    
 
 # we dont need linkVerification with gstreamer
 
@@ -231,6 +237,7 @@ def get_path_settings():
 def get_misc_settings():
     list = []
     list.append(getConfigListEntry(_("Convert captcha images to 8bit"), config.plugins.archivCZSK.convertPNG))
+    list.append(getConfigListEntry(_("Drop caches on exit"), config.plugins.archivCZSK.clearMemory))
     verification = config.plugins.archivCZSK.linkVerification.getValue()
     if not (videoPlayerInfo.type == 'gstreamer'):
         list.append(getConfigListEntry(_("Use link verification"), config.plugins.archivCZSK.linkVerification))
@@ -238,4 +245,5 @@ def get_misc_settings():
             list.append(getConfigListEntry(_("Verification timeout"), config.plugins.archivCZSK.linkVerificationTimeout))
     if ARCH == 'sh4':
         list.append(getConfigListEntry(_("Amiko HDMU fix"), config.plugins.archivCZSK.hdmuFix))
+    
     return list

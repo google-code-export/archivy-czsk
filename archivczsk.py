@@ -203,7 +203,7 @@ For optimal use of this plugin, you need to check if you have all neccesary vide
     def restart_e2(self, callback=None):
         if callback:
             from Screens.Standby import TryQuitMainloop
-            self.session.open(TryQuitMainloop, 10)
+            self.session.open(TryQuitMainloop, 3)
         
     def open_archive_screen(self, callback=None):
         if not ArchivCZSK.__loaded:
@@ -246,5 +246,5 @@ For optimal use of this plugin, you need to check if you have all neccesary vide
         #os.system("rm -rf /tmp/*.txt")
         os.system("rm -r /tmp/archivCZSK")
         
-    def show_error(self, info):
-        self.session.open(MessageBox, info, type=MessageBox.TYPE_ERROR, timeout=1)
+        if config.plugins.archivCZSK.clearMemory.getValue():
+            os.system("echo 1 > /proc/sys/vm/drop_caches")
