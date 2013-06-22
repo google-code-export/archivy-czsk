@@ -45,11 +45,11 @@ class DownloadManagerMessages(object):
             if DownloadListScreen.instance is not None:
                 DownloadListScreen.instance.refreshList()
         if download.downloaded:
-            session.openWithCallback(updateDownloadList, MessageBox, _("ArchivCZSK - Download:") + ' ' + \
+            session.openWithCallback(updateDownloadList, MessageBox, _("ArchivyCZSK - Download:") + ' ' + \
                                       download.name.encode('utf-8', 'ignore') + ' ' + _("successfully finished."), \
                                       type=MessageBox.TYPE_INFO, timeout=0)
         else:
-            session.openWithCallback(updateDownloadList, MessageBox, _("ArchivCZSK - Download:") + ' ' + \
+            session.openWithCallback(updateDownloadList, MessageBox, _("ArchivyCZSK - Download:") + ' ' + \
                                       download.name.encode('utf-8', 'ignore') + ' ' + _("finished with errors."), \
                                       type=MessageBox.TYPE_ERROR, timeout=0)  
     @staticmethod
@@ -252,7 +252,7 @@ class DownloadListScreen(BaseArchivCZSKMenuListScreen):
         self.player = Player(session, self.workingFinished)
         
         self.lst_items = []
-        self.title = _("Recent downloads")
+        self.title = "ArchivyCZSK" +" - "+ _("Recent downloads")
         self.onClose.append(self.__onClose)
 
         self["actions"] = NumberActionMap(["archivCZSKActions"],
@@ -355,7 +355,7 @@ class DownloadsScreen(BaseArchivCZSKMenuListScreen, DownloadList):
         self["key_green"] = Button("")
         self["key_yellow"] = Button(self.sort_next['name'])
         self["key_blue"] = Button("")
-        self.title = self.name.encode('utf-8', 'ignore') + ' ' + (_("downloads"))
+        self.title = self.name.encode('utf-8', 'ignore') + ' - ' + (_("Downloads"))
 
         self["actions"] = NumberActionMap(["archivCZSKActions"],
             {

@@ -50,7 +50,7 @@ class BaseArchivCZSKConfigScreen(BaseArchivCZSKScreen, ConfigListScreen):
         self.initializeCategories()
         self.initializeSkin()
         
-        self["key_yellow"] = Label(_("changelog"))
+        self["key_yellow"] = Label(_("Changelog"))
         self["key_green"] = Label(_("Save"))
         self["key_red"] = Label(_("Cancel"))
         self["key_blue"] = Label(_("Next"))
@@ -72,7 +72,7 @@ class BaseArchivCZSKConfigScreen(BaseArchivCZSKScreen, ConfigListScreen):
     def initializeSkin(self):
         if self.HD:
             self.skin = """
-            <screen position="335,140" size="%s,%s" >
+            <screen position="center,center" size="%s,%s" >
                 <widget name="key_red" position="10,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" shadowOffset="-2,-2" shadowColor="black" />
                 <widget name="key_green" position="160,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#1f771f" shadowOffset="-2,-2" shadowColor="black" />
                 <widget name="key_yellow" position="310,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#a08500" shadowOffset="-2,-2" shadowColor="black" />
@@ -84,7 +84,7 @@ class BaseArchivCZSKConfigScreen(BaseArchivCZSKScreen, ConfigListScreen):
                         </screen>""" % (self.category_widgets_y, self.WIDTH_HD, self.HEIGHT_HD - self.category_widgets_y - 10)
         else:
             self.skin = """
-            <screen position="335,140" size="%s,%s" >
+            <screen position="center,center" size="%s,%s" >
                 <widget name="key_red" position="10,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#9f1313" shadowOffset="-2,-2" shadowColor="black" />
                 <widget name="key_green" position="160,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#1f771f" shadowOffset="-2,-2" shadowColor="black" />
                 <widget name="key_yellow" position="310,5" zPosition="1" size="140,45" font="Regular;20" halign="center" valign="center" backgroundColor="#a08500" shadowOffset="-2,-2" shadowColor="black" />
@@ -223,7 +223,7 @@ class ArchiveCZSKConfigScreen(BaseArchivCZSKConfigScreen):
         self.onShown.append(self.buildMenu)
 
     def layoutFinished(self):
-        self.setTitle(_("Configuration of ArchivCZSK"))
+        self.setTitle("ArchivCZSK"+" - "+_("Configuration"))
         
     
     def buildMenu(self):
@@ -263,7 +263,6 @@ class AddonConfigScreen(BaseArchivCZSKConfigScreen):
     def __init__(self, session, addon):
         self.session = session
         self.addon = addon
-        self.setup_title = _("Settings of ") + addon.name.encode('utf-8', 'ignore')
         
         # to get addon config including global settings
         categories = addon_config.getArchiveConfigList(addon)
@@ -275,7 +274,7 @@ class AddonConfigScreen(BaseArchivCZSKConfigScreen):
         self.onLayoutFinish.append(self.layoutFinished)
 
     def layoutFinished(self):
-        self.setTitle(_("Settings of") + ' ' + self.addon.name.encode('utf-8', 'ignore'))
+        self.setTitle(self.addon.name.encode('utf-8', 'ignore')+" - "+_("Settings"))
             
     def changelog(self):
         info.showChangelog(self.session, self.addon.name, self.addon.changelog)
