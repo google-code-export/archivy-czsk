@@ -40,10 +40,27 @@ class PItem(object):
         self.thumb = u''
         self.image = None
         
+    def __repr__(self):
+        out = "<%s label=%r" % (self.__class__.__name__, self.name)
+        out += " params=%r" % self.params
+        out += " info=%r" % self.info
+        if self.thumb:
+            out += " thumb=" + self.thumb
+        out += '>'
+        return out.encode('utf-8','ignore')
+        
     def add_context_menu_item(self, name, thumb=None, action=None, params={}):
         item = PContextMenuItem(name, thumb, action, params)
         if item not in self.context:
             self.context.append(item)
+            
+    def remove_context_menu_item(self, name, thumb=None, action=None, params={}):
+        item = PContextMenuItem(name, thumb, action, params)
+        if item in self.context:
+            self.context.remove(item)
+            
+    def clear_context_menu(self):
+        del self.context[:]
         
     def get_id(self):
         return str(len(self.name)) + str(len(self.params))
