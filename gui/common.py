@@ -4,7 +4,7 @@ Created on 22.5.2012
 @author: marko
 '''
 import time
-
+import skin
 from skin import parseColor
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
@@ -66,13 +66,13 @@ def PanelListEntrySD(name, idx, png=''):
 def PanelListDownloadEntry_SD(name, download):
     res = [(name)]
     res.append(MultiContentEntryText(pos=(0, 5), size=(610, 30), font=0, flags=RT_HALIGN_LEFT, text=toUTF8(name)))
-    #res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_LEFT, text=toUTF8(download.startTime)))
+    # res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_LEFT, text=toUTF8(download.startTime)))
     if download.state == 'success_finished':
         res.append(MultiContentEntryText(pos=(0, 5), size=(570, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('finished'), color=0x00FF00))
-        #res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_LEFT, text=toUTF8(download.startTime)))
+        # res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_LEFT, text=toUTF8(download.startTime)))
     elif download.state == 'error_finished':
         res.append(MultiContentEntryText(pos=(0, 5), size=(570, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('finished with errors'), color=0xff0000))
-        #res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_RIGHT, text=toUTF8(download.finishTime)))
+        # res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_RIGHT, text=toUTF8(download.finishTime)))
     elif download.state == 'downloading':
         res.append(MultiContentEntryText(pos=(0, 5), size=(570, 30), font=0, flags=RT_HALIGN_RIGHT, text=_('downloading')))
     return res 
@@ -83,13 +83,13 @@ def PanelListDownloadEntry_SD(name, download):
 def PanelListDownloadEntry(name, download):
     res = [(name)]
     res.append(MultiContentEntryText(pos=(0, 5), size=(640, 30), font=0, flags=RT_HALIGN_LEFT, text=toUTF8(name)))
-    #res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_LEFT, text=toUTF8(download.startTime)))
+    # res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_LEFT, text=toUTF8(download.startTime)))
     if download.state == 'success_finished':
         res.append(MultiContentEntryText(pos=(0, 5), size=(850, 30), font=0, flags=RT_HALIGN_RIGHT, text=download.textState, color=0x00FF00))
-        #res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_LEFT, text=toUTF8(download.startTime)))
+        # res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_LEFT, text=toUTF8(download.startTime)))
     elif download.state == 'error_finished':
         res.append(MultiContentEntryText(pos=(0, 5), size=(850, 30), font=0, flags=RT_HALIGN_RIGHT, text=download.textState, color=0xff0000))
-        #res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_RIGHT, text=toUTF8(download.finishTime)))
+        # res.append(MultiContentEntryText(pos=(0, 38), size=(900, 30), font=2, flags=RT_VALIGN_TOP | RT_HALIGN_RIGHT, text=toUTF8(download.finishTime)))
     elif download.state == 'downloading':
         res.append(MultiContentEntryText(pos=(0, 5), size=(850, 30), font=0, flags=RT_HALIGN_RIGHT, text=download.textState))
     return res
@@ -251,7 +251,71 @@ class LoadingScreen(Screen):
         self["spinner"].instance.setPixmapFromFile(spin)
         self.timer.start(130, True)
               
+
+class CutLabel(Label):
+    def __init__(self, text, cutLeft=True, replaceChar='.', replaceCharNum=4):
+        self.maxChars = 9999
+        self.cutLeft = cutLeft
+        self.replaceChar = replaceChar
+        self.replaceCharNum = replaceCharNum
+        self.testInstance = None
+        Label.__init__(self, text)
+                
+    def applySkin(self, desktop, parent):
+        #testInstance = self.GUI_WIDGET(parent)
+        testInstance = self.testInstance
+        testInstance.hide()
+        testSkinAttributes = []
+        if self.skinAttributes:
+            for (attrib, value) in self.skinAttributes:
+                if attrib =='size':
+                    x,y = value.split(',')
+                    x = '2000'
+                    new_value = x+','+y
+                    testSkinAttributes.append((attrib,new_value))
+                else:
+                    testSkinAttributes.append((attrib,value))
+            skin.applyAllAttributes(testInstance, desktop, testSkinAttributes, parent.scale)
+        Label.applySkin(self,desktop, parent)
+        maxWidth = self.instance.size().width()
+            
+        # some random text
+        text =  'DSADJASNKDNSJANDJKSANDJKSANDNASJKNDSJKANDJKSANDJKAS'
+        text += 'FDSFDSFDSFDSFDSFDSFDSFDSFDSFDSFDSFDSFDSFDSFSDFDSFDS'
+        text += 'FDSFDSFDSFDSFDSFDSFDSFDSFDSFDSFDSFDSFDSFDSFSDFDSFDS'
+        text += 'FDSFDSFDSFDSFDSFDSFDSFDSFDSFDSFDSFDSFDSFDSFSDFDSFDS'
         
+        testInstance.setText(text)
+        actWidth = testInstance.calculateSize().width()
+        pixsPerChar = float(actWidth) / float(len(text))
+        print actWidth,'/',len(text),'=',pixsPerChar
+        print maxWidth
+        if pixsPerChar>0:
+            self.maxChars = int(maxWidth / pixsPerChar)
+        print self.maxChars
+        
+    def GUIcreate(self,parent):
+        self.testInstance = self.GUI_WIDGET(parent)
+        Label.GUIcreate(self,parent)
+        
+    def GUIdelete(self):
+        self.testInstance = None
+        Label.GUIdelete(self)
+        
+            
+    def setText(self, text):
+        print len(text), self.maxChars
+        if len(text) > self.maxChars:
+            cutChars = len(text) - self.maxChars
+            if self.cutLeft:
+                text = text[cutChars:]
+                text = "%s %s" % (self.replaceChar * self.replaceCharNum, text[self.replaceCharNum + 1:])
+            else:
+                text = text[:self.cutChars]
+                text = "%s %s" % (text[:-self.replaceCharNum + 1], self.replaceChar * self.replaceCharNum)
+        Label.setText(self,text)
+         
+
 class MultiLabelWidget():
     def __init__(self, widget1, widget2):
         position = widget1.position
@@ -266,7 +330,7 @@ class CategoryWidget():
     color_grey = "#5c5b5b"
     
     def __init__(self, screen, name, label):
-        #print 'intializing category widget %s-%s' % (name, label.encode('utf-8'))
+        # print 'intializing category widget %s-%s' % (name, label.encode('utf-8'))
         self.screen = screen
         self.name = name
         self.label = label
