@@ -18,7 +18,8 @@ from Components.config import config
 from enigma import ePicLoad, getDesktop
 
 from base import BaseArchivCZSKScreen
-from Plugins.Extensions.archivCZSK import _, settings
+from Plugins.Extensions.archivCZSK import _
+from Plugins.Extensions.archivCZSK.settings import ARCH,PLUGIN_PATH
 from Plugins.Extensions.archivCZSK.gui.common import showYesNoDialog, showInfoMessage, PanelColorListEntry, PanelList
 from Plugins.Extensions.archivCZSK.engine.player.info import videoPlayerInfo
 
@@ -32,12 +33,9 @@ def showCSFDInfo(session, name):
 	try:
 		from Plugins.Extensions.CSFD.plugin import CSFD
 	except ImportError:
-		showInfo(session, _("Plugin CSFD is not installed."))
+		showInfoMessage(session, _("Plugin CSFD is not installed."))
 	else:
 		session.open(CSFD, name, False)
-	
-def showInfo(session, text):
-	session.open(MessageBox, text=text, type=MessageBox.TYPE_INFO, timeout=5)
 	
 	
 def showVideoPlayerInfo(session, cb=None):
@@ -171,44 +169,47 @@ class ItemInfoScreen(BaseArchivCZSKScreen):
 		
 class VideoPlayerInfoScreen(BaseArchivCZSKScreen):
 	GST_INSTALL = 0
-	GST_INSTALL_OPENPLI = 1
-	GST_REINSTALL = 2
-	
-	WIDTH_HD = 355
-	WIDTH_SD = 200
+	GST_REINSTALL = 1
+	GST_INSTALL_RTMP = 2
+
+	GST_SCRIPT_PATH = os.path.join(PLUGIN_PATH, 'script','gst-plugins-archivczsk.sh')
+	RTMP_SCRIPT_PATH = os.path.join(PLUGIN_PATH, 'script','rtmp-plugin.sh')
 	
 	def __init__(self, session):
 		BaseArchivCZSKScreen.__init__(self, session)
 		self.__settings = config.plugins.archivCZSK.videoPlayer
 		self.selectedInstallType = self.GST_INSTALL
-		# initialize GUI
-		self["key_red"] = Label(_("Install GStreamer libraries"))
-		self["key_green"] = Label(_("Install GStreamer libraries (Openpli feeds)"))
-		self["key_yellow"] = Label(_("Re-Install GStreamer libraries"))
-		self["key_blue"] = Label(_("Refresh"))
+		self.restartNeeded = False
 		
+		if ARCH == 'mipsel':
+			self["key_red"] = Label(_("Install GStreamer plugins"))
+			self["key_green"] = Label(_("Install RTMP plugins"))
+			self["key_yellow"] = Label(_("Re-Install GStreamer plugins"))
+			self["key_blue"] = Label(_("Refresh"))
+		else:
+			self["key_red"] = Label("")
+			self["key_green"] = Label("")
+			self["key_yellow"] = Label("")
+			self["key_blue"] = Label("")   
 		self["detected player"] = Label(_("Detected player:"))
 		self["detected player_val"] = Label("")
-		
 		self["protocol"] = Label(_("Supported protocols:"))
-		self["protocol_list"] = PanelList([],24)
-		#self["protocol_list_info"] = PanelList([])
+		self["protocol_list"] = PanelList([], 24)
 		self["container"] = Label(_("Supported containers:"))
-		self["container_list"] = PanelList([],24)
-		#self["container_list_info"] = PaneList([])
+		self["container_list"] = PanelList([], 24)
 		self["info_scrolllabel"] = ScrollLabel()
 			
-		self["actions"] = NumberActionMap(["archivCZSKActions"],
+		self["actions"] = ActionMap(["archivCZSKActions"],
 		{
-			#"up": self["info_scrolllabel"].up(),
-			#"down": self["info_scrolllabel"].down(),
+			"up": self.pageUp,
+			"down": self.pageDown,
 			"right": self.pageDown,
 			"left": self.pageUp,
-			"cancel":self.close,
+			"cancel":self.cancel,
 			"blue": self.updateGUI,
 			"yellow": self.askReinstallGstPlugins,
 			"red": self.askInstallGstPlugins,
-			"green": self.askInstallGstPluginsOpenpli,
+			"green": self.askInstallRtmpPlugin,
 		}, -2)
 		
 		self.onShown.append(self.setWindowTitle)
@@ -225,48 +226,53 @@ class VideoPlayerInfoScreen(BaseArchivCZSKScreen):
 		self["protocol_list"].selectionEnabled(False)
 		
 	def updateGUI(self):
-		self.updateProtocolList()
-		self.updateContainerList()
+		containerWidth = self["container_list"].instance.size().width()
+		protocolWidth = self["protocol_list"].instance.size().width()
+		self.updateProtocolList(containerWidth)
+		self.updateContainerList(protocolWidth)
 		
 	def setPlayer(self):
 		self["detected player_val"].setText(videoPlayerInfo.getName())
 		
 	def setInfo(self):
-		info = _("""* If some of the tests FAIL you should try to install Gstreamer plugins in following order:
-1. Press Red, If it doesnt help go to point 2
-2. Press Green, If it doesnt help go to point 3
-3. Press Yellow\n\n
-* Status UNKNOWN means, that I dont know how to get info, it doesnt meant that protocol/container isn't supported.\n
-* Videos are encoded by various codecs, to play them you need to have HW support of your receiver to decode them.\n
-For example if you have ASF(WMV) - OK state, it doesnt already mean that you can play WMV file, it just means that player
-can open WMV container and get ENCODED video out of it. In WMV container is used VC1 encoded video. IF your player cannot decode VC1 codec, than you cannot play this video.""")
+		infoText=''
+		if ARCH == 'mipsel':
+			infoText += _("* If some of the tests FAIL you should")
+			infoText += " " + _("try to install Gstreamer plugins in following order:")
+			infoText += "\n   " + _("1. Press Red, If it doesnt help go to point 2")
+			infoText += "\n   " + _("2. Press Green, If it doesnt help go to point 3")
+			infoText += "\n   " + _("3. Press Yellow")
+			infoText += "\n\n"
+		infoText += _("* Status UNKNOWN means, that I dont know how to get info,")
+		infoText += " " + _("it doesnt mean that protocol or container isn't supported") + "."
+		infoText += "\n\n"
+		infoText += _("* Videos are encoded by various codecs")
+		infoText += ", " + _("to play them you need to have HW support of your receiver to decode them") + "."
+		infoText += "\n" + _("For example if you have ASF(WMV) - OK state")
+		infoText += ", " + _("it doesnt already mean that you can play WMV file")
+		infoText += ", " + _("it just means that player can open WMV container and get ENCODED video out of it") + "."
+		infoText += " " + _("In WMV container is used VC1 encoded video") + "."
+		infoText += " " + _("If your player cannot decode VC1 codec, than you cannot play this video.")
+		self["info_scrolllabel"].setText(infoText)
 		
-		self["info_scrolllabel"].setText(info)
+	def updateProtocolList(self,width):
+		menuList = []
+		menuList.append(self.buildEntry(_("HTTP Protocol"), videoPlayerInfo.isHTTPSupported(), width))
+		menuList.append(self.buildEntry(_("HLS Protocol"), videoPlayerInfo.isHLSSupported(), width))
+		menuList.append(self.buildEntry(_("MMS Protocol"), videoPlayerInfo.isMMSSupported(), width))
+		menuList.append(self.buildEntry(_("RTMP Protocol"), videoPlayerInfo.isRTMPSupported(), width))
+		menuList.append(self.buildEntry(_("RTSP Protocol"), videoPlayerInfo.isRTSPSupported(), width))
+		self["protocol_list"].setList(menuList)
 		
-	def updateProtocolList(self):
-		menu_list = []
-		width = self.WIDTH_HD
-		if not self.HD:
-			width = self.WIDTH_SD
-		menu_list.append(self.buildEntry(_("HTTP Protocol"), videoPlayerInfo.isHTTPSupported(), width))
-		menu_list.append(self.buildEntry(_("HLS Protocol"), videoPlayerInfo.isHLSSupported(), width))
-		menu_list.append(self.buildEntry(_("MMS Protocol"), videoPlayerInfo.isMMSSupported(), width))
-		menu_list.append(self.buildEntry(_("RTMP Protocol"), videoPlayerInfo.isRTMPSupported(), width))
-		menu_list.append(self.buildEntry(_("RTSP Protocol"), videoPlayerInfo.isRTSPSupported(), width))
-		self["protocol_list"].setList(menu_list)
-		
-	def updateContainerList(self):
-		menu_list = []
-		width = self.WIDTH_HD
-		if not self.HD:
-			width = self.WIDTH_SD
-		menu_list.append(self.buildEntry(_("3GP container"), videoPlayerInfo.isMP4Supported(), width))
-		menu_list.append(self.buildEntry(_("ASF(WMV) Container"), videoPlayerInfo.isASFSupported(), width))
-		menu_list.append(self.buildEntry(_("AVI Container"), videoPlayerInfo.isAVISupported(), width))
-		menu_list.append(self.buildEntry(_("FLV Container"), videoPlayerInfo.isFLVSupported(), width))
-		menu_list.append(self.buildEntry(_("MKV Container"), videoPlayerInfo.isMKVSupported(), width))
-		menu_list.append(self.buildEntry(_("MP4 Container"), videoPlayerInfo.isMP4Supported(), width))
-		self["container_list"].setList(menu_list)
+	def updateContainerList(self,width):
+		menuList = []
+		menuList.append(self.buildEntry(_("3GP container"), videoPlayerInfo.isMP4Supported(), width))
+		menuList.append(self.buildEntry(_("ASF(WMV) Container"), videoPlayerInfo.isASFSupported(), width))
+		menuList.append(self.buildEntry(_("AVI Container"), videoPlayerInfo.isAVISupported(), width))
+		menuList.append(self.buildEntry(_("FLV Container"), videoPlayerInfo.isFLVSupported(), width))
+		menuList.append(self.buildEntry(_("MKV Container"), videoPlayerInfo.isMKVSupported(), width))
+		menuList.append(self.buildEntry(_("MP4 Container"), videoPlayerInfo.isMP4Supported(), width))
+		self["container_list"].setList(menuList)
 
 		
 	def buildEntry(self, name, res, width):
@@ -283,57 +289,74 @@ can open WMV container and get ENCODED video out of it. In WMV container is used
 	def pageDown(self):
 		self["info_scrolllabel"].pageDown()
 		
+		
+	def askInstallGstPlugins(self):
+		if ARCH == 'mipsel' :
+			self.selectedInstallType = self.GST_INSTALL
+			message = _("Do you want to install gstreamer plugins?")
+			showYesNoDialog(self.session, message, self.installGstPlugins)
+		
 	
 	def askReinstallGstPlugins(self):
-		if settings.ARCH != 'mipsel' :
-			showInfoMessage(self.session, _("You can only install this plugins on mipsel platform"))
-		else:
+		if ARCH == 'mipsel':
 			self.selectedInstallType = self.GST_REINSTALL
-			showYesNoDialog(self.session, _("Do you want to re-install gstreamer plugins?"), self.installGstPlugins)
+			message = _("Do you want to re-install gstreamer plugins?")
+			showYesNoDialog(self.session, message, self.installGstPlugins)
 	
 	
-	def askInstallGstPluginsOpenpli(self):
-		if settings.ARCH != 'mipsel' :
-			showInfoMessage(self.session, _("You can only install this plugins on mipsel platform"))
-		else:
-			self.selectedInstallType = self.GST_INSTALL_OPENPLI
-			showYesNoDialog(self.session, _("Do you want to install gstreamer plugins by using openpli feed?"), self.installGstPlugins)
+	def askInstallRtmpPlugin(self):
+		if ARCH == 'mipsel':
+			self.selectedInstallType = self.GST_INSTALL_RTMP
+			warnMessage = _("ATTENTION: Installation of this plugin can cause")
+			warnMessage += '\n' + _("crash of Enigma2.")
+			if videoPlayerInfo.isRTMPSupported():
+				message = warnMessage
+				message += '\n'
+				message += '\n' + _("It looks like RTMP plugin is already installed")
+				message += '\n' + _("Do you want to reinstall it?")
+			else:
+				message = warnMessage
+				message += '\n\n' + _("Do you want to continue?")
+			showYesNoDialog(self.session, message, self.installGstPlugins)
 	
-	
-	def askInstallGstPlugins(self):
-		if settings.ARCH != 'mipsel' :
-			showInfoMessage(self.session, _("You can only install this plugins on mipsel platform"))
-		else:
-			self.selectedInstallType = self.GST_INSTALL
-			showYesNoDialog(self.session, _("Do you want to install gstreamer plugins?"), self.installGstPlugins)
 		
 	def installGstPlugins(self, callback=None):
 		if callback:
-			scriptPath = os.path.join(settings.PLUGIN_PATH, 'script/gst-plugins-archivczsk.sh')
-			if self.selectedInstallType == self.GST_INSTALL_OPENPLI:
-				params = " N openpli"
+			cmdList = []
+			if self.selectedInstallType == self.GST_INSTALL_RTMP:
+				cmdList = [self.RTMP_SCRIPT_PATH]
 			elif self.selectedInstallType == self.GST_INSTALL:
 				params = " N"
+				cmdList = [self.GST_SCRIPT_PATH + params]
 			elif self.selectedInstallType == self.GST_REINSTALL:
 				params = " A"
-			cmdList = [scriptPath + params]
+				cmdList = [self.GST_SCRIPT_PATH + params]
 			self.session.openWithCallback(self.installGstPluginsCB, Console, cmdlist=cmdList)
 		
 	def installGstPluginsCB(self, callback=None):
 		self.updateGUI()
 		self.updatePlayerSettings()
+		self.restartNeeded = True
 		
 	def updatePlayerSettings(self):
 		if videoPlayerInfo.isRTMPSupported():
 			self.__settings.seeking.setValue(True)
 			self.__settings.seeking.save()
 			
-			
+	def askRestartE2(self):
+		message = _("Its highly recommended to restart Enigma2")
+		message += " " + _("after installation of gstreamer plugins")
+		message += "\n"
+		message += "\n" + _("Do you want to restart Enigma2 now?")
+		showYesNoDialog(self.session, message, self.restartE2)
 		
-				
+	def restartE2(self, callback=None):
+		if callback:
+			from Screens.Standby import TryQuitMainloop
+			self.session.open(TryQuitMainloop, 3)
+		else: self.close()
 		
-		
-	
-	
-
-		
+	def cancel(self):
+		if self.restartNeeded:
+			self.askRestartE2()
+		else: self.close()

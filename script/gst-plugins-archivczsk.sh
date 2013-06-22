@@ -26,19 +26,6 @@ then
 fi
 
 
-copy_pli_feeds ()
-{
-	cp $BASEDIR/feeds/$platform/openpli_all-feed.conf /etc/opkg/
-	cp $BASEDIR/feeds/$platform/openpli_$platform-feed.conf /etc/opkg/
-}
-
-remove_pli_feeds ()
-{
-	rm /etc/opkg/openpli_all-feed.conf
-	rm /etc/opkg/openpli_$platform-feed.conf
-}
-
-
 check_pkg ()
 {
 	echo $(opkg list_installed|grep $1|wc -l)
@@ -54,15 +41,7 @@ reinstall_pkg ()
 		echo "Instalacia $package bola uspesna"
 	else
 		echo "$package sa nenachadza vo feede"
-		echo "Pokusam sa instalovat $package z tohto balicku"
-		opkg --force-reinstall install $BASEDIR/$platform/$package*.ipk > /dev/null
-		if [ "$(check_pkg $package)" != "0" ]
-		then 
-			echo "Instalacia $package bola uspesna"
-		else
-			echo "Instalacia $package nebola uspesna!!!"
-			echo "Skuste nainstalovat $package manualne..."
-		fi
+		echo "Instalacia $package nebola uspesna,,"
 	fi	
 }
 install_pkg ()
@@ -81,25 +60,11 @@ install_pkg ()
 			echo "Instalacia $package bola uspesna"
 		else
 			echo "$package sa nenachadza vo feede"
-			echo "Pokusim sa instalovat $package z tohto balicku"
-			opkg --force-reinstall install $BASEDIR/$platform/$package*.ipk > /dev/null
-			if [ "$(check_pkg $package)" != "0" ]
-			then 
-				echo "Instalacia $package bola uspesna"
-			else
-				echo "Instalacia $package bola neuspesna!!!"
-				echo "Skuste nainstalovat $package manualne..."
-			fi
-		fi	
-	fi
+			echo "Instalacia $package bola neuspesna..."
+		fi
+	fi	
 }
 echo $BASEDIR
-
-if [ "$openpli" == "openpli" ]
-then
-	echo "Bude pouzity openpli feed"
-	copy_pli_feeds
-fi
 
 echo "Aktualizujem feedy..."
 opkg update > /dev/null
@@ -147,14 +112,6 @@ then
 else
 	echo "Zvolili ste nespravnu platformu $platform, zvolte bud mipsel alebo mips32el platformu"
 	exit 1
-fi
-
-if [ "$openpli" == "openpli" ]
-then
-	echo "Mazem pouzite openpli feedy"
-	remove_pli_feeds
-	echo "Aktualizujem feedy"
-	opkg update > /dev/null
 fi
 
 exit 0
