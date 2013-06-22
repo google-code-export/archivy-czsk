@@ -18,6 +18,7 @@ from Components.config import config
 
 from Plugins.Extensions.archivCZSK import _
 from Plugins.Extensions.archivCZSK.engine.tools import util
+from Plugins.Extensions.archivCZSK.gui.base import BaseArchivCZSKScreen
 
 
 class Captcha(object):
@@ -47,19 +48,9 @@ class Captcha(object):
         
 
 
-class CaptchaDialog(VirtualKeyBoard):
-    def __init__(self, session, captcha_file):
-        self.skin = """
-            <screen position="center,center" size="1100,600" zPosition="99">
-                <widget source="Title" render="Label" position=" 50,12" size="1050, 33" halign="center" font="Regular;30" backgroundColor="background" shadowColor="black" shadowOffset="-3,-3" transparent="1"/>
-                <eLabel position=" 20,55" size="1080,1" backgroundColor="white"/>
-                <widget name="header" position="100,90" size="900,40" font="Regular;30" transparent="1" noWrap="1" />
-                <widget name="text" position="114,164" size="872,50" font="Regular;46" transparent="1" noWrap="1" halign="right" valign="center"/>
-                <widget name="list" position="22,272" size="1056,225" selectionDisabled="1" transparent="1"/>
-                <widget name="captcha" position="450,65" zPosition="-1" size="175,70"  alphatest="on"/>
-                <eLabel position="20,555" size="1060,1" backgroundColor="white" />
-            </screen> """
-
+class CaptchaDialog(BaseArchivCZSKScreen,VirtualKeyBoard):
+    def __init__(self, session, captcha_file):  
+        BaseArchivCZSKScreen.__init__(self,session,False)
         VirtualKeyBoard.__init__(self, session, _('Type text of picture'))
         self["captcha"] = Pixmap()
         self.Scale = AVSwitch().getFramebufferScale()
