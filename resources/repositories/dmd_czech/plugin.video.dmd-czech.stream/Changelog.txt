@@ -1,3 +1,5 @@
+2013-06-03:
+* oprava zobrazeni sekci
 2012-07-18:
  * obroda archivu
 2011-11-03:
