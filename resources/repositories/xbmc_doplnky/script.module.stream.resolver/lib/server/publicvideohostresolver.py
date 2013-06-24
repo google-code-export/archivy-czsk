@@ -21,7 +21,7 @@
 # */
 import re, util, decimal, random, base64, urllib
 
-__name__ = 'kset'
+__name__ = 'publicvideohost'
 def supports(url):
     return not _regex(url) == None
 
@@ -32,23 +32,17 @@ def gen_random_decimal(i, d):
 def resolve(url):
     m = _regex(url)
     if m:
-        id = int(m.group('id'))
-        headers = {
-                   "Referer":"http://st.kset.kz/pl/pl.swf"
-                   }
-        
+        id = int(m.group('v'))
         params = {
-                  'id':id,
-                  'ref':'http://kset.kz/video_frame.php?id=%d' % id,
-                  'r':gen_random_decimal(0, 99999999999999)
+                  'v':id,
                   }
         quality = "480p"
-        data = util.request("http://kset.kz/v.php?" + urllib.urlencode(params), headers=headers)
-        item = util.json.loads(base64.decodestring(data))
-        return [{'quality':quality, 'url':item[u'file']}]
+        data = util.request("http://embed.publicvideohost.org/v.php?" + urllib.urlencode(params))
+        vurl = re.search('file\:(.*?)\"(?P<url>[^"]+)',data, re.IGNORECASE | re.DOTALL).group('url')
+        return [{'quality':quality, 'url':vurl}]
     
     
 def _regex(url):
-    m = re.search('http://kset\.kz/video_frame\.php\?id=(?P<id>[0-9]+)', url, re.IGNORECASE | re.DOTALL)
+    m = re.search('http://embed\.publicvideohost\.org/v\.php\?(.+?)v=(?P<v>[0-9]+)', url, re.IGNORECASE | re.DOTALL)
     return m
     

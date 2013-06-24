@@ -117,21 +117,37 @@ class SerialyczContentProvider(ContentProvider):
         item = item.copy()
         url = self._url(item['url']).replace('×', '%c3%97')
         data = util.substr(util.request(url), '<div id=\"content\"', '#content')
-        resolved = []
+        visionone_resolved, onevision_resolved = [],[]
+        
         onevision = re.search('(?P<url>http://onevision\.ucoz\.ua/[^<]+)', data, re.IGNORECASE)
         if onevision:
             onevision_data = util.substr(util.request(onevision.group('url')),'<td class=\"eText\"','<td class=\"rightColumn\"')
-            resolved += resolver.findstreams(onevision_data, ['<embed( )src=\"(?P<url>[^\"]+)',
+            onevision_resolved=resolver.findstreams(onevision_data, ['<embed( )src=\"(?P<url>[^\"]+)',
                                                   '<object(.+?)data=\"(?P<url>[^\"]+)',
                                                   '<iframe(.+?)src=[\"\'](?P<url>.+?)[\'\"]',
-                                                  '<object.*?data=(?P<url>.+?)</object>',
-                                                  '<p><code><strong>(?P<url>.+?)</strong></code></p>'])
+                                                  '<object.*?data=(?P<url>.+?)</object>'])
         
-        resolved += resolver.findstreams(data, ['<embed( )src=\"(?P<url>[^\"]+)',
+        visionone = re.search('(?P<url>http://visionone\.ucoz\.ru/[^<]+)', data, re.IGNORECASE)
+        if visionone:
+            visionone_data = util.substr(util.request(visionone.group('url')),'<td class=\"eText\"','<td class=\"rightColumn\"')
+            visionone_resolved = resolver.findstreams(visionone_data, ['<embed( )src=\"(?P<url>[^\"]+)',
+                                                  '<object(.+?)data=\"(?P<url>[^\"]+)',
+                                                  '<iframe(.+?)src=[\"\'](?P<url>.+?)[\'\"]',
+                                                  '<object.*?data=(?P<url>.+?)</object>'])
+        
+        serialy_resolved = resolver.findstreams(data, ['<embed( )src=\"(?P<url>[^\"]+)',
                                                '<object(.+?)data=\"(?P<url>[^\"]+)',
                                                '<iframe(.+?)src=[\"\'](?P<url>.+?)[\'\"]',
                                                '<object.*?data=(?P<url>.+?)</object>',
-                                               '<p><code><strong>(?P<url>.+?)</strong></code></p>'])
+                                               '<p><code><strong>(?P<url>http.+?)</strong></code></p>',
+                                               '<p><code><strong><big>(?P<url>.+?)</big></strong></code></p>'])
+        
+        resolved = []
+        resolved+= serialy_resolved or []
+        resolved+= visionone_resolved or []
+        resolved+= onevision_resolved or []
+        resolved = len(resolved) > 0 and resolved or None
+        
         result = []
         for i in resolved:
             item = self.video_item()
