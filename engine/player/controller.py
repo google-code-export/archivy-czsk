@@ -716,6 +716,12 @@ class RTMPController(BaseVideoPlayerController):
         # so we will provide offset_mode_limit which will helps us to determine if we will use offset mode or not
         # Value should be around maximum buffer seconds for rtmp stream(default for librtmp is 30 seconds)
         self._offset_mode_limit = 60 * 1000 * 90
+        
+        # when we try to seek in quick succession
+        # sometimes can happen that we don't have video service set yet
+        # so if we want to seek again we need to wait until is current service available 
+        self._seek_try_limit = 5
+        self._seek_try_delay = 300 #ms
 
         
     def set_video_player(self, video_player):
@@ -727,6 +733,7 @@ class RTMPController(BaseVideoPlayerController):
         self.sref_id = sref.getType()
         self.sref_name = sref.getServiceName()
         self._eplayer_mode = video_player.__class__.__name__ in ('EPlayer3VideoPlayer', 'EPlayer2VideoPlayer')
+
         
     def _update_video_state(self, play_pts):
         if self.video_length_total is None:
@@ -757,7 +764,7 @@ class RTMPController(BaseVideoPlayerController):
             if self._seek_pts < 0:
                 return
             seek_time = self.pts_to_sec(self._seek_pts) * 1000
-            self.do_rtmp_seek(seek_time)
+            self.rtmp_seek(seek_time)
             
     def unpause_service(self):
         if self._offset_mode:
@@ -765,7 +772,7 @@ class RTMPController(BaseVideoPlayerController):
         else:
             current_pts = play_pts
         time = self.pts_to_sec(current_pts) * 1000
-        self.do_rtmp_seek(time)
+        self.rtmp_seek(time)
     
     #@inlineCallbacks    
     def pause_service(self):
@@ -778,8 +785,16 @@ class RTMPController(BaseVideoPlayerController):
             else:
                 self._play_pts = play_pts
             self._pause_service()
-
-        
+    
+    @inlineCallbacks 
+    def rtmp_seek(self,seek_time,seek_try=0):
+        if self.video.service:
+            self.do_rtmp_seek(seek_time)
+        elif seek_try < self._seek_try_limit:
+            seek_try +=1
+            yield sleep(self._seek_try_delay)
+            self.rtmp_seek(seek_time, seek_try)
+            
     def do_rtmp_seek(self, seek_time):
         log.info('RTMPSeek to %ss', seek_time)
         self.session.nav.stopService()
