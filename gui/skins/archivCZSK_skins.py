@@ -30,7 +30,6 @@ VideoAddonsContentScreen_SD = """
             <widget name="version" position="350,390" size="370,25" halign="left" font="Regular;20" transparent="1" foregroundColor="yellow" />
             <widget name="about" position="350,425" size="370,100" halign="left" font="Regular;20" transparent="1" foregroundColor="white" />
             <ePixmap position="0,545" size="35,25" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/archivCZSK/gui/icon/key_info.png"  zPosition="3" transparent="1" alphatest="on" />
-            <widget name="menu_text" position="45,545" size="370,25" halign="left" font="Regular;20" transparent="1" foregroundColor="white" />
         </screen>"""
             
 VideoAddonsContentScreen = """
@@ -47,7 +46,6 @@ VideoAddonsContentScreen = """
             <widget name="version" position="350,390" size="370,25" halign="left" font="Regular;20" transparent="1" foregroundColor="yellow" />
             <widget name="about" position="350,425" size="370,100" halign="left" font="Regular;20" transparent="1" foregroundColor="white" />
             <ePixmap position="0,545" size="35,25" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/archivCZSK/gui/icon/key_info.png"  zPosition="3" transparent="1" alphatest="on" />
-            <widget name="menu_text" position="45,545" size="370,25" halign="left" font="Regular;20" transparent="1" foregroundColor="white" />
         </screen>"""
 
         
