@@ -222,7 +222,7 @@
 
 <addon id="plugin.video.dmd-czech.stream"
        name="Stream TV Archiv"
-       version="0.9"
+       version="1.0"
        provider-name="Jiri Vyhnalek">
   <requires>
     <import addon="xbmc.python" version="1.0"/>
