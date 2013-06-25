@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: archivCZSK 0.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-06-24 15:13+0100\n"
-"PO-Revision-Date: 2013-06-24 15:27+0100\n"
+"PO-Revision-Date: 2013-06-25 21:14+0100\n"
 "Last-Translator: mx3L <mxfitsat@gmail.com>\n"
 "Language-Team: mx3L\n"
 "MIME-Version: 1.0\n"
@@ -630,9 +630,8 @@ msgstr "Prehrať"
 
 #: gui/content.py:295
 #: gui/content.py:394
-#, fuzzy
 msgid "Show playlist"
-msgstr "zobraziť aktuálne sťahované súbory"
+msgstr "Zobraziť playlist"
 
 #: gui/content.py:299
 #: gui/content.py:398
@@ -981,7 +980,6 @@ msgid "Install RTMP plugins"
 msgstr "Inštalovať RTMP pluginy"
 
 #: gui/info.py:187
-#, fuzzy
 msgid "Re-Install GStreamer plugins"
 msgstr "Preinštalovať GStreamer pluginy"
 
@@ -1011,7 +1009,7 @@ msgstr "* Ak niektoré testy skončia neúspešne"
 
 #: gui/info.py:241
 msgid "try to install Gstreamer plugins in following order:"
-msgstr "pokúsiť sa nainštalovať Gstreamer pluginy v nasledujúcom poradí"
+msgstr "pokúste sa nainštalovať Gstreamer pluginy v nasledujúcom poradí"
 
 #: gui/info.py:242
 msgid "1. Press Red, If it doesnt help go to point 2"
@@ -1047,7 +1045,7 @@ msgstr "Napríklad ak sa vám zobrazuje stav ASF(WMV) - NAINŠTALOVANÝ"
 
 #: gui/info.py:252
 msgid "it doesnt already mean that you can play WMV file"
-msgstr "tak to ešte neznamená že môžete prehrávať WMV súbory"
+msgstr "tak to ešte neznamená že môžete prehrávať WMV videá"
 
 #: gui/info.py:253
 msgid "it just means that player can open WMV container and get ENCODED video out of it"
@@ -1135,7 +1133,7 @@ msgstr "pád Enigmy2."
 
 #: gui/info.py:315
 msgid "It looks like RTMP plugin is already installed"
-msgstr "Vyzerá to tak že RTMP plugin je už nainštalovaný"
+msgstr "RTMP plugin je už nainštalovaný"
 
 #: gui/info.py:316
 msgid "Do you want to reinstall it?"
@@ -1147,11 +1145,11 @@ msgstr "Chcete pokračovať?"
 
 #: gui/info.py:347
 msgid "Its highly recommended to restart Enigma2"
-msgstr "Grafické rozhranie je potrebné reštartovať"
+msgstr "Po inštalácii Gstreamer pluginov"
 
 #: gui/info.py:348
 msgid "after installation of gstreamer plugins"
-msgstr "po inštalácii Gstreamer pluginov"
+msgstr "je potrebné reštartovať grafické rozhranie"
 
 #: gui/info.py:350
 msgid "Do you want to restart Enigma2 now?"
