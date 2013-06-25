@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: archivCZSK 0.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-06-24 15:27+0100\n"
-"PO-Revision-Date: 2013-06-24 15:47+0100\n"
+"PO-Revision-Date: 2013-06-25 09:05+0100\n"
 "Last-Translator: mx3L <mxfitsat@gmail.com>\n"
 "Language-Team: mx3L\n"
 "MIME-Version: 1.0\n"
@@ -1004,7 +1004,7 @@ msgstr "* Jesli některé testy selhají měli by ste"
 
 #: gui/info.py:241
 msgid "try to install Gstreamer plugins in following order:"
-msgstr "pokuste se nainstalovat Gstreamer pluginy v nasledujícím poradí:"
+msgstr "pokuste se nainstalovat Gstreamer pluginy v nasledujícím pořadí:"
 
 #: gui/info.py:242
 msgid "1. Press Red, If it doesnt help go to point 2"
@@ -1036,7 +1036,7 @@ msgstr "na jejich přehrání je nutný aby váš příjmač měl hardvérovou p
 
 #: gui/info.py:251
 msgid "For example if you have ASF(WMV) - OK state"
-msgstr "Například jestli máte ASF(WMV) - NAINSTALOVANÝ"
+msgstr "Například jestli máte ASF(WMV) - NAINSTALOVÁN"
 
 #: gui/info.py:252
 msgid "it doesnt already mean that you can play WMV file"
@@ -1132,7 +1132,7 @@ msgstr "Vypadá to tak že RTMP pluginy jsou už nainstalovaný"
 
 #: gui/info.py:316
 msgid "Do you want to reinstall it?"
-msgstr "Chcete jich přeinstalovat?"
+msgstr "Chcete je přeinstalovat?"
 
 #: gui/info.py:319
 msgid "Do you want to continue?"
