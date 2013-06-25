@@ -252,7 +252,10 @@ def add_video(name, url, subs=None, image=None, infoLabels={}, menuItems={}, fil
                                stream=stream,
                                settings=settings)
     
-    GItem_lst[0].append(video_it)
+    if url is None or url == '':
+        log.info('add_video - ignoring %s, empty url', repr(video_it))
+    else:
+        GItem_lst[0].append(video_it)
 
 @abortTask    
 def add_playlist(name, media_list=[]):
