@@ -147,6 +147,9 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, InfoBarPlaylist, SubsSupport, 
 		InfoBarPlaylist.__init__(self, playlist, playlistCB, playlistName,
 								 autoPlay=autoPlay, onStartShow=onStartShow, repeat=repeat, showProtocol=showProtocol)
 		
+		# to get real start of service, and for queries for video length/position
+		self.video = Video(session)
+		
 		## bindend some video events to functions
 		self.__event_tracker = ServiceEventTracker(screen=self, eventmap=
 		{
@@ -156,9 +159,6 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, InfoBarPlaylist, SubsSupport, 
 			iPlayableService.evUser + 11: self.__evVideoDecodeError,
 			iPlayableService.evUser + 12: self.__evPluginError,
 		})
-		
-		# to get real start of service, and for queries for video length/position
-		self.video = Video(session)
 		
 		self.isStream = self.sref.getPath().find('://') != -1
 		self.returning = False
