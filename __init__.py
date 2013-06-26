@@ -38,8 +38,8 @@ class log(object):
         if log.mode == log.DEBUG:
             if len(args) == 1 and isinstance(args[0], tuple):
                 text = text % args[0]
-            elif len(args) >1:
-                text = text % (args)
+            elif len(args) >=1:
+                text = text % args
             print "[ArchivCZSK] DEBUG:", text.encode('utf-8')
     
     @staticmethod    
@@ -47,8 +47,8 @@ class log(object):
         if log.mode >= log.INFO:
             if len(args) == 1 and isinstance(args[0], tuple):
                 text = text % args[0]
-            elif len(args) >1:
-                text = text % (args)
+            elif len(args) >=1:
+                text = text % args
             print "[ArchivCZSK] INFO:", text.encode('utf-8') 
     
     @staticmethod  
@@ -56,8 +56,8 @@ class log(object):
         if log.mode >= log.ERROR:
             if len(args) == 1 and isinstance(args[0], tuple):
                 text = text % args[0]
-            elif len(args) >1:
-                text = text % (args)
+            elif len(args) >=1:
+                text = text % args
             print "[ArchivCZSK] ERROR:", text.encode('utf-8')
   
 

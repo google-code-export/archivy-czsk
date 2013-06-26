@@ -252,8 +252,8 @@ def add_video(name, url, subs=None, image=None, infoLabels={}, menuItems={}, fil
                                stream=stream,
                                settings=settings)
     
-    if url is None or url == '':
-        log.info('add_video - ignoring %s, empty url', repr(video_it))
+    if not isinstance(url,basestring):
+        log.info('add_video - ignoring %s, invalid url', repr(video_it))
     else:
         GItem_lst[0].append(video_it)
 

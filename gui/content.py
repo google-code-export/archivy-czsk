@@ -679,11 +679,11 @@ class VideoAddonsContentScreen(BaseContentScreen, DownloadList, TipBar):
     
     def toggleCancelLoading(self):
         if Task.getInstance() is not None and not Task.getInstance().isCancelling():
-            self["status_label"].setText("Canceling...")
+            self["status_label"].setText(_("Canceling..."))
             Task.getInstance().setCancel()
             
         elif Task.getInstance() is not None and Task.getInstance().isCancelling():
-            self["status_label"].setText("Loading...")
+            self["status_label"].setText(_("Loading..."))
             Task.getInstance().setResume()
         else:
             log.debug("Task is not running")
