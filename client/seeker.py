@@ -105,7 +105,7 @@ class ArchivCZSKSeeker():
         
         
     def _errorSearch(self, failure):
-        showErrorMessage(self.session, _('Error while trying to retrieve search list'), 5) 
+        showErrorMessage(self.session, _('Error while trying to retrieve search list'), 5)
         if self.searcher is not None:
             self.searcher.close()
             self.searcher = None
@@ -134,6 +134,7 @@ class ArchivCZSKSeeker():
             self.searcher = searcher
             self.searching = True
             self.addon = searcher.addon
+            searcher.start()
             searcher.search(search_exp, mode)
         else:
             showInfoMessage(self.session, _("Cannot find searcher") + ' ' + addon_id.encode('utf-8'))
@@ -165,13 +166,16 @@ class Search(object):
         self.succ_cb = succ_cb
         self.err_cb = err_cb
         
+    def start(self):
+        self.provider.start()
+        
     def search(self, search_exp, mode=None):
         """search according to search_exp and choosen mode"""
         pass
     
     def close(self):
         """releases resources"""
-        self.provider.release_dependencies()
+        self.provider.stop()
 
 
 class OnlineFilesSearch(Search):
