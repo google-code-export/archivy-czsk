@@ -20,7 +20,7 @@ class eServiceFactoryMP4: public iServiceHandler
 public:
 	eServiceFactoryMP4();
 	virtual ~eServiceFactoryMP4();
-	enum { id = 0x1011 };
+	enum { id = 4113 };
 
 		// iServiceHandler
 	RESULT play(const eServiceReference &, ePtr<iPlayableService> &ptr);
@@ -42,7 +42,50 @@ public:
 	int getLength(const eServiceReference &ref);
 	int getInfo(const eServiceReference &ref, int w);
 	int isPlayable(const eServiceReference &ref, const eServiceReference &ignore, bool simulate) { return 1; }
-	PyObject* getInfoObject(const eServiceReference &ref, int w);
+	long long getFileSize(const eServiceReference &ref);
+};
+
+class eStreamBufferInfo: public iStreamBufferInfo
+{
+	DECLARE_REF(eStreamBufferInfo);
+	int bufferPercentage;
+	int inputRate;
+	int outputRate;
+	int bufferSpace;
+	int bufferSize;
+
+public:
+	eStreamBufferInfo(int percentage, int inputrate, int outputrate, int space, int size);
+
+	int getBufferPercentage() const;
+	int getAverageInputRate() const;
+	int getAverageOutputRate() const;
+	int getBufferSpace() const;
+	int getBufferSize() const;
+};
+
+class eServiceMP4InfoContainer: public iServiceInfoContainer
+{
+	DECLARE_REF(eServiceMP4InfoContainer);
+
+	double doubleValue;
+	GstBuffer *bufferValue;
+
+	unsigned char *bufferData;
+	unsigned int bufferSize;
+#if GST_VERSION_MAJOR >= 1
+	GstMapInfo map;
+#endif
+
+public:
+	eServiceMP4InfoContainer();
+	~eServiceMP4InfoContainer();
+
+	double getDouble(unsigned int index) const;
+	unsigned char *getBuffer(unsigned int &size) const;
+
+	void setDouble(double value);
+	void setBuffer(GstBuffer *buffer);
 };
 
 typedef struct _GstElement GstElement;
@@ -103,7 +146,7 @@ public:
 	RESULT getName(std::string &name);
 	int getInfo(int w);
 	std::string getInfoString(int w);
-	PyObject *getInfoObject(int w);
+	ePtr<iServiceInfoContainer> getInfoObject(int w);
 
 		// iAudioTrackSelection
 	int getNumberOfTracks();
@@ -123,7 +166,7 @@ public:
 
 		// iStreamedService
 	RESULT streamed(ePtr<iStreamedService> &ptr);
-	PyObject *getBufferCharge();
+	ePtr<iStreamBufferInfo> getBufferCharge();
 	int setBufferSize(int size);
 
 		// iAudioDelay
@@ -167,10 +210,9 @@ public:
 	struct downloadInfo
 	{
 	    gint downloading;
-	    std::string downloadPath;
 	    gint downloadPercent;
 	    downloadInfo()
-            :downloading(0),downloadPath("Unknown"),downloadPercent(0)
+            :downloading(0),downloadPercent(0)
         {
         }
 	};
@@ -195,6 +237,7 @@ public:
 private:
 	static int pcm_delay;
 	static int ac3_delay;
+	static std::string m_download_path;
 	int m_currentAudioStream;
 	int m_currentSubtitleStream;
 	int m_cachedSubtitleStream;
@@ -216,8 +259,8 @@ private:
 	bufferInfo m_bufferInfo;
 	errorInfo m_errorInfo;
 	guint64 m_download_buffer_size;
-	std::string m_download_path;
-	std::string m_download_buffer_path;
+	std::string m_gdownload_path;
+	std::string m_gdownload_buffer_path;
 	eServiceMP4(eServiceReference ref);
 	Signal2<void,iPlayableService*,int> m_event;
 	enum
@@ -235,6 +278,7 @@ private:
 		GstPad *messagePad;
 		GstBuffer *messageBuffer;
 		int messageType;
+		gchar *messageText;
 
 	public:
 		GstMessageContainer(int type, GstMessage *msg, GstPad *pad, GstBuffer *buffer)
@@ -254,6 +298,7 @@ private:
 		operator GstMessage *() { return messagePointer; }
 		operator GstPad *() { return messagePad; }
 		operator GstBuffer *() { return messageBuffer; }
+
 	};
 	eFixedMessagePump<ePtr<GstMessageContainer> > m_pump;
 
@@ -266,7 +311,6 @@ private:
 	static void gstCBsubtitleAvail(GstElement *element, GstBuffer *buffer, gpointer user_data);
 	GstPad* gstCreateSubtitleSink(eServiceMP4* _this, subtype_t type);
 	void gstPoll(ePtr<GstMessageContainer> const &);
-	static void gstHTTPSourceSetAgent(GObject *source, GParamSpec *unused, gpointer user_data);
 	static gint match_sinktype(GstElement *element, gpointer type);
 	static void handleElementAdded(GstBin *bin, GstElement *element, gpointer user_data);
 	static void got_location(GstBin *bin, GstElement *element, gpointer user_data);
@@ -291,14 +335,14 @@ private:
 	void pullSubtitle(GstBuffer *buffer);
 	void sourceTimeout();
 	void updateDownloadStatus();
-	PyObject *getDownloadInfo();
 	sourceStream m_sourceinfo;
 	gulong m_subs_to_pull_handler_id;
 
 	RESULT seekToImpl(pts_t to);
 
 	gint m_aspect, m_width, m_height, m_framerate, m_progressive;
-	std::string m_useragent;
+	std::string m_user_agent;
+	std::string m_extra_headers;
 	RESULT trickSeek(gdouble ratio);
 };
 

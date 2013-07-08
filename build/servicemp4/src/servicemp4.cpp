@@ -51,29 +51,6 @@ eServiceFactoryMP4::eServiceFactoryMP4()
 	if (sc)
 	{
 		std::list<std::string> extensions;
-		extensions.push_back("dts");
-		extensions.push_back("mp2");
-		extensions.push_back("mp3");
-		extensions.push_back("ogg");
-		extensions.push_back("mpg");
-		extensions.push_back("vob");
-		extensions.push_back("wav");
-		extensions.push_back("wave");
-		extensions.push_back("m4v");
-		extensions.push_back("mkv");
-		extensions.push_back("avi");
-		extensions.push_back("divx");
-		extensions.push_back("dat");
-		extensions.push_back("flac");
-		extensions.push_back("flv");
-		extensions.push_back("mp4");
-		extensions.push_back("mov");
-		extensions.push_back("m4a");
-		extensions.push_back("3gp");
-		extensions.push_back("3g2");
-		extensions.push_back("asf");
-		extensions.push_back("wmv");
-		extensions.push_back("wma");
 		sc->addServiceFactory(eServiceFactoryMP4::id, this, extensions);
 	}
 
@@ -227,30 +204,121 @@ int eStaticServiceMP4Info::getInfo(const eServiceReference &ref, int w)
 			}
 		}
 		break;
-	}
-	return iServiceInformation::resNA;
-}
 
-PyObject* eStaticServiceMP4Info::getInfoObject(const eServiceReference &ref, int w)
-{
-	switch(w)
-	{
 	case iServiceInformation::sFileSize:
 		{
 			struct stat s;
 			if(stat(ref.path.c_str(), &s) == 0)
 			{
-				return PyLong_FromLongLong(s.st_size);
+				return s.st_size;
 			}
 		}
 		break;
 	}
-	Py_RETURN_NONE;
+	return iServiceInformation::resNA;
+}
+
+long long eStaticServiceMP4Info::getFileSize(const eServiceReference &ref)
+{
+	struct stat s;
+	if (stat(ref.path.c_str(), &s) == 0)
+	{
+		return s.st_size;
+	}
+	return 0;
+}
+
+DEFINE_REF(eStreamBufferInfo)
+
+eStreamBufferInfo::eStreamBufferInfo(int percentage, int inputrate, int outputrate, int space, int size)
+: bufferPercentage(percentage),
+	inputRate(inputrate),
+	outputRate(outputrate),
+	bufferSpace(space),
+	bufferSize(size)
+{
+}
+
+int eStreamBufferInfo::getBufferPercentage() const
+{
+	return bufferPercentage;
+}
+
+int eStreamBufferInfo::getAverageInputRate() const
+{
+	return inputRate;
+}
+
+int eStreamBufferInfo::getAverageOutputRate() const
+{
+	return outputRate;
+}
+
+int eStreamBufferInfo::getBufferSpace() const
+{
+	return bufferSpace;
+}
+
+int eStreamBufferInfo::getBufferSize() const
+{
+	return bufferSize;
+}
+
+DEFINE_REF(eServiceMP4InfoContainer);
+
+eServiceMP4InfoContainer::eServiceMP4InfoContainer()
+: doubleValue(0.0), bufferValue(NULL), bufferData(NULL), bufferSize(0)
+{
+}
+
+eServiceMP4InfoContainer::~eServiceMP4InfoContainer()
+{
+	if (bufferValue)
+	{
+#if GST_VERSION_MAJOR >= 1
+		gst_buffer_unmap(bufferValue, &map);
+#endif
+		gst_buffer_unref(bufferValue);
+		bufferValue = NULL;
+		bufferData = NULL;
+		bufferSize = 0;
+	}
+}
+
+double eServiceMP4InfoContainer::getDouble(unsigned int index) const
+{
+	return doubleValue;
+}
+
+unsigned char *eServiceMP4InfoContainer::getBuffer(unsigned int &size) const
+{
+	size = bufferSize;
+	return bufferData;
+}
+
+void eServiceMP4InfoContainer::setDouble(double value)
+{
+	doubleValue = value;
+}
+
+void eServiceMP4InfoContainer::setBuffer(GstBuffer *buffer)
+{
+	bufferValue = buffer;
+	gst_buffer_ref(bufferValue);
+#if GST_VERSION_MAJOR < 1
+	bufferData = GST_BUFFER_DATA(bufferValue);
+	bufferSize = GST_BUFFER_SIZE(bufferValue);
+#else
+	gst_buffer_map(bufferValue, &map, GST_MAP_READ);
+	bufferData = map.data;
+	bufferSize = map.size;
+#endif
 }
 
 // eServiceMP4
 int eServiceMP4::ac3_delay = 0,
     eServiceMP4::pcm_delay = 0;
+std::string eServiceMP4::m_download_path = "..";
 
 eServiceMP4::eServiceMP4(eServiceReference ref)
 	:m_ref(ref), m_pump(eApp, 1)
@@ -271,11 +339,13 @@ eServiceMP4::eServiceMP4(eServiceReference ref)
 	m_is_live = false;
 	m_use_prefillbuffer = false;
 	m_download_mode = false;
-	m_download_path = "";
-	m_download_buffer_path = "";
+	m_gdownload_path = "";
+	m_gdownload_buffer_path = "";
 	m_prev_decoder_time = -1;
 	m_decoder_time_valid_state = 0;
 	m_errorInfo.missing_codec = "";
+	m_extra_headers = "";
+	m_download_path = "";
 	audioSink = videoSink = NULL;
 
 	CONNECT(m_subtitle_sync_timer->timeout, eServiceMP4::pushSubtitles);
@@ -346,65 +416,48 @@ eServiceMP4::eServiceMP4(eServiceReference ref)
 	if ( m_sourceinfo.is_streaming )
 	{
 		uri = g_strdup_printf ("%s", filename);
+
 		m_streamingsrc_timeout = eTimer::create(eApp);
 		CONNECT(m_streamingsrc_timeout->timeout, eServiceMP4::sourceTimeout);
 
-		std::string config_str;
-		if( ePythonConfigQuery::getConfigValue("config.mediaplayer.useAlternateUserAgent", config_str) == 0 )
-		{
-			if ( config_str == "True" )
-				ePythonConfigQuery::getConfigValue("config.mediaplayer.alternateUserAgent", m_useragent);
-		}
-		if ( m_useragent.length() == 0 )
-			m_useragent = "Enigma2 Mediaplayer";
+        m_user_agent = eConfigManager::getConfigValue("config.plugins.archivCZSK.videoPlayer.userAgent");
+        if (m_user_agent.empty())
+            m_user_agent = "Enigma2 Mediaplayer";
 
-        std::string config_timeout;
-        if(ePythonConfigQuery::getConfigValue("config.plugins.archivCZSK.videoPlayer.httpTimeout", config_timeout) == 0)
-            m_http_timeout = atoi(config_timeout.c_str());
+        m_extra_headers = eConfigManager::getConfigValue("config.plugins.archivCZSK.videoPlayer.extraHeaders");
+        m_http_timeout = eConfigManager::getConfigIntValue("config.plugins.archivCZSK.videoPlayer.httpTimeout");
 
-        std::string config_download_flag;
-        if(ePythonConfigQuery::getConfigValue("config.plugins.archivCZSK.videoPlayer.download", config_download_flag) == 0)
-        {
-            if (config_download_flag == "True" && ::access("/hdd/movie", X_OK) >= 0 )
+        bool config_download_flag;
+        config_download_flag = eConfigManager::getConfigBoolValue("config.plugins.archivCZSK.videoPlayer.download");
+        if (config_download_flag && ::access("/hdd/movie", X_OK) >= 0 )
                 {
                     /* It looks like /hdd points to a valid mount, so we can store a download buffer on it */
-                    m_download_path = "/hdd/gstreamer_XXXXXXXXXX";
-                    eDebug("eServiceMP4::Download mode is set");
+                    m_gdownload_path = "/hdd/gstreamer_XXXXXXXXXX";
                     m_download_mode = true;
                     m_downloadInfo.downloading = 1;
                 }
-        }
 
-        std::string config_buffer_size;
-        if(ePythonConfigQuery::getConfigValue("config.plugins.archivCZSK.videoPlayer.bufferSize", config_buffer_size) == 0)
-            m_buffer_size = atoi(config_buffer_size.c_str())*1024;
-
-        std::string config_buffer_duration;
-        if(ePythonConfigQuery::getConfigValue("config.plugins.archivCZSK.videoPlayer.bufferDuration", config_buffer_duration) == 0)
-            m_buffer_duration = atoi(config_buffer_duration.c_str());
-
+        m_buffer_size = eConfigManager::getConfigIntValue("config.plugins.archivCZSK.videoPlayer.bufferSize")*1024;
+        m_buffer_duration = eConfigManager::getConfigIntValue("config.plugins.archivCZSK.videoPlayer.bufferDuration");
         std::string config_buffer_mode;
-        if(ePythonConfigQuery::getConfigValue("config.plugins.archivCZSK.videoPlayer.bufferMode", config_buffer_mode) == 0)
+        config_buffer_mode = eConfigManager::getConfigValue("config.plugins.archivCZSK.videoPlayer.bufferMode");
+        if (config_buffer_mode=="1")
         {
-            if (config_buffer_mode=="1")
+            m_use_prefillbuffer = true;
+            eDebug("eServiceMP4::Using prefill buffering");
+         }
+         else if (config_buffer_mode=="2")
+         {
+            /* progressive download buffering */
+            if (::access("/hdd/movie", X_OK) >= 0)
             {
-                m_use_prefillbuffer = true;
-                eDebug("eServiceMP4::Using prefill buffering");
-            }
-            else if (config_buffer_mode=="2")
-            {
-                /* progressive download buffering */
-                if (::access("/hdd/movie", X_OK) >= 0)
-                {
-                    /* It looks like /hdd points to a valid mount, so we can store a download buffer on it */
-                    m_download_buffer_path = "/hdd/gstreamer_XXXXXXXXXX";
-                    std::string config_download_buffer_size;
-                    ePythonConfigQuery::getConfigValue("config.plugins.archivCZSK.videoPlayer.downloadBufferSize", config_download_buffer_size);
-                    m_download_buffer_size = (guint64) ((long long)atoi(config_download_buffer_size.c_str()) * 1024LL *1024LL);
-                    eDebug("eServiceMP4::Using progressive download buffering");
-                }
-                m_use_prefillbuffer = true;
-            }
+                /* It looks like /hdd points to a valid mount, so we can store a download buffer on it */
+                m_gdownload_buffer_path = "/hdd/gstreamer_XXXXXXXXXX";
+                m_download_buffer_size = eConfigManager::getConfigIntValue("config.plugins.archivCZSK.videoPlayer.downloadBufferSize");
+                m_download_buffer_size = (guint64) ((long long) m_download_buffer_size * 1024LL *1024LL);
+                eDebug("eServiceMP4::Using progressive download buffering");
+             }
+             m_use_prefillbuffer = true;
         }
 	}
 	else if ( m_sourceinfo.containertype == ctCDA )
@@ -446,32 +499,33 @@ eServiceMP4::eServiceMP4(eServiceReference ref)
 		flags &= ~GST_PLAY_FLAG_SOFT_VOLUME;
 		if ( m_sourceinfo.is_streaming )
 		{
-			g_signal_connect (G_OBJECT (m_gst_playbin), "notify::source", G_CALLBACK (playbinNotifySource), NULL);
+			g_signal_connect (G_OBJECT (m_gst_playbin), "notify::source", G_CALLBACK (playbinNotifySource), this);
 
 			/* downloading */
 			if (m_download_mode)
 			{
 			    flags |= GST_PLAY_FLAG_DOWNLOAD;
 			    g_signal_connect (G_OBJECT(m_gst_playbin), "deep-notify::temp-location", G_CALLBACK (got_location), this);
-				g_signal_connect(G_OBJECT(m_gst_playbin), "element-added", G_CALLBACK(handleElementAdded), this);
-				m_download_poll_timer = eTimer::create(eApp);
-				CONNECT(m_download_poll_timer->timeout, eServiceMP4::updateDownloadStatus);
+			    g_signal_connect(G_OBJECT(m_gst_playbin), "element-added", G_CALLBACK(handleElementAdded), this);
+		            m_download_poll_timer = eTimer::create(eApp);
+                            CONNECT(m_download_poll_timer->timeout, eServiceMP4::updateDownloadStatus);
 
 			}
 
-			else if (m_download_buffer_path != "")
+			else if (m_gdownload_buffer_path != "")
 			{
 				/* use progressive download buffering */
 				flags |= GST_PLAY_FLAG_DOWNLOAD;
+				flags |= GST_PLAY_FLAG_BUFFERING;
 				g_signal_connect(G_OBJECT(m_gst_playbin), "element-added", G_CALLBACK(handleElementAdded), this);
 				/* limit file size */
 				g_object_set(m_gst_playbin, "ring-buffer-max-size", m_download_buffer_size, NULL);
-			}
+
+			}   else flags |= GST_PLAY_FLAG_BUFFERING;
 			/*
 			 * regardless whether or not we configured a progressive download file, use a buffer as well
 			 * (progressive download might not work for all formats)
 			 */
-			flags |= GST_PLAY_FLAG_BUFFERING;
 			/* increase the default 2 second / 2 MB buffer limitations to 5s / 5MB */
 
 			g_object_set(G_OBJECT(m_gst_playbin), "buffer-duration", (long long) (m_buffer_duration) * GST_SECOND, NULL);
@@ -479,6 +533,7 @@ eServiceMP4::eServiceMP4(eServiceReference ref)
 		}
 		g_object_set (G_OBJECT (m_gst_playbin), "flags", flags, NULL);
 		g_object_set (G_OBJECT (m_gst_playbin), "uri", uri, NULL);
+
 		GstElement *subsink = gst_element_factory_make("subsink", "subtitle_sink");
 		if (!subsink)
 			eDebug("eServiceMP4::sorry, can't play: missing gst-plugin-subsink");
@@ -505,6 +560,7 @@ eServiceMP4::eServiceMP4(eServiceReference ref)
 			eDebug("eServiceMP4::subtitle uri: %s", g_filename_to_uri(srt_filename, NULL, NULL));
 			g_object_set (G_OBJECT (m_gst_playbin), "suburi", g_filename_to_uri(srt_filename, NULL, NULL), NULL);
 		}
+
 	} else
 	{
 		m_event((iPlayableService*)this, evUser+12);
@@ -584,7 +640,6 @@ RESULT eServiceMP4::start()
 		eDebug("eServiceMP4::starting pipeline");
 		gst_element_set_state (m_gst_playbin, GST_STATE_PLAYING);
 	}
-
 	m_event(this, evStart);
 
 	return 0;
@@ -641,7 +696,6 @@ RESULT eServiceMP4::pause()
 	if (!m_gst_playbin || m_state != stRunning)
 		return -1;
 
-    //gst_element_set_state(m_gst_playbin, GST_STATE_PAUSED);
 	trickSeek(0.0);
 
 	return 0;
@@ -652,9 +706,8 @@ RESULT eServiceMP4::unpause()
 	if (!m_gst_playbin || m_state != stRunning)
 		return -1;
 
-    //gst_element_set_state(m_gst_playbin, GST_STATE_PLAYING);
-
 	// why should we use seeking when unpause?
+	// because after some time will paused stream lose connection to server..
 	trickSeek(1.0);
 
 	return 0;
@@ -693,7 +746,7 @@ RESULT eServiceMP4::seekToImpl(pts_t to)
 {
 		/* convert pts to nanoseconds */
 	gint64 time_nanoseconds = to * 11111LL;
-	//GST_SEEK_FLAG_KEY_UNIT
+	//GST_SEEK_FLAG_KEY_UNIT(GstSeekFlags)
 	if (!gst_element_seek (m_gst_playbin, m_currentTrickRatio, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
 		GST_SEEK_TYPE_SET, time_nanoseconds,
 		GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE))
@@ -1072,8 +1125,10 @@ std::string eServiceMP4::getInfoString(int w)
 	return "";
 }
 
-PyObject *eServiceMP4::getInfoObject(int w)
+ePtr<iServiceInfoContainer> eServiceMP4::getInfoObject(int w)
 {
+	eServiceMP4InfoContainer *container = new eServiceMP4InfoContainer;
+	ePtr<iServiceInfoContainer> retval = container;
 	const gchar *tag = 0;
 	bool isBuffer = false;
 	switch (w)
@@ -1119,36 +1174,25 @@ PyObject *eServiceMP4::getInfoObject(int w)
 			const GValue *gv_buffer = gst_tag_list_get_value_index(m_stream_tags, tag, 0);
 			if ( gv_buffer )
 			{
-				PyObject *retval = NULL;
-				guint8 *data;
-				gsize size;
+
+
+
 				GstBuffer *buffer;
 				buffer = gst_value_get_buffer (gv_buffer);
-#if GST_VERSION_MAJOR < 1
-				data = GST_BUFFER_DATA(buffer);
-				size = GST_BUFFER_SIZE(buffer);
-#else
-				GstMapInfo map;
-				gst_buffer_map(buffer, &map, GST_MAP_READ);
-				data = map.data;
-				size = map.size;
-#endif
-				retval = PyBuffer_FromMemory(data, size);
-#if GST_VERSION_MAJOR >= 1
-				gst_buffer_unmap(buffer, &map);
-#endif
-				return retval;
+				container->setBuffer(buffer);
 			}
 		}
 		else
 		{
 			gdouble value = 0.0;
 			gst_tag_list_get_double(m_stream_tags, tag, &value);
-			return PyFloat_FromDouble(value);
+			container->setDouble(value);
 		}
 	}
 
-	Py_RETURN_NONE;
+
+
+	return retval;
 }
 
 RESULT eServiceMP4::audioChannel(ePtr<iAudioChannelSelection> &ptr)
@@ -1412,6 +1456,7 @@ void eServiceMP4::gstBusCall(GstMessage *msg)
 					children = gst_bin_iterate_recurse(GST_BIN(m_gst_playbin));
 #if GST_VERSION_MAJOR < 1
 					audioSink = GST_ELEMENT_CAST(gst_iterator_find_custom(children, (GCompareFunc)match_sinktype, (gpointer)"GstDVBAudioSink"));
+
 #else
 					if (gst_iterator_find_custom(children, (GCompareFunc)match_sinktype, &element, (gpointer)"GstDVBAudioSink"))
 					{
@@ -1441,6 +1486,8 @@ void eServiceMP4::gstBusCall(GstMessage *msg)
 				{
 					if ( m_sourceinfo.is_streaming && m_streamingsrc_timeout )
 						m_streamingsrc_timeout->stop();
+                                        if ( m_sourceinfo.is_streaming && m_download_mode )
+                                                m_download_poll_timer->start(1000,true);
 				}	break;
 				case GST_STATE_CHANGE_PLAYING_TO_PAUSED:
 				{
@@ -1719,7 +1766,7 @@ void eServiceMP4::gstBusCall(GstMessage *msg)
 				gst_message_parse_buffering(msg, &(m_bufferInfo.bufferPercent));
 				eDebug("Buffering %u percent done", m_bufferInfo.bufferPercent);
 				gst_message_parse_buffering_stats(msg, &mode, &(m_bufferInfo.avgInRate), &(m_bufferInfo.avgOutRate), &(m_bufferInfo.bufferingLeft));
-				m_event((iPlayableService*)this, evBuffering);
+                m_event((iPlayableService*)this, evBuffering);
 				/*
 				 * we don't react to buffer level messages, unless we are configured to use a prefill buffer
 				 * (even if we are not configured to, we still use the buffer, but we rely on it to remain at the
@@ -1747,7 +1794,7 @@ void eServiceMP4::gstBusCall(GstMessage *msg)
 						 * Ignore the first few buffering messages, giving the buffer the chance to recover
 						 * a bit, before we start handling empty buffer states again.
 						 */
-						m_ignore_buffering_messages = 5;
+						m_ignore_buffering_messages = 10;
 					}
 					else if (m_bufferInfo.bufferPercent == 0)
 					{
@@ -1823,66 +1870,81 @@ GstBusSyncReply eServiceMP4::gstBusSyncHandler(GstBus *bus, GstMessage *message,
 	return GST_BUS_DROP;
 }
 
-void eServiceMP4::playbinNotifySource(GObject *object, GParamSpec *unused, gpointer data)
+void eServiceMP4::playbinNotifySource(GObject *object, GParamSpec *unused, gpointer user_data)
 {
-	char header[400];
-	char head[100];
-	char value[100];
+	char header[1800];
+	char head[250];
+	char value[250];
 
-    const char *p;
-    int len = 0;
-    int len2 = 0;
-    int len1 = 0;
+    gchar *p_start_h;
+    gchar *p_end_h;
+    gchar *p_start;
+    gchar *p_end;
+    int len_headers = 0;
+
+    gchar *extra_headers;
 
 	GValue headerValue;
 	GstElement *source = NULL;
+	eServiceMP4 *_this = (eServiceMP4*)user_data;
 	g_object_get(object, "source", &source, NULL);
 	if (source)
 	{
-        std::string user_agent;
-        ePythonConfigQuery::getConfigValue("config.plugins.archivCZSK.videoPlayer.userAgent", user_agent);
-
-        if (g_object_class_find_property(G_OBJECT_GET_CLASS(source), "user-agent") != 0 && user_agent != "")
+        if (g_object_class_find_property(G_OBJECT_GET_CLASS(source), "user-agent") != 0 && _this->m_user_agent != "")
         {
-            g_object_set(G_OBJECT(source), "user-agent", user_agent.c_str(), NULL);
+            g_object_set(G_OBJECT(source), "user-agent", _this->m_user_agent.c_str(), NULL);
         }
 
-        std::string extra_headers;
-        ePythonConfigQuery::getConfigValue("config.plugins.archivCZSK.videoPlayer.extraHeaders", extra_headers);
-
-        if (g_object_class_find_property(G_OBJECT_GET_CLASS(source), "extra-headers") != 0 && extra_headers != "")
+        if (g_object_class_find_property(G_OBJECT_GET_CLASS(source), "extra-headers") != 0 && _this->m_extra_headers != "")
         {
+
             GstStructure *extras = gst_structure_empty_new("extras");
-			for(p = extra_headers.c_str(); *p != '\0'; p++)
+
+            extra_headers = g_strdup(_this->m_extra_headers.c_str());
+            g_print("extra headers %s\n",extra_headers);
+
+			len_headers = strlen(extra_headers);
+			for(p_start_h = extra_headers; *p_start_h != '\0'; p_start_h++)
 			{
-				len = strlen(p);
-				strncpy(header, p, len);
-				p = strchr(p, ',');
-				if(p != NULL)
+				p_end_h = strchr(p_start_h, '#');
+				if(p_end_h != NULL)
 				{
-					len2 = strlen(p);
-					len1 = len-len2;
-					header[len1] = '\0';
+					*p_end_h='\0';
+					strcpy(header, p_start_h);
+				}
+				else
+				{
+					strcpy(header,p_start_h);
+					p_end_h = &extra_headers[len_headers-1];
+					extra_headers[len_headers]='\0';
 				}
 
-				if (p == NULL)
-					header[len]='\0';
+				p_start=header;
+				p_end=strchr(header,':');
+				if(p_end != NULL)
+				{
+					*p_end = '\0';
+					strcpy(head,header);
+					p_end++;
+					strcpy(value,p_end);
 
-				sscanf(header, "%s %s", &head, &value);
-				g_print("%s %s\n",head,value);
-				memset(&headerValue, 0, sizeof(GValue));
-				g_value_init(&headerValue, G_TYPE_STRING);
-				g_value_set_string(&headerValue,value);
-				gst_structure_set_value(extras, head, &headerValue);
+					g_print("%s:%s\n",head,value);
 
-				if (p == NULL)
-					break;
+					memset(&headerValue, 0, sizeof(GValue));
+					g_value_init(&headerValue, G_TYPE_STRING);
+					g_value_set_string(&headerValue,value);
+					gst_structure_set_value(extras, head, &headerValue);
+				}
+				else g_print("Invalid header format %s",header);
+
+				p_start_h = p_end_h;
 			}
 
 			if (gst_structure_n_fields(extras) > 0)
 				g_object_set(G_OBJECT(source), "extra-headers", extras, NULL);
 
             gst_structure_free(extras);
+            g_free(extra_headers);
 		}
 
 		gst_object_unref(source);
@@ -1894,35 +1956,21 @@ void eServiceMP4::playbinNotifySource(GObject *object, GParamSpec *unused, gpoin
 
 void eServiceMP4::got_location (GstBin *bin, GstElement *element, gpointer user_data) {
 
-    eServiceMP4 *_this = (eServiceMP4*)user_data;
-	if (_this)
-	{
-	    g_object_get (G_OBJECT (element), "temp-location", &(_this->m_downloadInfo.downloadPath), NULL);
-	    eDebug("ServiceMP4:: Download location is %s",_this->m_downloadInfo.downloadPath.c_str());
-	    /* set download path */
-	    _this->m_download_poll_timer->start(1000,false);
-	    _this->m_event((iPlayableService*)_this, evUser+20);
-	}
+    gchar *downloadPath;
+    g_object_get (G_OBJECT (element), "temp-location", &downloadPath, NULL);
+    g_object_set(G_OBJECT(element), "temp-remove", FALSE, NULL);
+    m_download_path = downloadPath;
+    g_free(downloadPath);
 }
 
-PyObject *eServiceMP4::getDownloadInfo()
+void eServiceMP4::updateDownloadStatus()
 {
-	ePyObject tuple = PyTuple_New(5);
-	PyTuple_SET_ITEM(tuple, 0, PyInt_FromLong(m_downloadInfo.downloading));
-	PyTuple_SET_ITEM(tuple, 1, PyString_FromString(m_downloadInfo.downloadPath.c_str()));
-	PyTuple_SET_ITEM(tuple, 2, PyInt_FromLong(m_downloadInfo.downloadPercent));
-	return tuple;
-}
-
-void eServiceMP4::updateDownloadStatus() {
     GstQuery *query;
     gboolean result;
     gint percent;
-    gboolean busy;
-
+    m_download_poll_timer->stop();
     if (!m_gst_playbin)
     {
-		m_download_poll_timer->stop();
 		m_downloadInfo.downloading = 0;
 		return;
     }
@@ -1935,23 +1983,36 @@ void eServiceMP4::updateDownloadStatus() {
 
     if (result)
     {
-        GstFormat format = GST_FORMAT_TIME;
+        //GstFormat format = GST_FORMAT_TIME;
         gint64 position = 0, duration = 0;
         gint64 start=0,stop=0;
+        GstBufferingMode mode;
 
+
+        // update downloaded percent
         gst_query_parse_buffering_range(query,0,&start,&stop,0);
         //g_print("Start: %lu, End: %lu, Estimated total: %lu",start,stop,total);
-        m_downloadInfo.downloadPercent = 100.0 * stop / GST_FORMAT_PERCENT_MAX;
+        if (stop != -1)
+            m_downloadInfo.downloadPercent = 100.0 * stop / GST_FORMAT_PERCENT_MAX;
+
+        // update InRate(download speed),
+        gst_query_parse_buffering_stats(query, &mode, &(m_bufferInfo.avgInRate), &(m_bufferInfo.avgOutRate), &(m_bufferInfo.bufferingLeft));
+
+        /* updated download stats */
+        m_event((iPlayableService*)this, evUser+22);
+
+        m_download_poll_timer->start(1000,true);
         if (m_downloadInfo.downloadPercent==100)
         {
-            m_downloadInfo.downloading = 1;
             m_download_poll_timer->stop();
+            m_downloadInfo.downloading = 1;
             eDebug("eServiceMP4::Download finished");
 
             /* download finished */
             m_event((iPlayableService*)this, evUser+21);
         }
     }
+    gst_query_unref(query);
 }
 
 void eServiceMP4::handleElementAdded(GstBin *bin, GstElement *element, gpointer user_data)
@@ -1966,19 +2027,13 @@ void eServiceMP4::handleElementAdded(GstBin *bin, GstElement *element, gpointer 
 		    /*we are downloading full length of file*/
 		    if(_this->m_download_mode)
 		    {
-		        g_object_set(G_OBJECT(element), "temp-template", _this->m_download_path.c_str(), NULL);
-		        eDebug("Setting download path to %s",_this->m_download_path.c_str());
-		        //g_object_set(G_OBJECT(element), "temp-remove", FALSE, NULL);
+		        g_object_set(G_OBJECT(element), "temp-template", _this->m_gdownload_path.c_str(), NULL);
 		    }
 		    /*progressive download buffering*/
-			else if (_this->m_download_buffer_path != "")
+			else if (_this->m_gdownload_buffer_path != "")
 			{
-				g_object_set(G_OBJECT(element), "temp-template", _this->m_download_buffer_path.c_str(), NULL);
+				g_object_set(G_OBJECT(element), "temp-template", _this->m_gdownload_buffer_path.c_str(), NULL);
 			}
-			//else
-			//{
-			//	g_object_set(G_OBJECT(element), "temp-template", NULL, NULL);
-			//}
 		}
 		else if (g_str_has_prefix(elementname, "uridecodebin"))
 		{
@@ -1986,7 +2041,9 @@ void eServiceMP4::handleElementAdded(GstBin *bin, GstElement *element, gpointer 
 			 * Listen for queue2 element added to uridecodebin/decodebin2 as well.
 			 * Ignore other bins since they may have unrelated queues
 			 */
-				g_signal_connect(element, "element-added", G_CALLBACK(handleElementAdded), user_data);
+            g_signal_connect(element, "element-added", G_CALLBACK(handleElementAdded), user_data);
+
+
 		}
 		g_free(elementname);
 	}
@@ -2162,6 +2219,12 @@ void eServiceMP4::pullSubtitle(GstBuffer *buffer)
 		{
 			if ( m_subtitleStreams[m_currentSubtitleStream].type < stVOB )
 			{
+                                int delay = eConfigManager::getConfigIntValue("config.subtitles.pango_subtitles_delay");
+				int subtitle_fps = eConfigManager::getConfigIntValue("config.subtitles.pango_subtitles_fps");
+
+				double convert_fps = 1.0;
+				if (subtitle_fps > 1 && m_framerate > 0)
+					convert_fps = subtitle_fps / (double)m_framerate;
 				unsigned char line[len+1];
 				SubtitlePage page;
 #if GST_VERSION_MAJOR < 1
@@ -2174,7 +2237,7 @@ void eServiceMP4::pullSubtitle(GstBuffer *buffer)
 				gRGB rgbcol(0xD0,0xD0,0xD0);
 				page.type = SubtitlePage::Pango;
 				page.pango_page.m_elements.push_back(ePangoSubtitlePageElement(rgbcol, (const char*)line));
-				page.pango_page.m_show_pts = buf_pos / 11111L;
+				page.pango_page.m_show_pts = buf_pos / 11111L * convert_fps + delay;
 				page.pango_page.m_timeout = duration_ns / 1000000;
 				m_subtitle_pages.push_back(page);
 				if (m_subtitle_pages.size()==1)
@@ -2359,15 +2422,11 @@ RESULT eServiceMP4::streamed(ePtr<iStreamedService> &ptr)
 	return 0;
 }
 
-PyObject *eServiceMP4::getBufferCharge()
+
+
+ePtr<iStreamBufferInfo> eServiceMP4::getBufferCharge()
 {
-	ePyObject tuple = PyTuple_New(5);
-	PyTuple_SET_ITEM(tuple, 0, PyInt_FromLong(m_bufferInfo.bufferPercent));
-	PyTuple_SET_ITEM(tuple, 1, PyInt_FromLong(m_bufferInfo.avgInRate));
-	PyTuple_SET_ITEM(tuple, 2, PyInt_FromLong(m_bufferInfo.avgOutRate));
-	PyTuple_SET_ITEM(tuple, 3, PyInt_FromLong(m_bufferInfo.bufferingLeft));
-	PyTuple_SET_ITEM(tuple, 4, PyInt_FromLong(m_buffer_size));
-	return tuple;
+	return new eStreamBufferInfo(m_bufferInfo.bufferPercent, m_bufferInfo.avgInRate, m_bufferInfo.avgOutRate, m_bufferInfo.bufferingLeft, m_buffer_size);
 }
 
 int eServiceMP4::setBufferSize(int size)
@@ -2403,9 +2462,7 @@ void eServiceMP4::setAC3Delay(int delay)
 		 */
 		if (videoSink)
 		{
-			std::string config_delay;
-			if(ePythonConfigQuery::getConfigValue("config.av.generalAC3delay", config_delay) == 0)
-				config_delay_int += atoi(config_delay.c_str());
+			config_delay_int += eConfigManager::getConfigIntValue("config.av.generalAC3delay");
 		}
 		else
 		{
@@ -2436,9 +2493,7 @@ void eServiceMP4::setPCMDelay(int delay)
 		 */
 		if (videoSink)
 		{
-			std::string config_delay;
-			if(ePythonConfigQuery::getConfigValue("config.av.generalPCMdelay", config_delay) == 0)
-				config_delay_int += atoi(config_delay.c_str());
+			config_delay_int += eConfigManager::getConfigIntValue("config.av.generalPCMdelay");
 		}
 		else
 		{
