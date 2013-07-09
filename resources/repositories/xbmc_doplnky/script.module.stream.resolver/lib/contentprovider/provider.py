@@ -19,17 +19,23 @@
 # */
 
 import sys,os,util,re,traceback
+try:
+    import StorageServer
+except:
+    print 'Using dummy storage server'
+    import storageserverdummy as StorageServer
 
 class ResolveException(Exception):
     pass
+
 
 class ContentProvider(object):
     '''
     ContentProvider class provides an internet content. It should NOT have any xbmc-related imports
     and must be testable without XBMC runtime. This is a basic/dummy implementation.
-    '''	
+    '''    
 
-    def __init__(self,name,base_url,username,password,filter,tmp_dir='.'):
+    def __init__(self,name='dummy',base_url='/',username=None,password=None,filter=None,tmp_dir='.'):
         '''
         ContentProvider constructor
         Args:
@@ -48,12 +54,17 @@ class ContentProvider(object):
         self.base_url=base_url
         self.filter = filter
         self.tmp_dir = tmp_dir
+        self.cache = StorageServer.StorageServer(self.name, 24)
+ 
+    def __str__(self):
+        return 'ContentProvider'+self.name
 
     def capabilities(self):
         '''
-        This way class defines which capabilities it provides
+        This way class defines which capabilities it provides ['login','search','resolve','categories']
+        It may also contain '!download' when provider does not support downloading
         '''
-        return ['login','search','resolve','categories']
+        return []
 
     def video_item(self):
         '''
@@ -61,11 +72,11 @@ class ContentProvider(object):
         '''
         return {'type':'video','title':'','rating':0,'year':0,'size':'0MB','url':'','img':'','length':'','quality':'???','subs':'','surl':''}
 
-    def dir_item(self):
+    def dir_item(self,title='',url='',type='dir'):
         '''
             reutrns empty directory item
         '''
-        return {'type':'dir','title':'','size':'0','url':''}
+        return {'type':type,'title':title,'size':'0','url':url}
 
     def login(self):
         '''
@@ -112,6 +123,10 @@ class ContentProvider(object):
             url (str): relative or absolute URL to be resolved
             captcha_cb(func{obj}): callback function when user input is required (captcha, one-time passwords etc).
             function implementation must be Provider-specific
+            select_cb(func{array}): callback function for cases when given url resolves to multiple streams,
+            provider class may call this function and require user interaction
+            wait_cb(func{obj}): callback function for cases when url resolves to stream which becomes available
+            somewhere in future (typically in several seconds). Provider may call this and require waiting.
         Returns:
             None - if ``url`` was not resolved. Video item with 'url' key pointing to resolved target
         '''
@@ -141,4 +156,18 @@ class ContentProvider(object):
     def info(self,msg):
         util.info('[%s] %s' % (self.name,msg)) 
     def error(self,msg):
-        util.error('[%s] %s' % (self.name,msg)) 
+        util.error('[%s] %s' % (self.name,msg))
+
+
+def cached(f):
+    '''
+     A method decorator that can be used on any ContentProvider method
+     Having this decorator means that results of such method are going 
+     to be cached for 24hours
+    '''
+    def wrap(*args):
+        self = args[0]
+        if hasattr(self,'cache') and self.cache:
+            return self.cache.cacheFunction(f,*args)
+        return f(*args)
+    return wrap

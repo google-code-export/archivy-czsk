@@ -1,10 +1,8 @@
+[B]1.6.2:[/B]
+- updated zkouknito resolver, added kset, publicvideohost resolvers (by mx3L)
 [B]1.6.1:[/B]
-- fixed videomail resolver
-- fixed quality in kset resolver (mx3L)
-- added publicvideohost resolver (mx3L)
-[B]1.6.0:[/B]
-- added kset resolver (mx3L)
-- fixed zkouknito resolver (mx3L)
+- fixed downloading of files with special chars
+- support for @cached decorator for provider methods
 [B]1.5.6:[/B]
 - fixed koukni - works back with mp4
 [B]1.5.5:[/B]
