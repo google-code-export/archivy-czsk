@@ -3,7 +3,7 @@ Created on 2.2.2013
 
 @author: marko
 '''
-from Components.config import config, ConfigInteger, ConfigSubsection, ConfigYesNo, ConfigText
+from Components.config import config, ConfigInteger, ConfigSubsection, ConfigYesNo, ConfigText, NoSave
 from Plugins.Extensions.archivCZSK import log
 USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:18.0) Gecko/20100101 Firefox/18.0'
 
@@ -23,9 +23,15 @@ class VideoPlaySettingsProvider(object):
     def setHTTPTimeout(self, timeout):
         self.__config.httpTimeout.setValue(str(timeout))
     
-    def setExtraHeaders(self, dictHeaders={}):
-        headersString = '#'.join([(key + ':' + value) for key, value in dictHeaders.iteritems()])
-        self.__config.extraHeaders.setValue(headersString)
+    def setExtraHeaders(self, dictHeaders):
+        if not self.__config.servicemp4.getValue():
+            headersString = '|'.join([(key + ':' + value) for key, value in dictHeaders.iteritems()])
+            config.mediaplayer = ConfigSubsection()
+            config.mediaplayer.extraHeaders = NoSave(ConfigText(default=""))
+            config.mediaplayer.extraHeaders.setValue(headersString)
+        else:
+            headersString = '#'.join([(key + ':' + value) for key, value in dictHeaders.iteritems()])
+            self.__config.extraHeaders.setValue(headersString)
         
     def setUserAgent(self, agent=""):
         if self.__config.servicemp4.getValue():
@@ -33,15 +39,10 @@ class VideoPlaySettingsProvider(object):
                 self.__config.userAgent.setValue(agent)
         else:
             # servicemp3 uses config.mediaplayer.alternateUserAgent to set UserAgent for gstreamer
-            if not hasattr(config, 'mediaplayer'):
-                config.mediaplayer = ConfigSubsection()
-                config.mediaplayer.useAlternateUserAgent = ConfigYesNo(default=True)
-                config.mediaplayer.alternateUserAgent = ConfigText(default="")
-            if not hasattr(config.mediaplayer, 'useAlternateUserAgent'):
-                config.mediaplayer.useAlternateUserAgent = ConfigYesNo(default=True)
-            if not hasattr(config.mediaplayer, 'alternateUserAgent'):
-                config.mediaplayer.alternateUserAgent = ConfigText(default="")
-                 
+            config.mediaplayer = ConfigSubsection()
+            config.mediaplayer.useAlternateUserAgent = ConfigYesNo(default=True)
+            config.mediaplayer.alternateUserAgent = ConfigText(default="")
+    
             if agent != "":
                 config.mediaplayer.useAlternateUserAgent.setValue(True)
                 config.mediaplayer.alternateUserAgent.setValue(agent)
