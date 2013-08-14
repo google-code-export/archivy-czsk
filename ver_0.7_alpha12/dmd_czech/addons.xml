@@ -126,8 +126,8 @@
 
 <addon id="plugin.video.dmd-czech.joj"
        name="JOJ TV Archiv"
-       version="1.8.1"
-       provider-name="Jiri Vyhnalek">
+       version="1.9"
+       provider-name="Jiri Vyhnalek, mx3L">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.dmd-czech.common" version="1.5"/>
@@ -246,7 +246,7 @@
 
 <addon id="plugin.video.dmd-czech.stv"
        name="STV Archiv"
-       version="0.3"
+       version="0.4"
        provider-name="Jiri Vyhnalek, mx3L">
   <requires>
     <import addon="xbmc.python" version="1.0"/>
