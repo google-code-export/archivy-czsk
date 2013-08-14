@@ -98,7 +98,7 @@ def CATEGORIES():
     addDir("A-Z", __baseurl__ +'/tv.archive.alphabet',3,icon)
     
 def CATEGORY_AZ(url):
-    az = [str(unichr(c)) for c in range(65,90,1)]
+    addDir('0-9',url+'?letter=0-9',4,icon)
     for c in range(65,90,1):
         chr = str(unichr(c))
         addDir(chr,url+'?letter=%s'%chr.lower(),4,icon)
