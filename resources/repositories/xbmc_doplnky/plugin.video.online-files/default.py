@@ -38,6 +38,7 @@ import xbmcutil
 import bezvadata, hellspy, ulozto, fastshare
 import xbmcprovider
 
+from provider import ResolveException
 
 def search_cb(what):
 	for key in providers.keys():
