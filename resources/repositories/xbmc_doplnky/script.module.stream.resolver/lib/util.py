@@ -22,6 +22,8 @@
 import os, re, sys, urllib, urllib2, traceback, cookielib, time, socket
 from htmlentitydefs import name2codepoint as n2cp
 import simplejson as json
+import threading
+import Queue 
 from Plugins.Extensions.archivCZSK.engine import client
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
 UA = 'Mozilla/6.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.5) Gecko/2008092417 Firefox/3.0.3'
@@ -61,6 +63,18 @@ def post_json(url,data,headers={}):
     data = response.read()
     response.close()
     return data
+   
+def run_parallel_in_threads(target, args_list):
+    result = Queue.Queue()
+    # wrapper to collect return value in a Queue
+    def task_wrapper(*args):
+        result.put(target(*args))
+    threads = [threading.Thread(target=task_wrapper, args=args) for args in args_list]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    return result 
 
 def icon(name):
 	return 'https://github.com/lzoubek/xbmc-doplnky/raw/dharma/icons/' + name
