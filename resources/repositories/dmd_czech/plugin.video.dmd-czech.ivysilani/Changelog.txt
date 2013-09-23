@@ -1,3 +1,11 @@
+2013-09-23:
+ * oprava živého vysílání
+2013-09-21:
+ * oprava pro změnu HTML kódu iVysílání (thanx to Ivo)
+2013-09-08:
+ * oprava vzhledávání podle datumu (thanx to Ivo)
+2013-05-28:
+ * oprava linku k videu
 2013-03-26:
  * přidáno upozornění na bonus video
 2013-02-06:

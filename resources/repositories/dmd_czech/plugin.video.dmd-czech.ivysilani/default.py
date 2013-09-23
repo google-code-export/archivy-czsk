@@ -17,6 +17,7 @@ swfurl = 'http://img.ceskatelevize.cz/libraries/player/flashPlayer.swf?version=1
 __settings__ = ArchivCZSK.get_addon('plugin.video.dmd-czech.ivysilani')
 home = __settings__.get_info('path')
 icon = os.path.join(home, 'icon.png')
+search = os.path.join( home, 'search.png' )
 nexticon = os.path.join(home, 'nextpage.png')
 page_pole_url = []
 page_pole_no = []
@@ -25,45 +26,45 @@ bonus_video = __settings__.get_setting('bonus-video')
 DATE_FORMAT = '%d.%m.%Y'
 DAY_NAME = (u'Po', u'Út', u'St', u'Čt', u'Pá', u'So', u'Ne')
 
-RE_DATE = re.compile('(\d{1,2}\.\s*\d{1,2}\.\s*\d{4})')
-
+RE_DATE   = re.compile('(\d{1,2}\.\s*\d{1,2}\.\s*\d{4})')
 
 
 def OBSAH():
-    addSearch('Vyhledat...(beta)', '0', 13, None)
-    addDir('Nejnovější pořady', __baseurl__ + '/?nejnovejsi=vsechny-porady', 12, icon)
-    addDir('Nejsledovanější videa týdne', __baseurl__ + '/?nejsledovanejsi=tyden', 11, icon)
-    addDir('Podle data', __baseurl__ + '/podle-data-vysilani/', 5, icon)
-    addDir('Podle abecedy', __baseurl__ + '/podle-abecedy/', 2, icon)
-    addDir('Podle kategorie', __baseurl__, 1, icon)
-    addDir('Živé iVysílání', __baseurl__ + '/ajax/liveBox.php', 4, icon)
+    addDir('Nejnovější pořady',__baseurl__+'/?nejnovejsi=vsechny-porady',12,icon)
+    addDir('Nejsledovanější videa týdne',__baseurl__+'/?nejsledovanejsi=tyden',11,icon)
+    addDir('Podle data',__baseurl__+'/podle-data-vysilani/',5,icon)
+    addDir('Podle abecedy',__baseurl__+'/podle-abecedy/',2,icon)
+    addDir('Podle kategorie',__baseurl__,1,icon)
+    addDir('Vyhledat...(beta)','0',13,search)
+    addDir('Živé iVysílání',__baseurl__+'/ajax/liveBox.php?time=',4,icon)
 
 def KATEGORIE():
-    addDir('Filmy', __baseurl__ + '/filmy/', 3, icon)
-    addDir('Seriály', __baseurl__ + '/serialy/', 3, icon)
-    addDir('Dokumenty', __baseurl__ + '/dokumenty/', 3, icon)  
-    addDir('Sport', __baseurl__ + '/sportovni/', 3, icon)  
-    addDir('Hudba', __baseurl__ + '/hudebni/', 3, icon)  
-    addDir('Zábava', __baseurl__ + '/zabavne/', 3, icon)  
-    addDir('Děti a mládež', __baseurl__ + '/deti/', 3, icon)  
-    addDir('Vzdělání', __baseurl__ + '/vzdelavaci/', 3, icon)  
-    addDir('Zpravodajství', __baseurl__ + '/zpravodajske/', 3, icon)  
-    addDir('Publicistika', __baseurl__ + '/publicisticke/', 3, icon)  
-    addDir('Magazíny', __baseurl__ + '/magaziny/', 3, icon)  
-    addDir('Náboženské', __baseurl__ + '/nabozenske/', 3, icon)  
-    addDir('Všechny', __baseurl__ + '/zanr-vse/', 3, icon)  
+    addDir('Filmy',__baseurl__+'/filmy/',3,icon)
+    addDir('Seriály',__baseurl__+'/serialy/',3,icon)
+    addDir('Dokumenty',__baseurl__+'/dokumenty/',3,icon)  
+    addDir('Sport',__baseurl__+'/sportovni/',3,icon)  
+    addDir('Hudba',__baseurl__+'/hudebni/',3,icon)  
+    addDir('Zábava',__baseurl__+'/zabavne/',3,icon)  
+    addDir('Děti a mládež',__baseurl__+'/deti/',3,icon)  
+    addDir('Vzdělání',__baseurl__+'/vzdelavaci/',3,icon)  
+    addDir('Zpravodajství',__baseurl__+'/zpravodajske/',3,icon)  
+    addDir('Publicistika',__baseurl__+'/publicisticke/',3,icon)  
+    addDir('Magazíny',__baseurl__+'/magaziny/',3,icon)  
+    addDir('Náboženské',__baseurl__+'/nabozenske/',3,icon)  
+    addDir('Všechny',__baseurl__+'/zanr-vse/',3,icon)  
 
 def LIVE_OBSAH(url):
-    program = [r'ČT1 - ', r'ČT2 - ', r'ČT24 - ', r'ČT4 - ']
+    url = url+str(time.time())
+    program=[r'ČT1 - ', r'ČT2 - ', r'ČT24 - ', r'ČT4 - ', r'ČTD/ART - ']
     i = 0
     request = urllib2.Request(url)
-    request.add_header("Referer", __baseurl__)    
-    request.add_header("Origin", "http://www.ceskatelevize.cz")
-    request.add_header("Accept", "*/*")
-    request.add_header("X-Requested-With", "XMLHttpRequest")
-    request.add_header("x-addr", "127.0.0.1")
-    request.add_header("User-Agent", _UserAgent_)
-    request.add_header("Content-Type", "application/x-www-form-urlencoded")
+    request.add_header("Referer",__baseurl__)    
+    request.add_header("Origin","http://www.ceskatelevize.cz")
+    request.add_header("Accept","*/*")
+    request.add_header("X-Requested-With","XMLHttpRequest")
+    request.add_header("x-addr","127.0.0.1")
+    request.add_header("User-Agent",_UserAgent_)
+    request.add_header("Content-Type","application/x-www-form-urlencoded")
     con = urllib2.urlopen(request)
     # Read lisk XML page
     data = con.read()
@@ -72,21 +73,21 @@ def LIVE_OBSAH(url):
 
     items = doc.find('div', 'clearfix')
     for item in items.findAll('div', 'channel'):
-            prehrano = item.find('div', 'progressBar')
+            prehrano = item.find('div','progressBar')
             prehrano = prehrano['style']
             prehrano = prehrano[(prehrano.find('width:') + len('width:') + 1):]
             #name_a = item.find('p')
             try:
                 name_a = item.find('a')
-                name = program[i] + name_a.getText(" ").encode('utf-8') + '- Přehráno: ' + prehrano.encode('utf-8')
-                url = 'http://www.ceskatelevize.cz' + str(item.a['href'])
+                name = program[i]+name_a.getText(" ").encode('utf-8')+'- Přehráno: '+prehrano.encode('utf-8')
+                url = 'http://www.ceskatelevize.cz'+str(item.a['href'])
                 thumb = str(item.img['src'])
             except:
-                name = program[i] + 'Právě teď běží pořad, který nemůžeme vysílat po internetu.'
+                name = program[i]+'Právě teď běží pořad, který nemůžeme vysílat po internetu.'
                 thumb = 'http://img7.ceskatelevize.cz/ivysilani/gfx/empty/noLive.png'
             #print name, thumb, url
-            addDir(name, url, 10, thumb)
-            i = i + 1
+            addDir(name,url,14,thumb)
+            i=i+1
 def ABC(url):
     req = urllib2.Request(url)
     req.add_header('User-Agent', _UserAgent_)
@@ -94,9 +95,9 @@ def ABC(url):
     httpdata = response.read()
     response.close()
     match = re.compile('<a class="pageLoadAjaxAlphabet" href="(.+?)" rel="letter=.+?"><span>(.+?)</span></a>').findall(httpdata)
-    for link, name in match:
+    for link,name in match:
         #print name,__baseurl__+link
-        addDir(name, 'http://www.ceskatelevize.cz' + link, 3, icon)
+        addDir(name,'http://www.ceskatelevize.cz'+link,3,icon)
 
 def CAT_LIST(url):
     req = urllib2.Request(url)
@@ -145,35 +146,48 @@ def CAT_LIST(url):
 # vypis CT1,CT2,CT24,CT4
 def DAY_LIST(url):
     doc = read_page(url)
-    items = doc.findAll('div', 'programmeColumn')    
-    for item in items:
-        item = item.find('div', 'logo')    
-        item = item.find('img')
-        icons = item['src']
-        name = item['alt'].encode('utf-8').strip()
-        addDir(name, url, 9, icons)
+    data = doc.find("ul", {"id": "channels"})  
+    items = data.findAll("li")
+    kanaly=[]
+    for ite in items:
+        rows = ite.findAll("span", attrs={'class' : 'logo'})
+        for it in rows:
+                item = it.find('img')
+                icons= item['src']
+                name = item['alt'].encode('utf-8').strip()
+                addDir(name,url,9,icons)
 
-# vypis programu na zvolenem kanalu
-def DAY_PROGRAM_LIST(url, chnum):
+
+def DAY_PROGRAM_LIST( url, chnum ):
     doc = read_page(url)
-    items = doc.findAll('div', 'logo clearfix')    
-    for item in items:
-        item = item.find('img')
-        name = item['alt'].encode('utf-8').strip()
-        if name == chnum:
-                items2 = item.findParent()
-                items2 = items2.findParent()
-                for item2 in items2.findAll('a'):
-                        item3 = item2.findParent()
-                        item3 = item3.findParent()
-                        item3 = item3.findParent()
-                        cas = item3.find('div', 'time')
-                        cas = cas.getText(" ").encode('utf-8')
-                        name = item2.getText(" ").encode('utf-8')
-                        link = str(item2['href'])
-                        icons = item['src']
-                        if link != "#add":
-                                addDir(cas + ' ' + name, 'http://www.ceskatelevize.cz' + link, 10, icon)
+    data = doc.find('div', {"id": "programme"})
+    items = data.findAll('ul')
+    nazvy=['ČT1', 'ČT2', 'ČT24', 'ČT sport', 'ČT :D', 'ČT Art']
+    count=-1
+    for it1 in items:
+        count += 1    
+        if count != nazvy.index(chnum):
+                continue
+        it2 = it1.findAll('div',{'class': 'overlay'})
+        for it3 in it2:
+                name = it3.find('a', {'class':'title'})
+                if name == None:
+                        name = it3.find('strong', {'class':'title'})
+                name = name.getText(" ").encode('utf-8')
+               
+                cas  = it3.find("span", {"class": "time"})
+                cas  = cas.getText(" ").encode('utf-8')
+                #icons = it3.find("img")
+                #icons = icon['src']
+
+                link = it3.find("a")
+                if link != None:
+                        link = str(link['href'])
+                        addDir(cas+' '+name,'http://www.ceskatelevize.cz'+link,10,icon)
+                else:
+                        name = name +' - pořad se ještě nevysílá.'
+                        thumb = 'http://img7.ceskatelevize.cz/ivysilani/gfx/empty/noLive.png'
+                        addDir(cas+' '+name, url, 10, thumb)
 
 
 def date2label(date):
@@ -364,11 +378,11 @@ def HLEDAT(url):
     response.close()
     match = re.compile('google.search.Search.apiary6680\((.*)\)').findall(httpdata)
     items = json.loads(match[0])[u'results']
-    for item in items:        
+    for item in items:
+        print item
         name = item[u'titleNoFormatting']
         name = name.encode('utf-8')
         url2 = item[u'url']
-        url2 = url.encode('utf-8')
         try:
             image = item[u'richSnippet'][u'cseImage'][u'src']
             image = image.encode('utf-8')
@@ -390,9 +404,9 @@ def HLEDAT(url):
 
 
 
-
-               
-def VIDEOLINK(url, name):
+def VIDEOLINK(url, name, live):
+    if name.find('pořad se ještě nevysílá')!=-1:
+        return
     req = urllib2.Request(url)
     req.add_header('User-Agent', _UserAgent_)
     response = urllib2.urlopen(req)
@@ -434,8 +448,11 @@ def VIDEOLINK(url, name):
                 continue
             video = re.compile('<video src="(.+?)" system-bitrate=".+?" label="(.+?)" enabled=".+?"').findall(str(item))
             for cesta, kvalita in video:
-                app = base[base.find('/', base.find('://') + 3) + 1:]
-                rtmp_url = base + ' app=' + app + ' playpath=' + cesta
+                if live:
+                    rtmp_url = base+'/'+cesta
+                else:
+                    app = base[base.find('/', base.find('://') + 3) + 1:]
+                    rtmp_url = base + ' app=' + app + ' playpath=' + cesta
                 addLink(kvalita + ' ' + name, rtmp_url, icon, info[0])
                 #print rtmp_url,kvalita+info[0] #vystupni parametry RTMP
 
@@ -511,6 +528,7 @@ print "Mode: " + str(mode)
 print "URL: " + str(url)
 print "Name: " + str(name)
 
+
 if mode == None or url == None or len(url) < 1:
         print ""
         OBSAH()
@@ -553,7 +571,7 @@ elif mode == 9:
 
 elif mode == 10:
         print "" + url
-        VIDEOLINK(url, name)
+        VIDEOLINK(url, name, False)
 
 elif mode == 11:
         print "" + url
@@ -566,3 +584,7 @@ elif mode == 12:
 elif mode == 13:
         print "" + url
         HLEDAT(url)
+        
+elif mode == 14:
+        print "" + url
+        VIDEOLINK(url, name, True)

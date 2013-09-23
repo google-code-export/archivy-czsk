@@ -1,3 +1,7 @@
+2013-22-09
+* zobrazenie len neplatenych relacii
+  pridane najnovsie a najsledovanejsie videa
+
 2013-06-13
 * oprava archivu
 

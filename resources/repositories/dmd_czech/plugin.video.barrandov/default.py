@@ -23,6 +23,7 @@
 import urllib2
 import re
 import random
+from threading import Lock
 
 from util import addDir, addLink
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
@@ -33,19 +34,54 @@ _UserAgent_ = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:18.0) Gecko/20100101 Firef
 __settings__ = ArchivCZSK.get_xbmc_addon('plugin.video.barrandov')
 home = __settings__.getAddonInfo('path')
 icon = os.path.join(home, 'icon.png')
-nexticon = os.path.join(home, 'nextpage.png') 
+nexticon = os.path.join(home, 'nextpage.png')
+
+NEW_URL = 'http://www.barrandov.tv/video/vypis/nejnovejsi-videa/'
+TOP_URL = 'http://www.barrandov.tv/video/vypis/nejsledovanejsi-videa/'
 
 CATEGORIES_START = '<div id="right-menu">'
 CATEGORIES_END = '<div class="block tip">'
-CATEGORIES_ITER = '<li.*?<a href=\"(?P<url>[^"]+)">(?P<title>.+?)</a><\/li>'
+CATEGORIES_ITER_RE = '<li.*?<a href=\"(?P<url>[^"]+)">(?P<title>.+?)</a><\/li>'
+
+CATEGORY_IMG_RE= '<div class=\"header-container\">\s+<div class=\"content\">\s+<img src=\"(?P<img>[^\"]+)\"'
 
 LISTING_START = '<div class="block video show-archive">'
 LISTING_END = '<div id="right-menu">'
-LISTING_ITER = '<div class=\"item.*?\">.+?<a href=\"(?P<url>[^"]+)\">(?P<title>.+?)<.+?<p class=\"desc\">(?P<desc>.+?)</p>.+?<img src=\"(?P<img>[^"]+)".+?</div>'
+LISTING_ITER_RE = '<div class=\"item.*?\">.+?<a href=\"(?P<url>[^"]+)\">(?P<title>[^<]+)<.+?<p class=\"desc\">(?P<desc>[^<]+)</p>.+?<img src=\"(?P<img>[^\"]+)\".+?<span class=\"play\"><img src=\"(?P<playimg>[^\"]+)\".+?</div>'
 PAGER_RE = '<span class=\"pages">(?P<actpage>[0-9]+)/(?P<totalpage>[0-9]+)</span>.*?<a href=\"(?P<nexturl>[^"]+)'
-VIDEOLINK_ITER = 'file:.*?\"(?P<url>[^"]+)".+?label:.*?\"(?P<quality>[^"]+)\"'
+VIDEOLINK_ITER_RE = 'file:.*?\"(?P<url>[^"]+)".+?label:.*?\"(?P<quality>[^"]+)\"'
 
-def CATEGORIES():
+YELLOW_IMG = 'video-play-yellow'
+
+
+
+
+def categories():
+    def fill_list_parallel(list, categories):
+            def process_category(title, url):
+                req = urllib2.Request(url)
+                req.add_header('User-Agent', _UserAgent_)
+                response = urllib2.urlopen(req)
+                httpdata = response.read()
+                response.close()
+                m = re.search(CATEGORY_IMG_RE, httpdata, re.IGNORECASE)
+                img = m and __baseurl__ + m.group(1)
+                data2 = httpdata[httpdata.find(LISTING_START):httpdata.find(LISTING_END)]
+                finditer = False
+                for m in re.finditer(LISTING_ITER_RE, data2, re.DOTALL | re.IGNORECASE):
+                    finditer = True
+                    # payed content
+                    if m.group('playimg').find(YELLOW_IMG) != -1:
+                        return
+                    break
+                # no links
+                if not finditer:
+                    return
+                with lock:
+                    list.append((title, url, img))
+            lock = Lock()
+            run_parallel_in_threads(process_category, categories)
+    
     req = urllib2.Request(__baseurl__ + '/video')
     req.add_header('User-Agent', _UserAgent_)
     response = urllib2.urlopen(req)
@@ -53,22 +89,47 @@ def CATEGORIES():
     response.close()
     httpdata = httpdata[httpdata.find(CATEGORIES_START):httpdata.find(CATEGORIES_END)]
     
-    for item in re.compile(CATEGORIES_ITER, re.DOTALL | re.IGNORECASE).finditer(httpdata):
+    result = []
+    categories = []
+    for item in re.finditer(CATEGORIES_ITER_RE, httpdata, re.DOTALL | re.IGNORECASE):
         title = item.group('title')
-        link = __baseurl__ + item.group('url')
-        addDir(title, link, 1, icon)
+        url = __baseurl__ + item.group('url')
+        categories.append((title,url))
+    
+    fill_list_parallel(result, categories)
+    sorted(categories,key=lambda x:x[0])
+    addDir('Nejnovější',NEW_URL, 3, icon)
+    addDir('Nejsledovanější',TOP_URL, 4, icon)
+    for category in result:
+        addDir(category[0], category[1], 1, category[2])
         
-def LISTING(url):
+        
+def top(url):
+    return listing(url)
+    
+def new(url):
+    return listing(url)
+        
+
+def listing(url):
     req = urllib2.Request(url)
     req.add_header('User-Agent', _UserAgent_)
     response = urllib2.urlopen(req)
     httpdata = response.read()
     response.close()
     httpdata = httpdata[httpdata.find(LISTING_START):httpdata.find(LISTING_END)]
-    for item in re.compile(LISTING_ITER, re.DOTALL | re.IGNORECASE).finditer(httpdata):
+    for item in re.finditer(LISTING_ITER_RE, httpdata, re.DOTALL | re.IGNORECASE):
+        if item.group('playimg').find(YELLOW_IMG) != -1:
+            continue
         desc = item.group('desc')
         title = item.group('title')
-        title = title + ' ' + desc
+        m = re.search('(\d{1,2})\.(\d{1,2})\.(\d{4})',desc)
+        day = len(m.group(1))>1 and m.group(1)[0] =='0' and m.group(1)[1] or m.group(1)
+        month = len(m.group(2))>1 and m.group(2)[0] == '0' and m.group(2)[1]  or m.group(2)
+        year = m.group(3)
+        date = '%s.%s.%s'% (day, month, year)
+
+        title = "%s %s"%(title, date) if title.find(date) == -1 else title
         img = __baseurl__ + item.group('img')
         link = __baseurl__ + item.group('url')
         addDir(title, link, 2, img)
@@ -85,18 +146,34 @@ def LISTING(url):
             nexturl = url + nexturl
         addDir('Daľšia strana >> (%s / %s)' % (actpage, totalpage), nexturl, 1, nexticon)
         
-def VIDEOLINK(url, name):
+def videolink(url, name):
     req = urllib2.Request(url)
     req.add_header('User-Agent', _UserAgent_)
     response = urllib2.urlopen(req)
     httpdata = response.read()
     response.close()
     
-    for video in re.compile(VIDEOLINK_ITER, re.DOTALL | re.IGNORECASE).finditer(httpdata):
+    for video in re.compile(VIDEOLINK_ITER_RE, re.DOTALL | re.IGNORECASE).finditer(httpdata):
         url = __baseurl__ + video.group('url')
         quality = video.group('quality')
-        title = name + ' - ' + quality
+        title = '[%s] %s'%(quality, name)
         addLink(title, url, None, title)
+        
+        
+import threading
+import Queue
+
+def run_parallel_in_threads(target, args_list):
+    result = Queue.Queue()
+    # wrapper to collect return value in a Queue
+    def task_wrapper(*args):
+        result.put(target(*args))
+    threads = [threading.Thread(target=task_wrapper, args=args) for args in args_list]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    return result
 
             
 url = None
@@ -118,10 +195,16 @@ except:
         pass
 
 if mode is None or url is None:
-        CATEGORIES()
+        categories()
        
 elif mode == 1:
-        LISTING(url)
+        listing(url)
         
 elif mode == 2:
-        VIDEOLINK(url, name)
+        videolink(url, name)
+    
+elif mode == 3:
+        new(url)
+
+elif mode == 4:
+        top(url)
