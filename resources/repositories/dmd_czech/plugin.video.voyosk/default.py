@@ -58,6 +58,9 @@ wallet_php_url = 'http://voyo.markiza.sk/bin/eshop/ws/ewallet.php'
 player_php_url = 'http://voyo.markiza.sk/bin/eshop/ws/plusPlayer.php'
 livestream_php_url = 'http://voyo.markiza.sk/lbin/player/LiveStream.php'
 
+MAX_PAGE_ENTRIES = 35
+LISTING_START = 'productsList series'
+LISTING_END = 'productsList latestEpisodes'
 PAGER_RE = "<span class=\'next next_set\'><a href=\'([^']+)"
 VIDEOLINK_LIVE_RE = "clip:.+?url:.*?\'(?P<playpath>[^']+).+?plugins:.+?netConnectionUrl:.*?\'(?P<url>[^']+)"
 CATEGORIES_ITER_RE = '<div class=\"item">.*?<div class=\"image\">.*?<img src=\"(?P<img>[^"]+).*?<div class=\"description\">.*?<a href=\"(?P<url>[^"]+).*?title=\"(?P<title>[^"]+).*?<\/div>.*?<\/div>.*?<\/div>'
@@ -79,23 +82,41 @@ def OBSAH():
     addDir('Deti', __baseurl__ + '/deti/', 1, icon)
     addDir('Živé vysielanie', __baseurl__ + '/zive-vysielanie/', 2, icon)
 
-def VOYO_OBSAH(url, name):
-    data = markiza_read(url)
+def VOYO_OBSAH(url, name='', page=None):
+    i = 0
     iter1 = False
     iter2 = False
+    data = markiza_read(url)
+    start = data.find(LISTING_START)
+    end = data.find(LISTING_END)
+    if start != -1 and end != -1:
+        data = data[start:end]
+    elif end != -1:
+        data = data[:end]
+    elif start != -1:
+        data = data[start:]
 
     for item in re.finditer(CATEGORIES_ITER_RE, data, re.DOTALL):
         iter1 = True
+        i += 1
         addDir(item.group('title'), __baseurl__ + item.group('url'), 1, item.group('img'))
     
     if not iter1:
         for item in re.finditer(LISTING_ITER_RE, data, re.DOTALL):
             iter2 = True
+            i += 1
             addDir(item.group('title'), __baseurl__ + item.group('url'), 1, item.group('img'))
-            
-    pager = re.search(PAGER_RE, data, re.DOTALL)
-    if pager:
-        addDir('Daľšia strana >>', __baseurl__ + pager.group(1), 1, nexticon)
+    
+    if i == MAX_PAGE_ENTRIES:
+        if page is None:
+            page = 1
+        page += 1
+        idx = url.find('?page=')
+        if idx != -1:
+            nexturl = url[:idx] + '?page=' + str(page)
+        else:
+            nexturl = url + '?page=' + str(page)
+        addDir('Daľšia strana >>', nexturl, 1, nexticon, page=page)
         
     if not iter1 and not iter2:
         VIDEOLINK(url, name)
@@ -171,6 +192,7 @@ def VIDEOLINK(url, name):
     if dev_hash == "":
         new_devhash = gen_dev_hash()
         add_dev(new_devhash)
+        dev_hash = new_devhash
         __settings__.setSetting('devhash', new_devhash)
     
     # to remove device
@@ -311,6 +333,7 @@ url = None
 name = None
 thumb = None
 mode = None
+page = None
 
 try:
         url = urllib.unquote_plus(params["url"])
@@ -324,13 +347,17 @@ try:
         mode = int(params["mode"])
 except:
         pass
+try:
+        page = int(params["page"])
+except:
+        pass
 
 if mode == None or url == None or len(url) < 1:
         init_opener()
         OBSAH()
        
 elif mode == 1:
-        VOYO_OBSAH(url, name)
+        VOYO_OBSAH(url, name, page)
         
 elif mode == 2:
         VOYO_OBSAH_LIVE()

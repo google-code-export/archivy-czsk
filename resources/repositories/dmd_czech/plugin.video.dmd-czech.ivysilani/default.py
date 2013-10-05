@@ -106,39 +106,19 @@ def CAT_LIST(url):
     httpdata = response.read()
     response.close()
     
-    cat_iter_regex = '<li>(.+?a class=\"toolTip\".+?)</li>'
-    cat_regex = '.+?href=\"(.+?)\".*?title=\"(.*?)\".*?>(.+?)<'
+    cat_iter_regex = '<li>.+?a class=\"toolTip\"(.+?)href=\"(?P<url>.+?)\".*?title=\"(?P<desc>.*?)\".*?>(?P<title>[^<]+)(.*?)</li>'
     httpdata = httpdata[httpdata.find('clearfix programmesList'):]
-    for item in re.compile(cat_iter_regex, re.DOTALL).finditer(httpdata):
-        #print item.group(1)
-        it = re.search(cat_regex, item.group(1), re.DOTALL)
-        #print item.group(1),item.group(2),item.group(3)
-        link = it.group(1)
-        desc = it.group(2).encode('utf-8')
-        name = it.group(3).encode('utf-8')
-        if item.group(1).find('labelBonus') != -1:
+    for m in re.finditer(cat_iter_regex, httpdata, re.DOTALL):
+        link = m.group('url')
+        desc = m.group('desc')
+        name = m.group('title')
+        if m.group('url').find('labelBonus') != -1:
             name = name + ' (pouze bonusy)'
             if not bonus_video:
                 continue 
         infoLabels = {'title':name, 'plot':desc}
         #print name,link
         addDir(name, 'http://www.ceskatelevize.cz' + link, 6, icon, infoLabels=infoLabels)
-            
-        
-    """
-    doc = read_page(url)
-    items = doc.find('div', 'clearfix programmesList')    
-    for item in items.findAll('li'):
-        item_a = item.find('a')
-        name = item_a.getText(" ").encode('utf-8')
-        bonus = item.find('span', 'labelBonus')
-        if bonus:
-            name = name + ' (pouze bonusy)'
-        link = str(item_a['href'])
-        #print name,__baseurl__+link
-        addDir(name, 'http://www.ceskatelevize.cz' + link, 6, icon)
-        
-    """
 
 
 # =============================================
