@@ -318,7 +318,7 @@
 
 <addon id="plugin.video.voyosk"
        name="Voyo SK TV Archiv"
-       version="1.2"
+       version="1.2.1"
        provider-name="mx3L">
   <requires>
     <import addon="xbmc.python" version="1.0"/>
