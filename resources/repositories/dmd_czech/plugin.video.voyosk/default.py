@@ -189,6 +189,7 @@ def VIDEOLINK(url, name):
     if not islogged_in():
         log_in(username, password)
 
+    global dev_hash
     if dev_hash == "":
         new_devhash = gen_dev_hash()
         add_dev(new_devhash)
