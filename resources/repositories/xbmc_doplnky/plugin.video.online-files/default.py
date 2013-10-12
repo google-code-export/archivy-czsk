@@ -35,21 +35,24 @@ sys.path.append(os.path.join (os.path.dirname(__file__), 'resources', 'lib'))
 import util, search
 
 import xbmcutil
-import bezvadata, hellspy, ulozto, fastshare
+import bezvadata, hellspy, ulozto, fastshare, webshare
 import xbmcprovider
 
 from provider import ResolveException
 
 def search_cb(what):
-	for key in providers.keys():
-		p = providers[key]
-		try:
-			result = p.provider.search(what)
-			for item in result:
-				item['title'] = '[%s] %s' % (p.provider.name, item['title'])
-			p.list(result)
-		except:
-			traceback.print_exc()
+    for key in providers.keys():
+        p = providers[key]
+        try:
+            result = p.provider.search(what)
+            for item in result:
+                item['title'] = '[%s] %s' % (p.provider.name,item['title'])
+                if item['type'] == 'next':
+                    item['type'] = 'dir'
+                    item['title'] = p.provider.name+' >>> '
+            p.list(result)
+        except:
+            traceback.print_exc()
 	return
 
 def bezvadata_filter(item):
@@ -69,6 +72,14 @@ def ulozto_filter(item):
         if extension in ext_filter:
                 return False
         return True
+       
+def webshare_filter(item):
+	ext_filter = __settings__('webshare_ext-filter').split(',')
+	ext_filter =  ['.'+f.strip() for f in ext_filter]
+	extension = os.path.splitext(item['title'])[1]
+	if extension in ext_filter:
+		return False
+	return True
        
 class XBMCUloztoContentProvider(xbmcprovider.XBMCLoginOptionalContentProvider):
 
@@ -129,6 +140,7 @@ if __settings__('bezvadata_enabled'):
 	}
 	extra.update(settings)
 	providers[p.name] = xbmcprovider.XBMCLoginOptionalDelayedContentProvider(p, extra, __addon__, session)
+
 if __settings__('ulozto_enabled'):
 	p = ulozto.UloztoContentProvider(__settings__('ulozto_user'), __settings__('ulozto_pass'), filter=ulozto_filter)
 	extra = {
@@ -138,6 +150,7 @@ if __settings__('ulozto_enabled'):
 	}
 	extra.update(settings)
 	providers[p.name] = XBMCUloztoContentProvider(p, extra, __addon__, session)
+	
 if __settings__('hellspy_enabled'):
 	p = hellspy.HellspyContentProvider(__settings__('hellspy_user'), __settings__('hellspy_pass'), site_url=__settings__('hellspy_site_url'))
 	extra = {
@@ -146,15 +159,23 @@ if __settings__('hellspy_enabled'):
 	extra.update(settings)
 	providers[p.name] = XBMCHellspyContentProvider(p, extra, __addon__, session)
 	
-
 if __settings__('fastshare_enabled'):
-	p = fastshare.FastshareContentProvider(__settings__('fastshare_user'), __settings__('fastshare_pass'), tmp_dir=__addon__.getAddonInfo('profile'))
+	p = fastshare.FastshareContentProvider(username='', password='', tmp_dir=__addon__.getAddonInfo('profile'))
 	extra = {
 				'vip':'0',
 				'keep-searches':__settings__('fastshare_keep-searches')
 	}
 	extra.update(settings)
 	providers[p.name] = xbmcprovider.XBMCLoginOptionalContentProvider(p, extra, __addon__, session)
+	
+if __settings__('webshare_enabled'):
+	p = webshare.WebshareContentProvider(username='', password='',filter=webshare_filter)
+	extra = {
+			'vip':'0',
+			'keep-searches':__settings__('webshare_keep-searches')
+	}
+	extra.update(settings)
+	providers[p.name] = xbmcprovider.XBMCLoginOptionalContentProvider(p,extra,__addon__, session)
 
 def icon(provider):
 	icon_file = os.path.join(__addon__.get_info('path'), 'resources', 'icons', provider + '.png')

@@ -20,17 +20,56 @@
 # *
 # */
 import os
-import util, xbmcprovider, xbmcutil
+import util, xbmcprovider, xbmcutil, resolver
 from provider import ResolveException
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
 __scriptid__ = 'plugin.video.pohadkar.cz'
 __scriptname__ = 'Pohádkář.cz'
 __addon__ = ArchivCZSK.get_xbmc_addon(__scriptid__)
 __language__ = __addon__.getLocalizedString
+__settings__ = __addon__.getSetting
 
 sys.path.append(os.path.join (__addon__.getAddonInfo('path'), 'resources', 'lib'))
 import pohadkar
 settings = {'downloads':__addon__.getSetting('downloads'), 'quality':__addon__.getSetting('quality')}
+
+def vp8_youtube_filter(stream):
+    # some embedded devices running xbmc doesnt have vp8 support, so we
+    # provide filtering ability for youtube videos
+    
+    #======================================================================
+    #       5: "240p h263 flv container",
+    #      18: "360p h264 mp4 container | 270 for rtmpe?",
+    #      22: "720p h264 mp4 container",
+    #      26: "???",
+    #      33: "???",
+    #      34: "360p h264 flv container",
+    #      35: "480p h264 flv container",
+    #      37: "1080p h264 mp4 container",
+    #      38: "720p vp8 webm container",
+    #      43: "360p h264 flv container",
+    #      44: "480p vp8 webm container",
+    #      45: "720p vp8 webm container",
+    #      46: "520p vp8 webm stereo",
+    #      59: "480 for rtmpe",
+    #      78: "seems to be around 400 for rtmpe",
+    #      82: "360p h264 stereo",
+    #      83: "240p h264 stereo",
+    #      84: "720p h264 stereo",
+    #      85: "520p h264 stereo",
+    #      100: "360p vp8 webm stereo",
+    #      101: "480p vp8 webm stereo",
+    #      102: "720p vp8 webm stereo",
+    #      120: "hd720",
+    #      121: "hd1080"
+    #======================================================================
+    try:
+        if stream['fmt'] in [38, 44, 45, 46, 100, 101, 102]:
+            return True
+    except KeyError:
+        return False
+    return False
+
 
 class PohadkarContentProvider(xbmcprovider.XBMCMultiResolverContentProvider):
 
@@ -38,6 +77,16 @@ class PohadkarContentProvider(xbmcprovider.XBMCMultiResolverContentProvider):
         stream = self.resolve(params['play'])
         print type(stream)
         if type(stream) == type([]):
+            sdict={}
+            for s in stream:
+                if s['surl'] not in sdict:
+                    sdict[s['surl']] = s
+                    
+                if len(sdict) > 1:
+                    break
+            else:
+                return xbmcprovider.XBMCMultiResolverContentProvider.play(self,params)
+                
             # resolved to mutliple files, we'll feed playlist and play the first one
             playlist = []
             i = 0
@@ -56,11 +105,21 @@ class PohadkarContentProvider(xbmcprovider.XBMCMultiResolverContentProvider):
 
     def resolve(self, url):
         def select_cb(resolved):
-            # for this plugin we do not care about quality at all
-            if len(resolved) == 1:
+            stream_parts = []
+            stream_parts_dict = {}
+            
+            for stream in resolved:
+                if stream['surl'] not in stream_parts_dict:
+                    stream_parts_dict[stream['surl']] = []
+                    stream_parts.append(stream['surl'])
+                if __settings__('filter_vp8') and vp8_youtube_filter(stream):
+                    continue
+                stream_parts_dict[stream['surl']].append(stream)
+
+            if len(stream_parts) == 1:
                 return resolved[0]
-            else:
-                return resolved
+            # requested to play all streams in given order - so return them all
+            return [stream_parts_dict[p][0] for p in stream_parts]
 
         item = self.provider.video_item()
         item.update({'url':url})

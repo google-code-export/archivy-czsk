@@ -20,7 +20,7 @@
 # *
 # */
 
-import re,os,urllib,urllib2,shutil,traceback,cookielib
+import re,os,urllib,urllib2,shutil,traceback,cookielib,HTMLParser
 import util,resolver
 from provider import ContentProvider
 
@@ -31,12 +31,22 @@ class BefunContentProvider(ContentProvider):
         opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookielib.LWPCookieJar()))
         urllib2.install_opener(opener)
         self.order_by = ''
+        self.strict_search = False
 
     def capabilities(self):
         return ['categories','resolve','search']
 
     def search(self,keyword):
         keyword = urllib.quote_plus(keyword)
+        def strict_filter(item):
+            if item['type'] == 'dir' and item['title'].lower().find(keyword.lower()) < 0:
+                self.info('skip '+ item['title'])
+                return False
+            return True
+ 
+        if self.strict_search:
+            self.filter = strict_filter
+
         return self.list_page(util.request(self._url('vyhledat/results?q='+keyword+'&c=filmy')),'<h2>Výsledky vyhledávání</h2>','</section')
 
     def list(self,url):
@@ -144,7 +154,8 @@ class BefunContentProvider(ContentProvider):
         data = util.substr(data,'<div class=\"video','</div')
         sosac = re.search('\"(http\://[\w]+\.sosac\.ph[^\"]+)',data,re.DOTALL)
         if sosac:
-            data = util.request(sosac.group(1))
+            sosac = HTMLParser.HTMLParser().unescape(sosac.group(1))
+            data = util.request(sosac)
         resolved = resolver.findstreams(data,[
             '<embed( )*flashvars=\"file=(?P<url>[^\"]+)',
             '<embed( )src=\"(?P<url>[^\"]+)',
