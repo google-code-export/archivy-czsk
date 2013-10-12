@@ -295,7 +295,8 @@ class InfoBarPlaylist(object):
         self.__last = len(playlist) - 1
          
     def showPlaylist(self):
-        if Playlist.instance:return
+        if Playlist.instance or len(self.__playlist)==1:
+            return
         if self.__showProtocol:
             list = ["[%s] %s" % (video.get_protocol(), video.name) for video in self.__playlist]
         else:
