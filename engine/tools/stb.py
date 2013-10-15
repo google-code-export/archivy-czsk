@@ -3,7 +3,7 @@ Source from Project-Valerie
 http://code.google.com/p/project-valerie/source/browse/trunk/ValerieMediaCenter/__common__.py
 '''
 import sys
-
+from os.path import isfile
 
 
 gBoxType = None
@@ -19,17 +19,24 @@ def getBoxtype():
 
 def _setBoxtype():
         global gBoxType
+        fPath1 = "/proc/stb/info/model"
+        fPath2 = "/hdd/model"
+        fPath = isfile(fPath1) and fPath1 or isfile(fPath2) and fPath2 or ''
         try:
-                file = open("/proc/stb/info/model", "r")
-        except:
-                file = open("/hdd/model", "r")
-        box = file.readline().strip()
-        file.close()
-        manu = "Unknown"
-        model = box #"UNKNOWN" # Fallback to internal string
-        arch = "sh4" # "unk" # Its better so set the arch by default to unkown so no wrong updateinformation will be displayed
+            with open(fPath,'r') as f:
+                box = f.readline().strip()
+        except IOError:
+            box = "PC"
+
+        arch = "sh4"
         version = ""
-        if box == "ufs910":
+        
+        if box == "PC":
+            manu = "PC"
+            model = "PC"
+            arch = "sh4"
+    
+        elif box == "ufs910":
                 manu = "Kathrein"
                 model = "UFS-910"
                 arch = "sh4"
@@ -107,4 +114,3 @@ def getBoxArch():
                 ARCH = "oe20"
 
         return ARCH
-
