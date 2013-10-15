@@ -314,7 +314,7 @@ class CustomVideoPlayer(ArchivCZSKMoviePlayer):
 			self._doEofInternal(playing)
 			
 	def leavePlayerConfirmed(self, answer):
-		if answer:
+		if answer and self.execing:
 			self.exitVideoPlayer()
 		
 	def exitVideoPlayer(self):
