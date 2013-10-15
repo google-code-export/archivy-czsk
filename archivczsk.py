@@ -114,11 +114,7 @@ class ArchivCZSK():
             self.opened_first_time()
         
         elif config.plugins.archivCZSK.autoUpdate.value:
-            update_string = self.check_addon_updates()
-            if update_string != '':
-                self.ask_update_addons(update_string)
-            else:
-                self.open_archive_screen()
+            self.check_addon_updates()
         else:
             self.open_archive_screen()
             
@@ -137,18 +133,17 @@ class ArchivCZSK():
             config.plugins.archivCZSK.hdmuFix.save()
             
         
+        
         text = _("""This is the first time you started archivyCZSK.
 For optimal use of this plugin, you need to check if you have all neccesary video plugins installed.""")
-        
         showInfoMessage(self.session, text, 0, self.open_player_info)
         
         
     def open_player_info(self, callback=None):
         import gui.info as info
-        info.showVideoPlayerInfo(self.session, self.open_archive_screen)
-        
-        
+        info.showVideoPlayerInfo(self.session, self.check_addon_updates)
 
+    
     def check_addon_updates(self):
         for repo_key in self.__repositories.keys():
             repository = self.__repositories[repo_key]
@@ -163,13 +158,17 @@ For optimal use of this plugin, you need to check if you have all neccesary vide
                 log.info('error when checking updates for repository %s', repository)
                 #self.show_error(_("Error when checking updates of repository") + " [%s]" % repository.name.encode('utf-8'))
                 continue
-        return '\n'.join(addon.name for addon in self.toupdate_addons)
+        update_string = '\n'.join(addon.name for addon in self.toupdate_addons)
+        if update_string !='':
+            self.ask_update_addons(update_string)
+        else:
+            self.open_archive_screen()
             
 
     def ask_update_addons(self, update_string):
         self.session.openWithCallback(self.update_addons,
                                       MessageBox,
-                                      _("Do you want to update") + ': ' + update_string.encode('utf-8') + " " + _("addons") + '?',
+                                      _("Do you want to update") +" " + _("addons") + '?' +'\n\n' + update_string.encode('utf-8') ,
                                       type=MessageBox.TYPE_YESNO)
         
     
@@ -180,7 +179,7 @@ For optimal use of this plugin, you need to check if you have all neccesary vide
             if updated_string != '':
                 self.session.openWithCallback(self.ask_restart_e2,
                                               MessageBox,
-                                              _("Following addons were updated") + ': ' + updated_string.encode('utf-8') + '.',
+                                              _("Following addons were updated") + ':\n\n' + updated_string.encode('utf-8'),
                                               type=MessageBox.TYPE_INFO)
             else:
                 self.open_archive_screen()
