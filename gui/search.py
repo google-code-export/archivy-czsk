@@ -31,7 +31,8 @@ class SearchClient(BaseArchivCZSKMenuListScreen):
         self.session = session
         self.currService = currService
         self.searchList = seeker.getCapabilities()
-        self.searchExp = EventInfo(session.nav, EventInfo.NOW).getEvent().getEventName()
+        event = EventInfo(session.nav, EventInfo.NOW).getEvent()
+        self.searchExp = event and event.getEventName() or ''
         self["infolist"] = PanelList([], 30)
         self['search'] = Label(self.searchExp)
         
@@ -83,7 +84,8 @@ class SearchClient(BaseArchivCZSKMenuListScreen):
         self.close(None)
     
     def keyBlue(self):
-        self.chooseFromEpg()
+        if self.event:
+            self.chooseFromEpg()
         
     def keyYellow(self):
         self.changeSearchExp()
@@ -98,7 +100,8 @@ class SearchClient(BaseArchivCZSKMenuListScreen):
         except ImportError:
             showInfoMessage(self.session, _("Cannot remove diacritics, missing unicodedata.so"))
         else:
-            self.searchExp = ''.join((c for c in unicodedata.normalize('NFD', unicode(self.searchExp, 'utf-8', 'ignore')) if unicodedata.category(c) != 'Mn')).encode('utf-8')
+            self.searchExp = ''.join((c for c in unicodedata.normalize('NFD', unicode(self.searchExp, 'utf-8', 'ignore')) 
+                                      if unicodedata.category(c) != 'Mn')).encode('utf-8')
             self["search"].setText(self.searchExp)
     
         
