@@ -84,8 +84,7 @@ class SearchClient(BaseArchivCZSKMenuListScreen):
         self.close(None)
     
     def keyBlue(self):
-        if self.event:
-            self.chooseFromEpg()
+        self.chooseFromEpg()
         
     def keyYellow(self):
         self.changeSearchExp()
@@ -185,12 +184,3 @@ class SimpleChannelSelection(ChannelSelectionBase, SimpleChannelSelectionEPG):
                  "keyRadio": self.doRadioButton,
                  "keyTV": self.doTVButton,
                 })
-
-
-    
-            
-        
-        
-        
-    
-    
