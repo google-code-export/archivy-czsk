@@ -6,8 +6,6 @@ Created on 20.3.2012
 '''
 import os
 
-from subprocess import Popen, PIPE, STDOUT
-
 from enigma import  eServiceCenter, iServiceInformation, eServiceReference, iSeekableService, iPlayableService, iPlayableServicePtr, eTimer, eConsoleAppContainer, getDesktop
 from Screens.Screen import Screen
 from Screens.MessageBox import MessageBox
@@ -67,7 +65,7 @@ class StandardVideoPlayer(MoviePlayer, InfoBarPlaylist):
 		self.sref = sref
 		MoviePlayer.__init__(self, session, sref)
 		InfoBarPlaylist.__init__(self, playlist, playlistCB, playlistName)
-		#SubsSupport.__init__(self, subPath=subtitles, alreadyPlaying=True)
+		# SubsSupport.__init__(self, subPath=subtitles, alreadyPlaying=True)
 		self.skinName = "MoviePlayer" 
 		
 	def playService(self):
@@ -84,7 +82,7 @@ class StandardStreamVideoPlayer(MoviePlayer, InfoBarPlaylist):
 		autoPlay = False
 		InfoBarPlaylist.__init__(self, playlist, playlistCB, playlistName,
 								autoPlay=autoPlay, repeat=repeat, onStartShow=onStartShow, showProtocol=True)
-		#SubsSupport.__init__(self, subPath=subtitles, alreadyPlaying=True)
+		# SubsSupport.__init__(self, subPath=subtitles, alreadyPlaying=True)
 		self.skinName = "MoviePlayer" 
 		
 	def playService(self):
@@ -109,7 +107,7 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, InfoBarPlaylist, SubsSupport, 
 		self.settings = config.plugins.archivCZSK.videoPlayer
 		self.sref = sref
 		
-		## set default/non-default skin according to SD/HD mode
+		# # set default/non-default skin according to SD/HD mode
 		if self.settings.useDefaultSkin.getValue():
 			self.setSkinName("MoviePlayer")
 		else:
@@ -120,11 +118,11 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, InfoBarPlaylist, SubsSupport, 
 				self.setSkinName("MoviePlayer")
 				
 		
-		## init custom infobar (added info about download speed, buffer level..)
+		# # init custom infobar (added info about download speed, buffer level..)
 		ArchivCZSKMoviePlayerInfobar.__init__(self)
 		
 		
-		## custom actions for MP	
+		# # custom actions for MP	
 		self["actions"] = HelpableActionMap(self, "ArchivCZSKMoviePlayerActions",
         	{
          	"leavePlayer": (self.leavePlayer, _("leave player?")),
@@ -150,7 +148,7 @@ class ArchivCZSKMoviePlayer(BaseArchivCZSKScreen, InfoBarPlaylist, SubsSupport, 
 		# to get real start of service, and for queries for video length/position
 		self.video = Video(session)
 		
-		## bindend some video events to functions
+		# # bindend some video events to functions
 		self.__event_tracker = ServiceEventTracker(screen=self, eventmap=
 		{
 			iPlayableService.evStart: self.__serviceStarted,
@@ -512,7 +510,7 @@ class DownloadSupport(object):
 			
 	
 	def _playAndDownloadCB(self, callback=None):
-		#what is downloading is always seekable and pausable
+		# what is downloading is always seekable and pausable
 		self.seekable = True
 		self.pausable = True
 		
@@ -569,8 +567,9 @@ class DownloadSupport(object):
 		
 
 class RTMPGWSupport(object):
+	__port = 8902
+	
 	def __init__(self):
-		self.__port = 8902 # streaming port for rtmpgw
 		self.__streamPart = 'http://0.0.0.0:'
 		self.__rtmpgwProcess = None
 		self.useRtmpgw = not self.settings.seeking.getValue()
@@ -579,25 +578,24 @@ class RTMPGWSupport(object):
 	def _getRTMPGWPlayUrl(self):
 		return self.__streamPart + str(self.__port)
 		
+		
 	def startRTMPGWProcess(self, media_it):
 		log.debug('starting rtmpgw process')
 		ret = util.check_program(RTMPGW_PATH)
 		if ret is None:
-			log.info("Cannot found rtmpgw, make sure that you have installed it, or try to use Video player with internal rtmp support")
 			raise RTMPGWMissingError()
 		
-		netstat = Popen(NETSTAT_PATH + ' -tulna', stderr=STDOUT, stdout=PIPE, shell=True)
-		out, err = netstat.communicate()
-		if str(self.__port) in out:
-			log.debug("Port %s is not free" , self.__port)
-			self.__port = self.__port + 1
-			log.debug('Changing port for rtmpgw to %d' , self.__port)
-			
+		if RTMPGWSupport.__port > 8905:
+			RTMPGWSupport.__port = 8902
+		else:
+			RTMPGWSupport.__port += 1
+		port = RTMPGWSupport.__port
+		
 		stream = media_it.stream
 		url = media_it.url
 		live = media_it.live
 		try:
-			cmd = "%s %s --sport %d" % (RTMPGW_PATH, stream.getRtmpgwUrl(), self.__port)	
+			cmd = "%s %s --sport %d" % (RTMPGW_PATH, stream.getRtmpgwUrl(), port)	
 		except Exception:
 			urlList = url.split()
 			rtmpTimeout = self.settings.rtmpTimeout.getValue()
@@ -625,9 +623,6 @@ class RTMPGWSupport(object):
 	def stopRTMPGWProcess(self):
 		if self.__rtmpgwProcess is not None:
 			self.__rtmpgwProcess.sendCtrlC()
-		os.system('killall rtmpgw')
-		
-		
 		
 class Player(DownloadSupport, RTMPGWSupport):
 	"""Player for playing PVideo/PPlaylist content"""
@@ -671,7 +666,7 @@ class Player(DownloadSupport, RTMPGWSupport):
 		# for amiko hdmu fix
 		self.rassFuncs = []
 		
-		#set ContentScreen callback		
+		# set ContentScreen callback		
 		self.callback = callback
 		
 

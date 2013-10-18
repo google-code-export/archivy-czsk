@@ -9,6 +9,7 @@ from htmlentitydefs import name2codepoint as n2cp
 from urlparse import urlsplit
 import httplib
 import stat
+from enigma import eConsoleAppContainer
 
 supported_video_extensions = ('.avi', '.mp4', '.mkv', '.mpeg', '.mpg')
 
@@ -410,17 +411,19 @@ def check_program(program):
 def convert_png_to_8bit(png_path, pngquant_path='pngquant'):
     pngquant = check_program(pngquant_path)
     if pngquant is None:
-        print '[ArchivCZSK] cannot decode png %s, pngquant not found' % png_path
+        print 'cannot decode png %s, pngquant not found' % png_path
         return png_path
     
     png_path_8bit = os.path.splitext(png_path)[0] + '-fs8.png'
     cmd = '%s --force 32 %s' % (pngquant, png_path)
+    cmd = cmd.split()
 
     if os.path.isfile(png_path_8bit):
         os.remove(png_path_8bit)
-    os.system(cmd)
+        
+    eConsoleAppContainer().execute(*cmd)
     if os.path.isfile(png_path_8bit):
-        print '[ArchivCZSK] png %s was successfully converted' % os.path.basename(png_path)
+        print 'png %s was successfully converted' % os.path.basename(png_path)
         return png_path_8bit
     return png_path
 

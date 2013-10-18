@@ -6,6 +6,7 @@ Created on 21.10.2012
 
 import traceback
 import os
+import shutil
 
 from Screens.MessageBox import MessageBox
 from Components.config import config, configfile
@@ -151,15 +152,15 @@ For optimal use of this plugin, you need to check if you have all neccesary vide
                 self.toupdate_addons += repository.check_updates()
             except UpdateXMLVersionError:
                 log.info('cannot retrieve update xml for repository %s', repository)
-                #self.show_error(_("Cannot retrieve update xml for repository") + " [%s]" % repository.name.encode('utf-8'))
+                # self.show_error(_("Cannot retrieve update xml for repository") + " [%s]" % repository.name.encode('utf-8'))
                 continue
             except Exception:
                 traceback.print_exc()
                 log.info('error when checking updates for repository %s', repository)
-                #self.show_error(_("Error when checking updates of repository") + " [%s]" % repository.name.encode('utf-8'))
+                # self.show_error(_("Error when checking updates of repository") + " [%s]" % repository.name.encode('utf-8'))
                 continue
         update_string = '\n'.join(addon.name for addon in self.toupdate_addons)
-        if update_string !='':
+        if update_string != '':
             self.ask_update_addons(update_string)
         else:
             self.open_archive_screen()
@@ -168,7 +169,7 @@ For optimal use of this plugin, you need to check if you have all neccesary vide
     def ask_update_addons(self, update_string):
         self.session.openWithCallback(self.update_addons,
                                       MessageBox,
-                                      _("Do you want to update") +" " + _("addons") + '?' +'\n\n' + update_string.encode('utf-8') ,
+                                      _("Do you want to update") + " " + _("addons") + '?' + '\n\n' + update_string.encode('utf-8') ,
                                       type=MessageBox.TYPE_YESNO)
         
     
@@ -248,10 +249,24 @@ For optimal use of this plugin, you need to check if you have all neccesary vide
         configfile.save()
         
         # clear tmp content by shamman
-        os.system("rm -rf /tmp/*.url")
-        os.system("rm -rf /tmp/*.png")
-        #os.system("rm -rf /tmp/*.txt")
-        os.system("rm -r /tmp/archivCZSK")
+        
+        filelist = [ f for f in os.listdir("/tmp") if f.endswith(".url") ]
+        for f in filelist:
+            try:
+                os.remove(f)
+            except OSError:
+                continue
+        filelist = [ f for f in os.listdir("/tmp") if f.endswith(".png") ]
+        for f in filelist:
+            try:
+                os.remove(f)
+            except OSerror:
+                continue
+        shutil.rmtree("/tmp/archivCZSK", True)
         
         if config.plugins.archivCZSK.clearMemory.getValue():
-            os.system("echo 1 > /proc/sys/vm/drop_caches")
+            try:
+                with open("/proc/sys/vm/drop_caches", "w") as f:
+                    f.write("1")
+            except IOError as e:
+                print 'cannot drop caches : %s' % str(e)
