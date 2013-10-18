@@ -35,20 +35,25 @@ class Updater(object):
         self.remote_addons_dict = {}
     
     def check_addon(self, addon, update_xml=True):
-        """check if addon needs update"""
+        """
+        check if addon needs update and if its broken
+        """
+        
         log.debug("checking updates for %s", addon.name)
         self._get_server_addon(addon, update_xml)
         
+        broken = self.remote_addons_dict[addon.id]['broken']
         remote_version = self.remote_addons_dict[addon.id]['version']
         local_version = addon.version
+        
         if util.check_version(local_version, remote_version):
             log.debug("%s local version %s < remote version %s", addon.name, local_version, remote_version)
             log.debug("%s is not up to date", addon.name)
-            return True
+            return True, broken
         else:
             log.debug("%s local version %s >= remote version %s", addon.name, local_version, remote_version)
-            log.debug("%s is up to date", addon.name)  
-        return False
+            log.debug("%s is up to date", addon.name)
+        return False, broken
           
     def update_addon(self, addon):
         """updates addon"""

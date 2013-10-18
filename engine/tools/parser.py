@@ -124,9 +124,8 @@ class XBMCAddonXMLParser(XMLParser):
                     
  
             if info.attrib.get('point') == 'xbmc.addon.metadata':
-                if info.attrib.get('broken') is not None:
-                    broken = info.attrib.get('broken')
-
+                if info.findtext('broken'):
+                    broken = info.findtext('broken')
                 for desc in info.findall('description'):
                     if desc.attrib.get('lang') is None:
                         description['en'] = desc.text

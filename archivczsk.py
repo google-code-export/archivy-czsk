@@ -222,6 +222,9 @@ For optimal use of this plugin, you need to check if you have all neccesary vide
             addon = ArchivCZSK.get_addon(key)
             if not isinstance(addon, VideoAddon):
                 continue
+            if (not config.plugins.archivCZSK.showBrokenAddons.getValue()
+                and addon.get_info('broken')):
+                continue
             if key in tv_archives:
                 tv_video_addon.append(PVideoAddon(addon))
                 log.debug('adding %s addon to tv group' , key)

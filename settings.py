@@ -157,24 +157,16 @@ config.plugins.archivCZSK.subtitlesPath = ConfigDirectory(default="/tmp")
 
 ########### Misc #########################
 
+config.plugins.archivCZSK.showBrokenAddons = ConfigYesNo(default=False)
 config.plugins.archivCZSK.convertPNG = ConfigYesNo(default=True)
 config.plugins.archivCZSK.clearMemory = ConfigYesNo(default=False)
 if ARCH == 'sh4' and SERVICEMP4:
     config.plugins.archivCZSK.hdmuFix = ConfigYesNo(default=True)
 else:
     config.plugins.archivCZSK.hdmuFix = ConfigYesNo(default=False)
-    
 
-# we dont need linkVerification with gstreamer
-
-#if videoPlayerInfo.type == 'gstreamer':
 config.plugins.archivCZSK.linkVerification = ConfigYesNo(default=False)
-#config.plugins.archivCZSK.linkVerification.setValue(False)
-#config.plugins.archivCZSK.linkVerification.save()
-#else:
-#    config.plugins.archivCZSK.linkVerification = ConfigYesNo(default=True)
     
-
 choicelist = []
 for i in range(1, 250, 1):
     choicelist.append(("%d" % i, "%d s" % i))
@@ -236,6 +228,7 @@ def get_path_settings():
 
 def get_misc_settings():
     list = []
+    list.append(getConfigListEntry(_("Show broken addons"), config.plugins.archivCZSK.showBrokenAddons))
     list.append(getConfigListEntry(_("Convert captcha images to 8bit"), config.plugins.archivCZSK.convertPNG))
     list.append(getConfigListEntry(_("Drop caches on exit"), config.plugins.archivCZSK.clearMemory))
     verification = config.plugins.archivCZSK.linkVerification.getValue()
@@ -245,5 +238,4 @@ def get_misc_settings():
             list.append(getConfigListEntry(_("Verification timeout"), config.plugins.archivCZSK.linkVerificationTimeout))
     if ARCH == 'sh4':
         list.append(getConfigListEntry(_("Amiko HDMU fix"), config.plugins.archivCZSK.hdmuFix))
-    
     return list
