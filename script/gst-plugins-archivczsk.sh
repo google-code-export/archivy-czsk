@@ -104,10 +104,12 @@ then
 		install_pkg gst-plugins-bad-rtmp 
 		install_pkg gst-plugins-good-isomp4
 		install_pkg librtmp0
+		install_pkg librtmp1
 	else
 		reinstall_pkg gst-plugins-good-flv 
 		reinstall_pkg gst-plugins-bad-rtmp 
 		reinstall_pkg librtmp0
+		reinstall_pkg librtmp1
 	fi
 else
 	echo "Zvolili ste nespravnu platformu $platform, zvolte bud mipsel alebo mips32el platformu"

@@ -47,14 +47,12 @@ class VideoPlayerInfo(object):
             rtmplib = os.path.join(GSTREAMER_PATH, 'libgstrtmp.so')
             
             librtmp = os.path.join(LIB_PATH, 'librtmp.so.0')
-            librtmp2 = os.path.join(LIB_PATH, 'librtmp.so')
+            librtmp2 = os.path.join(LIB_PATH, 'librtmp.so.1')
             
-            # flv is very common file container used in rtmp 
+            # flv is file container used in rtmp
             flvlib = os.path.join(GSTREAMER_PATH, 'libgstflv.so')
-            if os.path.isfile(rtmplib) and (os.path.isfile(librtmp) or os.path.isfile(librtmp2)):
-                if os.path.isfile(flvlib):
+            if os.path.isfile(rtmplib) and (os.path.isfile(librtmp) or os.path.isfile(librtmp2)) and os.path.isfile(flvlib):
                     return True
-                return None
             return False
             
         elif self.type == 'eplayer2':
