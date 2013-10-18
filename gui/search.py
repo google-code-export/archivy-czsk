@@ -105,7 +105,7 @@ class SearchClient(BaseArchivCZSKMenuListScreen):
     
         
     def changeSearchExp(self):
-        self.session.openWithCallback(self.changeSearchExpCB, VirtualKeyBoard, _("Set your search expression"), self.searchExp)
+        self.session.openWithCallback(self.changeSearchExpCB, VirtualKeyBoard, _("Set your search expression"), text = self.searchExp)
         
     def changeSearchExpCB(self, word=None):
         if word is not None and len(word) > 0:
