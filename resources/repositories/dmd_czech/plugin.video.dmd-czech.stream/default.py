@@ -5,7 +5,7 @@ from urlparse import urlparse
 from util import addDir, addLink,addSearch, getSearch,showWarning
 from Plugins.Extensions.archivCZSK.archivczsk import ArchivCZSK
 
-__baseurl__ = 'http://www.stream.cz'
+__baseurl__ = 'http://old.stream.cz'
 __dmdbase__ = 'http://iamm.netuje.cz/xbmc/stream/'
 __cdn_url__ = 'http://cdn-dispatcher.stream.cz/?id='
 _UserAgent_ = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'
@@ -15,16 +15,16 @@ icon = os.path.join(home, 'icon.png')
 nexticon = os.path.join(home, 'nextpage.png') 
 page_pole_url = []
 page_pole_no = []
-searchurl = 'http://www.stream.cz/?a=search&search_text='
+searchurl = 'http://old.stream.cz/?a=search&search_text='
 user_name = __settings__.get_setting('user_name')
 
 def OBSAH():
     addSearch('Hledat...', __baseurl__, 13, icon)
-    addDir('Všechny Pořady','http://www.stream.cz/televize/nazev',1,icon)
-    addDir('Pořady Stream.cz','http://www.stream.cz/televize/429-stream',3,icon)
-    addDir('Partnerské pořady','http://www.stream.cz/',4,icon)
-    addDir('Komerční videa','http://www.stream.cz/?m=stream&a=commercial_channel',5,icon)  
-    addDir('Uživatelská videa','http://www.stream.cz/kategorie/2-uzivatelska-videa',2,icon)
+    addDir('Všechny Pořady','http://old.stream.cz/televize/nazev',1,icon)
+    addDir('Pořady Stream.cz','http://old.stream.cz/televize/429-stream',3,icon)
+    addDir('Partnerské pořady','http://old.stream.cz/',4,icon)
+    addDir('Komerční videa','http://old.stream.cz/?m=stream&a=commercial_channel',5,icon)  
+    addDir('Uživatelská videa','http://old.stream.cz/kategorie/2-uzivatelska-videa',2,icon)
     addDir('Moje videa',__baseurl__,15,icon)
     
 def INDEX_TV(url):
@@ -73,8 +73,8 @@ def INDEX_UZIVATEL(url):
     response.close()
     match = re.compile('<li><a  href="(.+?)">(.+?)</a>').findall(httpdata)
     for link, name in match:
-        if not re.match('http://www.stream.cz', link, re.U):
-                link = 'http://www.stream.cz' + link
+        if not re.match('http://old.stream.cz', link, re.U):
+                link = 'http://old.stream.cz' + link
         #print name,link
         addDir(name, link, 6, icon)
 
@@ -87,8 +87,8 @@ def INDEX_STREAM(url):
     match = re.compile('<h4 class="redTitelBox">Pořady Stream.cz</h4>(.+?)<h4 class="redTitelBox">Partnerské pořady</h4>', re.S).findall(httpdata)
     item = re.compile('<a href="(.+?)">(.+?)</a>').findall(match[0])
     for link,name in item:
-        if not re.match('http://www.stream.cz', link, re.U):
-                link = 'http://www.stream.cz'+link
+        if not re.match('http://old.stream.cz', link, re.U):
+                link = 'http://old.stream.cz'+link
         #print name,link
         addDir(name,link,7,icon)
 
@@ -101,8 +101,8 @@ def INDEX_PARTNERSKE(url):
     match = re.compile('<h4 class="redTitelBox">Partnerské pořady</h4>(.+?)<h4 class="redTitelBox">Uživatelská videa</h4>', re.S).findall(httpdata)
     item = re.compile('<a href="(.+?)">(.+?)</a>').findall(match[0])
     for link,name in item:
-        if not re.match('http://www.stream.cz', link, re.U):
-                link = 'http://www.stream.cz'+link
+        if not re.match('http://old.stream.cz', link, re.U):
+                link = 'http://old.stream.cz'+link
         #print name,link
         addDir(name,link,7,icon)
 
@@ -115,8 +115,8 @@ def INDEX_KOMERCNI(url):
     match = re.compile('<div class="themesList">(.+?)<div class="vertical300Box">', re.S).findall(httpdata)
     item = re.compile('<a href="(.+?)">(.+?)</a>').findall(match[0])
     for link,name in item:
-        if not re.match('http://www.stream.cz', link, re.U):
-                link = 'http://www.stream.cz'+link
+        if not re.match('http://old.stream.cz', link, re.U):
+                link = 'http://old.stream.cz'+link
         #print name,link
         addDir(name,link,7,icon)
 
