@@ -67,10 +67,10 @@ def VIDEOLINK(url):
     doc = read_page(url)
     name = re.compile('<title>(.+?)</title>').findall(str(doc))
     thumb = re.compile('<link rel="image_src" href="(.+?)"').findall(str(doc))
-    low_hq = re.compile("'file','(.+?)'").findall(str(doc))        
-    high_hq = re.compile("'hd.file','(.+?)'").findall(str(doc))    
+    low_hq = re.compile("'file','(.+?)'").findall(str(doc))
+    high_hq = re.compile("'hd.file','(.+?)'").findall(str(doc))
     if __settings__.get_setting('kvalita_sel'):
-        addLink('LQ '+name[0],low_hq[0],thumb[0],name[0])
+        addLink('LQ '+name[0],low_hq[1],thumb[0],name[0])
     if __settings__.get_setting('kvalita_sel'):
         addLink('HQ '+name[0],high_hq[0],thumb[0],name[0])
     
