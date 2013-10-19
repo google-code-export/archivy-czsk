@@ -74,11 +74,7 @@ config.plugins.archivCZSK.videoPlayer.autoPlay = ConfigYesNo(default=True)
 
 # to use servicemrua instead of servicemp3/servicemp4
 config.plugins.archivCZSK.videoPlayer.servicemrua = ConfigYesNo(default=False)
-
-if SERVICEMP4:
-    config.plugins.archivCZSK.videoPlayer.servicemp4 = ConfigYesNo(default=True)
-else:
-    config.plugins.archivCZSK.videoPlayer.servicemp4 = ConfigYesNo(default=False)
+config.plugins.archivCZSK.videoPlayer.servicemp4 = ConfigYesNo(default=False)
     
 
 # downloading flag, headers, userAgent for servicemp4
