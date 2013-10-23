@@ -19,6 +19,7 @@ def getBoxtype():
 
 def _setBoxtype():
         global gBoxType
+        box = 'Unknown'
         fPath1 = "/proc/stb/info/model"
         fPath2 = "/hdd/model"
         fPath = isfile(fPath1) and fPath1 or isfile(fPath2) and fPath2 or ''
@@ -27,7 +28,9 @@ def _setBoxtype():
                 box = f.readline().strip()
         except IOError:
             box = "PC"
-
+        
+        manu = 'Unknown'
+        model = box
         arch = "sh4"
         version = ""
         
