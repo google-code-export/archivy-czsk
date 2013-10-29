@@ -7,6 +7,10 @@ from Components.config import config, ConfigInteger, ConfigSubsection, ConfigYes
 from Plugins.Extensions.archivCZSK import log
 USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:18.0) Gecko/20100101 Firefox/18.0'
 
+config.mediaplayer.useAlternateUserAgent = ConfigYesNo(default=True)
+config.mediaplayer.alternateUserAgent = ConfigText(default="")
+config.mediaplayer.extraHeaders = NoSave(ConfigText(default=""))
+
 def loadSettings(userAgent="", extraHeaders={}, downloadMode=False):
     if userAgent != "" or len(extraHeaders) > 0 or downloadMode:
         CustomVideoPlaySetting(userAgent, extraHeaders, downloadMode)
@@ -26,8 +30,6 @@ class VideoPlaySettingsProvider(object):
     def setExtraHeaders(self, dictHeaders):
         if not self.__config.servicemp4.getValue():
             headersString = '|'.join([(key + ':' + value) for key, value in dictHeaders.iteritems()])
-            config.mediaplayer = ConfigSubsection()
-            config.mediaplayer.extraHeaders = NoSave(ConfigText(default=""))
             config.mediaplayer.extraHeaders.setValue(headersString)
         else:
             headersString = '#'.join([(key + ':' + value) for key, value in dictHeaders.iteritems()])
@@ -38,11 +40,6 @@ class VideoPlaySettingsProvider(object):
             if agent != "":
                 self.__config.userAgent.setValue(agent)
         else:
-            # servicemp3 uses config.mediaplayer.alternateUserAgent to set UserAgent for gstreamer
-            config.mediaplayer = ConfigSubsection()
-            config.mediaplayer.useAlternateUserAgent = ConfigYesNo(default=True)
-            config.mediaplayer.alternateUserAgent = ConfigText(default="")
-    
             if agent != "":
                 config.mediaplayer.useAlternateUserAgent.setValue(True)
                 config.mediaplayer.alternateUserAgent.setValue(agent)
